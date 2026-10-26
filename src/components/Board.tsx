@@ -79,6 +79,7 @@ export function Board({
             const isConflict = conflictingKeys.has(`${r},${c}`);
             const isError = lastErrorCell?.row === r && lastErrorCell?.col === c;
             const isJustPlaced = lastPlacedCat?.row === r && lastPlacedCat?.col === c;
+            const isLocked = lockedCats[r]?.[c] ?? false;
 
             let catAnim: 'idle' | 'placed' | 'conflict' | 'victory' = 'idle';
             if (isVictory) catAnim = 'victory';
@@ -91,7 +92,7 @@ export function Board({
                 data-testid={`cell-${r}-${c}`}
                 className={`board-cell reg-${regId % 9} ${isConflict ? 'has-conflict' : ''} ${
                   isError ? 'has-error' : ''
-                }`}
+                } ${isLocked ? 'is-locked' : ''}`}
                 onClick={() => handleClick(r, c)}
                 onPointerDown={(e) => handlePointerDown(r, c, e as unknown as PointerEvent)}
                 onPointerEnter={() => handlePointerEnter(r, c)}
