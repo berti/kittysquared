@@ -39,6 +39,18 @@ export function Board({
     isDraggingRef.current = true;
     hasDraggedRef.current = false;
 
+    // Release pointer capture on mobile touch to allow pointerenter on adjacent cells
+    const currentTarget = e.currentTarget as HTMLElement | null;
+    const target = (e.target as HTMLElement | null) || currentTarget;
+    const elToRelease = currentTarget || target;
+    if (elToRelease && typeof elToRelease.releasePointerCapture === 'function' && e.pointerId) {
+      try {
+        elToRelease.releasePointerCapture(e.pointerId);
+      } catch (_err) {
+        // Ignore if already released
+      }
+    }
+
     // Target cross state based on current cell state
     const current = board[row][col];
     dragTargetStateRef.current = current === 'cross' ? 'empty' : 'cross';
@@ -63,8 +75,12 @@ export function Board({
     onCellTap(row, col);
   };
 
+  const containerPointerProps = {
+    onpointerup: handlePointerUp,
+  };
+
   return (
-    <div className="board-container" onPointerUp={handlePointerUp}>
+    <div className="board-container" onPointerUp={handlePointerUp} {...containerPointerProps}>
       <div
         className="board-grid"
         style={{
@@ -86,6 +102,14 @@ export function Board({
             else if (isConflict) catAnim = 'conflict';
             else if (isJustPlaced) catAnim = 'placed';
 
+            const onPDown = (e: unknown) => handlePointerDown(r, c, e as PointerEvent);
+            const onPEnter = () => handlePointerEnter(r, c);
+
+            const nativePointerProps = {
+              onpointerdown: onPDown,
+              onpointerenter: onPEnter,
+            };
+
             return (
               <div
                 key={`${r}-${c}`}
@@ -94,8 +118,9 @@ export function Board({
                   isError ? 'has-error' : ''
                 } ${isLocked ? 'is-locked' : ''}`}
                 onClick={() => handleClick(r, c)}
-                onPointerDown={(e) => handlePointerDown(r, c, e as unknown as PointerEvent)}
-                onPointerEnter={() => handlePointerEnter(r, c)}
+                onPointerDown={onPDown}
+                onPointerEnter={onPEnter}
+                {...nativePointerProps}
               >
                 {state === 'cross' && <span className="cross-mark">✕</span>}
                 {state === 'cat' && (
