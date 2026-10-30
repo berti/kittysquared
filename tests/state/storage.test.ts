@@ -44,4 +44,34 @@ describe('state/storage', () => {
     const loaded = loadPersistedState();
     expect(loaded).toEqual(getDefaultAppState());
   });
+
+  it('initializes and persists regionAssist setting with default "off"', () => {
+    const state = getDefaultAppState();
+    expect(state.settings.regionAssist).toBe('off');
+
+    state.settings.regionAssist = 'textures';
+    savePersistedState(state);
+
+    const loaded = loadPersistedState();
+    expect(loaded.settings.regionAssist).toBe('textures');
+  });
+
+  it('Review Focus #1: loadPersistedState defaults regionAssist to "off" if missing in older save files', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        chill: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
+        classic: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
+        settings: {
+          controlScheme: 'toggle',
+          catVariant: 'black',
+          musicMuted: false,
+          sfxMuted: false,
+          tutorialSeen: true,
+        },
+      })
+    );
+    const loaded = loadPersistedState();
+    expect(loaded.settings.regionAssist).toBe('off');
+  });
 });

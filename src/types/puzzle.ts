@@ -6,6 +6,8 @@ export type ControlScheme = 'toggle' | 'double-tap';
 
 export type CatVariant = 'black' | 'white';
 
+export type RegionAssistMode = 'off' | 'textures' | 'glyphs' | 'numbers';
+
 export type CatAnimState = 'idle' | 'placed' | 'conflict' | 'victory';
 
 export interface CellCoord {

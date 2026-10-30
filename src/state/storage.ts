@@ -1,4 +1,4 @@
-import { CatVariant, CellState, ControlScheme, GameMode } from '../types/puzzle';
+import { CatVariant, CellState, ControlScheme, GameMode, RegionAssistMode } from '../types/puzzle';
 
 export interface SavedBoardSnapshot {
   levelId: number;
@@ -18,6 +18,7 @@ export interface ModeProgress {
 export interface AppSettings {
   controlScheme: ControlScheme;
   catVariant: CatVariant;
+  regionAssist: RegionAssistMode;
   musicMuted: boolean;
   sfxMuted: boolean;
   tutorialSeen: boolean;
@@ -46,6 +47,7 @@ export function getDefaultAppState(): PersistedAppState {
     settings: {
       controlScheme: 'toggle',
       catVariant: 'black',
+      regionAssist: 'off',
       musicMuted: false,
       sfxMuted: false,
       tutorialSeen: false,
@@ -73,6 +75,7 @@ export function loadPersistedState(): PersistedAppState {
       settings: {
         ...defaults.settings,
         ...(parsed.settings || {}),
+        regionAssist: parsed.settings?.regionAssist || 'off',
       },
     };
   } catch (_e) {
