@@ -1,5 +1,5 @@
 import { AppSettings } from '../state/storage';
-import { CatVariant, ControlScheme, GameMode } from '../types/puzzle';
+import { CatVariant, ControlScheme, GameMode, RegionAssistMode } from '../types/puzzle';
 import { CatSvg } from './CatSvg';
 
 export interface SettingsModalProps {
@@ -168,6 +168,49 @@ export function SettingsModal({
               </div>
               <span style={{ fontSize: '12px', fontWeight: 700 }}>Gato Blanco</span>
             </div>
+          </div>
+        </div>
+
+        {/* Region Assist (Accessibility) */}
+        <div>
+          <div style={{ fontSize: '13px', fontWeight: 800, color: '#7A686E', marginBottom: '8px' }}>
+            AYUDA VISUAL DE REGIONES (ACCESIBILIDAD)
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+            {[
+              { id: 'off', label: 'Desactivado', desc: 'Colores puros' },
+              { id: 'textures', label: 'Texturas', desc: 'Rayas y tramas' },
+              { id: 'glyphs', label: 'Gatitos 🐾', desc: 'Iconos en esquina' },
+              { id: 'numbers', label: 'Números 1-9', desc: 'Dígitos en esquina' },
+            ].map((item) => {
+              const active = (settings.regionAssist || 'off') === item.id;
+              return (
+                <button
+                  key={item.id}
+                  data-testid={`select-region-assist-${item.id}`}
+                  onClick={() =>
+                    onUpdateSettings({ ...settings, regionAssist: item.id as RegionAssistMode })
+                  }
+                  style={{
+                    padding: '9px 8px',
+                    borderRadius: '12px',
+                    border: active ? '3px solid #6366F1' : '2px solid #E2D6C1',
+                    background: active ? '#FFF' : '#EFE6D5',
+                    color: '#3D3135',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '2px',
+                  }}
+                >
+                  <span style={{ fontSize: '12px', fontWeight: 800 }}>{item.label}</span>
+                  <span style={{ fontSize: '10.5px', color: '#7A686E', fontWeight: 600 }}>
+                    {item.desc}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

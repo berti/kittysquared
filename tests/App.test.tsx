@@ -50,4 +50,20 @@ describe('App integration', () => {
     fireEvent.click(getByTestId('start-classic-btn'));
     expect(getByText(/Nivel 1/i)).toBeTruthy();
   });
+
+  it('Review Focus #5: allows changing Region Assist in Settings and applies it to the active game board', () => {
+    const { getByTestId } = render(<App />);
+
+    // Open settings
+    fireEvent.click(getByTestId('open-settings-btn'));
+
+    // Select Glyphs
+    fireEvent.click(getByTestId('select-region-assist-glyphs'));
+    fireEvent.click(getByTestId('close-settings-btn'));
+
+    // Start game and verify glyph badges are present on the board
+    fireEvent.click(getByTestId('start-chill-btn'));
+    const cell = document.querySelector('[data-testid="cell-0-0"]');
+    expect(cell?.querySelector('.region-glyph-badge')).not.toBeNull();
+  });
 });
