@@ -182,6 +182,7 @@ export function GameScreen({
         regions={puzzle.regions}
         board={session.board}
         lockedCats={session.lockedCats}
+        errorCrosses={session.errorCrosses}
         conflictingKeys={session.conflictingKeys}
         lastPlacedCat={session.lastPlacedCat}
         lastErrorCell={session.lastErrorCell}

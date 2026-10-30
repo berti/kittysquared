@@ -133,6 +133,14 @@ body {
   line-height: 1;
 }
 
+.cross-mark.cross-mark-error {
+  color: var(--danger-red);
+}
+
+.board-cell.has-error-cross {
+  cursor: default;
+}
+
 /* Region colors */
 .reg-0 { background: var(--reg-0); }
 .reg-1 { background: var(--reg-1); }

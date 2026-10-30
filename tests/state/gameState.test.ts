@@ -50,7 +50,7 @@ describe('state/gameState', () => {
     // 3 wrong cat placements -> lost on 3rd mistake, partialScore reset to 0
     s = applyCellTap(s, 0, 0, 'toggle', 'cat');
     expect(s.mistakes).toBe(1);
-    expect(s.board[0][0]).toBe('empty');
+    expect(s.board[0][0]).toBe('cross');
     s = applyCellTap(s, 1, 0, 'toggle', 'cat');
     expect(s.mistakes).toBe(2);
     expect(s.status).toBe('playing');
@@ -103,15 +103,47 @@ describe('state/gameState', () => {
     expect(s.board[0][0]).toBe('cross');
     expect(s.mistakes).toBe(0);
 
-    // Double tap on (0,0) attempts to place a cat -> triggers Classic mistake
+    // Double tap on (0,0) attempts to place a cat -> triggers Classic mistake and adds cross
     s = applyCellTap(s, 0, 0, 'double-tap', 'cat', { isDoubleTap: true });
     expect(s.mistakes).toBe(1);
-    expect(s.board[0][0]).toBe('empty');
+    expect(s.board[0][0]).toBe('cross');
 
     // Double tap on valid position (0,1) places locked cat
     s = applyCellTap(s, 0, 1, 'double-tap', 'cat', { isDoubleTap: true });
     expect(s.board[0][1]).toBe('cat');
     expect(s.lockedCats[0][1]).toBe(true);
     expect(s.partialScore).toBe(10);
+  });
+
+  it('Classic mode adds locked red cross on wrong cat guess, immune to taps, drag, clearCrosses, and undo', () => {
+    let s = createLevelSession(samplePuzzle, 'classic');
+    // Place wrong cat at (0,0)
+    s = applyCellTap(s, 0, 0, 'toggle', 'cat');
+    expect(s.mistakes).toBe(1);
+    expect(s.board[0][0]).toBe('cross');
+    expect(s.errorCrosses[0][0]).toBe(true);
+
+    // Tapping again does not alter the error cross
+    s = applyCellTap(s, 0, 0, 'toggle', 'cross');
+    expect(s.board[0][0]).toBe('cross');
+    s = applyCellTap(s, 0, 0, 'toggle', 'cat');
+    expect(s.board[0][0]).toBe('cross');
+
+    // Dragging cross over it does not alter it
+    s = applyDragCross(s, 0, 0, 'empty');
+    expect(s.board[0][0]).toBe('cross');
+
+    // clearCrosses clears normal crosses but keeps error cross
+    s = applyCellTap(s, 0, 2, 'toggle', 'cross');
+    expect(s.board[0][2]).toBe('cross');
+    s = clearCrosses(s);
+    expect(s.board[0][2]).toBe('empty');
+    expect(s.board[0][0]).toBe('cross');
+    expect(s.errorCrosses[0][0]).toBe(true);
+
+    // undoMove does not clear error cross
+    s = undoMove(s);
+    expect(s.board[0][0]).toBe('cross');
+    expect(s.errorCrosses[0][0]).toBe(true);
   });
 });

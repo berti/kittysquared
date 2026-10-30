@@ -51,6 +51,7 @@ export function App() {
     if (snap && snap.levelId === currentLvlId) {
       newSession.board = snap.board;
       newSession.lockedCats = snap.lockedCats;
+      if (snap.errorCrosses) newSession.errorCrosses = snap.errorCrosses;
       newSession.mistakes = snap.mistakes;
       newSession.partialScore = snap.partialScore;
     }
@@ -75,6 +76,7 @@ export function App() {
             levelId: nextSession.puzzle.id,
             board: nextSession.board,
             lockedCats: nextSession.lockedCats,
+            errorCrosses: nextSession.errorCrosses,
             mistakes: nextSession.mistakes,
             partialScore: nextSession.partialScore,
           }

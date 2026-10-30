@@ -1,11 +1,15 @@
 // @vitest-environment jsdom
-import { fireEvent, render } from '@testing-library/preact';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render } from '@testing-library/preact';
 import { Board } from '../../src/components/Board';
 import { CatSvg } from '../../src/components/CatSvg';
 import { CellState } from '../../src/types/puzzle';
 
 describe('components/CatSvg & Board', () => {
+  beforeEach(() => {
+    cleanup();
+    document.body.innerHTML = '';
+  });
   it('renders both black and white cat variants keeping ears, pink nose, and 4 whiskers across all 4 states', () => {
     for (const variant of ['black', 'white'] as const) {
       for (const state of ['idle', 'placed', 'conflict', 'victory'] as const) {
@@ -69,5 +73,47 @@ describe('components/CatSvg & Board', () => {
     fireEvent.pointerEnter(cell01);
     fireEvent.pointerUp(cell01);
     expect(onDragCross).toHaveBeenCalledWith(0, 1, 'cross');
+  });
+
+  it('renders a red cross with cross-mark-error class on error crosses in Classic mode', () => {
+    const regions = [
+      [0, 0],
+      [1, 1],
+    ];
+    const board: CellState[][] = [
+      ['cross', 'empty'],
+      ['empty', 'empty'],
+    ];
+    const locked = [
+      [false, false],
+      [false, false],
+    ];
+    const errorCrosses = [
+      [true, false],
+      [false, false],
+    ];
+
+    const { getByTestId } = render(
+      <Board
+        size={2}
+        regions={regions}
+        board={board}
+        lockedCats={locked}
+        errorCrosses={errorCrosses}
+        conflictingKeys={new Set()}
+        lastPlacedCat={null}
+        lastErrorCell={null}
+        isVictory={false}
+        catVariant="black"
+        onCellTap={() => {}}
+        onDragCross={() => {}}
+      />
+    );
+
+    const cell00 = getByTestId('cell-0-0');
+    expect(cell00.classList.contains('has-error-cross')).toBe(true);
+    const crossSpan = cell00.querySelector('.cross-mark');
+    expect(crossSpan).not.toBeNull();
+    expect(crossSpan?.classList.contains('cross-mark-error')).toBe(true);
   });
 });

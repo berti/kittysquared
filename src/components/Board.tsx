@@ -7,6 +7,7 @@ export interface BoardProps {
   regions: number[][];
   board: CellState[][];
   lockedCats: boolean[][];
+  errorCrosses?: boolean[][];
   conflictingKeys: Set<string>;
   lastPlacedCat: { row: number; col: number } | null;
   lastErrorCell: { row: number; col: number } | null;
@@ -23,6 +24,7 @@ export function Board({
   regions,
   board,
   lockedCats,
+  errorCrosses,
   conflictingKeys,
   lastPlacedCat,
   lastErrorCell,
@@ -116,7 +118,8 @@ export function Board({
             const isConflict = conflictingKeys.has(`${r},${c}`);
             const isError = lastErrorCell?.row === r && lastErrorCell?.col === c;
             const isJustPlaced = lastPlacedCat?.row === r && lastPlacedCat?.col === c;
-            const isLocked = lockedCats[r]?.[c] ?? false;
+            const isErrorCross = errorCrosses?.[r]?.[c] ?? false;
+            const isLocked = (lockedCats[r]?.[c] ?? false) || isErrorCross;
 
             let catAnim: 'idle' | 'placed' | 'conflict' | 'victory' = 'idle';
             if (isVictory) catAnim = 'victory';
@@ -137,13 +140,15 @@ export function Board({
                 data-testid={`cell-${r}-${c}`}
                 className={`board-cell reg-${regId % 9} ${isConflict ? 'has-conflict' : ''} ${
                   isError ? 'has-error' : ''
-                } ${isLocked ? 'is-locked' : ''}`}
+                } ${isLocked ? 'is-locked' : ''} ${isErrorCross ? 'has-error-cross' : ''}`}
                 onClick={() => handleClick(r, c)}
                 onPointerDown={onPDown}
                 onPointerEnter={onPEnter}
                 {...nativePointerProps}
               >
-                {state === 'cross' && <span className="cross-mark">✕</span>}
+                {state === 'cross' && (
+                  <span className={`cross-mark ${isErrorCross ? 'cross-mark-error' : ''}`}>✕</span>
+                )}
                 {state === 'cat' && (
                   <div style={{ width: '82%', height: '82%' }}>
                     <CatSvg variant={catVariant} state={catAnim} />

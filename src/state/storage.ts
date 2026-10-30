@@ -4,6 +4,7 @@ export interface SavedBoardSnapshot {
   levelId: number;
   board: CellState[][];
   lockedCats: boolean[][];
+  errorCrosses?: boolean[][];
   mistakes: number;
   partialScore: number;
 }
