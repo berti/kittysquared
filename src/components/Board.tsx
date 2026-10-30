@@ -1,6 +1,8 @@
 import { useRef } from 'preact/hooks';
-import { CatVariant, CellState } from '../types/puzzle';
+import { CatVariant, CellState, RegionAssistMode } from '../types/puzzle';
 import { CatSvg } from './CatSvg';
+
+export const REGION_GLYPHS = ['🐾', '🐟', '🧶', '🔔', '⭐', '🌙', '🐭', '👑', '💖'];
 
 export interface BoardProps {
   size: number;
@@ -13,6 +15,7 @@ export interface BoardProps {
   lastErrorCell: { row: number; col: number } | null;
   isVictory: boolean;
   catVariant: CatVariant;
+  regionAssist?: RegionAssistMode;
   onCellTap: (row: number, col: number, options?: { isDoubleTap?: boolean }) => void;
   onDragCross: (row: number, col: number, targetState: 'cross' | 'empty') => void;
 }
@@ -30,6 +33,7 @@ export function Board({
   lastErrorCell,
   isVictory,
   catVariant,
+  regionAssist = 'off',
   onCellTap,
   onDragCross,
 }: BoardProps) {
@@ -146,8 +150,23 @@ export function Board({
                 onPointerEnter={onPEnter}
                 {...nativePointerProps}
               >
+                {regionAssist === 'textures' && (
+                  <div className={`region-pattern pat-${regId % 9}`} />
+                )}
+                {regionAssist === 'glyphs' && (
+                  <span className="region-glyph-badge">{REGION_GLYPHS[regId % 9]}</span>
+                )}
+                {regionAssist === 'numbers' && (
+                  <span className="region-number-badge">{(regId % 9) + 1}</span>
+                )}
                 {state === 'cross' && (
-                  <span className={`cross-mark ${isErrorCross ? 'cross-mark-error' : ''}`}>✕</span>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className={`cross-mark ${isErrorCross ? 'cross-mark-error' : ''}`}
+                  >
+                    <line x1="5" y1="5" x2="19" y2="19" />
+                    <line x1="19" y1="5" x2="5" y2="19" />
+                  </svg>
                 )}
                 {state === 'cat' && (
                   <div style={{ width: '82%', height: '82%' }}>

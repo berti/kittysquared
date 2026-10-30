@@ -188,6 +188,7 @@ export function GameScreen({
         lastErrorCell={session.lastErrorCell}
         isVictory={session.status === 'won'}
         catVariant={settings.catVariant}
+        regionAssist={settings.regionAssist}
         onCellTap={handleCellTap}
         onDragCross={handleDragCross}
       />

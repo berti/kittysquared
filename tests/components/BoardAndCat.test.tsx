@@ -116,4 +116,111 @@ describe('components/CatSvg & Board', () => {
     expect(crossSpan).not.toBeNull();
     expect(crossSpan?.classList.contains('cross-mark-error')).toBe(true);
   });
+
+  it('renders region assist indicators (textures, glyphs, numbers) when enabled', () => {
+    const regions = [
+      [0, 1],
+      [2, 3],
+    ];
+    const board: CellState[][] = [
+      ['empty', 'empty'],
+      ['empty', 'empty'],
+    ];
+    const locked = [
+      [false, false],
+      [false, false],
+    ];
+
+    // Test textures
+    const { container: texContainer, unmount: unmountTex } = render(
+      <Board
+        size={2}
+        regions={regions}
+        board={board}
+        lockedCats={locked}
+        conflictingKeys={new Set()}
+        lastPlacedCat={null}
+        lastErrorCell={null}
+        isVictory={false}
+        catVariant="black"
+        regionAssist="textures"
+        onCellTap={() => {}}
+        onDragCross={() => {}}
+      />
+    );
+    expect(texContainer.querySelector('.pat-1')).not.toBeNull();
+    unmountTex();
+
+    // Test glyphs
+    const { container: glyContainer, unmount: unmountGly } = render(
+      <Board
+        size={2}
+        regions={regions}
+        board={board}
+        lockedCats={locked}
+        conflictingKeys={new Set()}
+        lastPlacedCat={null}
+        lastErrorCell={null}
+        isVictory={false}
+        catVariant="black"
+        regionAssist="glyphs"
+        onCellTap={() => {}}
+        onDragCross={() => {}}
+      />
+    );
+    const glyphs = glyContainer.querySelectorAll('.region-glyph-badge');
+    expect(glyphs).toHaveLength(4);
+    expect(glyphs[0].textContent).toBe('🐾'); // Reg 0
+    expect(glyphs[1].textContent).toBe('🐟'); // Reg 1
+    unmountGly();
+
+    // Test numbers (Review Focus #3: 1-indexed)
+    const { container: numContainer } = render(
+      <Board
+        size={2}
+        regions={regions}
+        board={board}
+        lockedCats={locked}
+        conflictingKeys={new Set()}
+        lastPlacedCat={null}
+        lastErrorCell={null}
+        isVictory={false}
+        catVariant="black"
+        regionAssist="numbers"
+        onCellTap={() => {}}
+        onDragCross={() => {}}
+      />
+    );
+    const nums = numContainer.querySelectorAll('.region-number-badge');
+    expect(nums).toHaveLength(4);
+    expect(nums[0].textContent).toBe('1'); // Reg 0 -> 1
+    expect(nums[1].textContent).toBe('2'); // Reg 1 -> 2
+  });
+
+  it('Review Focus #2: cell tap and drag work normally even with region assist badges active', () => {
+    const onCellTap = vi.fn();
+    const regions = [[0]];
+    const board: CellState[][] = [['empty']];
+    const locked = [[false]];
+
+    const { getByTestId } = render(
+      <Board
+        size={1}
+        regions={regions}
+        board={board}
+        lockedCats={locked}
+        conflictingKeys={new Set()}
+        lastPlacedCat={null}
+        lastErrorCell={null}
+        isVictory={false}
+        catVariant="black"
+        regionAssist="glyphs"
+        onCellTap={onCellTap}
+        onDragCross={() => {}}
+      />
+    );
+
+    fireEvent.click(getByTestId('cell-0-0'));
+    expect(onCellTap).toHaveBeenCalledWith(0, 0, expect.anything());
+  });
 });
