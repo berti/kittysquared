@@ -5,20 +5,98 @@
   --border-clay: #E2D6C1;
   --text-dark: #3D3135;
   --text-sub: #7A686E;
-  --accent-orange: #FF9770;
-  --accent-teal: #4ECDC4;
-  --danger-red: #EF4444;
+  --accent-orange: #F3722C;
+  --accent-teal: #2EC4B6;
+  --danger-red: #991B1B;
 
   /* 9 Region Colors */
   --reg-0: #FFD166;
-  --reg-1: #70D6FF;
-  --reg-2: #FF9770;
+  --reg-1: #4EA8DE;
+  --reg-2: #FF8FA3;
   --reg-3: #80ED99;
-  --reg-4: #C792DF;
-  --reg-5: #F4A261;
-  --reg-6: #A8DADC;
-  --reg-7: #FFCAD4;
-  --reg-8: #BDE0FE;
+  --reg-4: #C77DFF;
+  --reg-5: #F3722C;
+  --reg-6: #2EC4B6;
+  --reg-7: #90BE6D;
+  --reg-8: #7209B7;
+
+  /* Accessibility Patterns */
+  --pattern-opacity: 0.22;
+  --pattern-color: #3D3135;
+}
+
+.region-pattern {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--pattern-opacity);
+  background-repeat: repeat;
+  mix-blend-mode: multiply;
+  z-index: 1;
+}
+
+.pat-0 { background-image: none; }
+.pat-1 {
+  background-image: repeating-linear-gradient(45deg, var(--pattern-color), var(--pattern-color) 2px, transparent 2px, transparent 8px);
+}
+.pat-2 {
+  background-image: radial-gradient(var(--pattern-color) 2px, transparent 2.2px);
+  background-size: 8px 8px;
+}
+.pat-3 {
+  background-image: repeating-linear-gradient(0deg, var(--pattern-color), var(--pattern-color) 2px, transparent 2px, transparent 8px);
+}
+.pat-4 {
+  background-image: 
+    repeating-linear-gradient(0deg, var(--pattern-color), var(--pattern-color) 1.5px, transparent 1.5px, transparent 8px),
+    repeating-linear-gradient(90deg, var(--pattern-color), var(--pattern-color) 1.5px, transparent 1.5px, transparent 8px);
+}
+.pat-5 {
+  background-image: repeating-linear-gradient(-45deg, var(--pattern-color), var(--pattern-color) 2.5px, transparent 2.5px, transparent 8px);
+}
+.pat-6 {
+  background-image: repeating-linear-gradient(90deg, var(--pattern-color), var(--pattern-color) 2px, transparent 2px, transparent 8px);
+}
+.pat-7 {
+  background-image: 
+    linear-gradient(45deg, var(--pattern-color) 25%, transparent 25%), 
+    linear-gradient(-45deg, var(--pattern-color) 25%, transparent 25%), 
+    linear-gradient(45deg, transparent 75%, var(--pattern-color) 75%), 
+    linear-gradient(-45deg, transparent 75%, var(--pattern-color) 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+}
+.pat-8 {
+  background-image: repeating-radial-gradient(circle at 0 0, transparent 0, transparent 4px, var(--pattern-color) 4px, var(--pattern-color) 6px);
+  background-size: 10px 10px;
+}
+
+.region-glyph-badge {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.85;
+  filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.7));
+  z-index: 2;
+  pointer-events: none;
+  user-select: none;
+}
+
+.region-number-badge {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 11px;
+  font-weight: 850;
+  font-family: system-ui, sans-serif;
+  color: rgba(61, 49, 53, 0.82);
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.9);
+  line-height: 1;
+  z-index: 2;
+  pointer-events: none;
+  user-select: none;
 }
 
 body {
@@ -127,14 +205,19 @@ body {
 }
 
 .cross-mark {
-  color: rgba(61, 49, 53, 0.55);
-  font-weight: 900;
-  font-size: 20px;
-  line-height: 1;
+  width: 58%;
+  height: 58%;
+  display: block;
+  stroke: #FFFFFF;
+  stroke-width: 5.2px;
+  stroke-linecap: round;
+  filter: drop-shadow(0 1px 2px rgba(61, 49, 53, 0.45));
+  pointer-events: none;
 }
 
 .cross-mark.cross-mark-error {
-  color: var(--danger-red);
+  stroke: var(--danger-red);
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.6));
 }
 
 .board-cell.has-error-cross {
