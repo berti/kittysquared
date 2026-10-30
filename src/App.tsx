@@ -179,6 +179,7 @@ export function App() {
       {showTutorial && (
         <TutorialModal
           catVariant={appState.settings.catVariant}
+          regionAssist={appState.settings.regionAssist}
           onClose={() => setShowTutorial(false)}
         />
       )}

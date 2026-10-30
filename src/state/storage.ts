@@ -32,6 +32,13 @@ export interface PersistedAppState {
 
 const STORAGE_KEY = 'kittysquared_state_v1';
 
+export const VALID_REGION_ASSIST_MODES: RegionAssistMode[] = [
+  'off',
+  'textures',
+  'glyphs',
+  'numbers',
+];
+
 export function getDefaultAppState(): PersistedAppState {
   return {
     chill: {
@@ -75,7 +82,9 @@ export function loadPersistedState(): PersistedAppState {
       settings: {
         ...defaults.settings,
         ...(parsed.settings || {}),
-        regionAssist: parsed.settings?.regionAssist || 'off',
+        regionAssist: VALID_REGION_ASSIST_MODES.includes(parsed.settings?.regionAssist)
+          ? parsed.settings.regionAssist
+          : 'off',
       },
     };
   } catch (_e) {

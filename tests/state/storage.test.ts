@@ -74,4 +74,17 @@ describe('state/storage', () => {
     const loaded = loadPersistedState();
     expect(loaded.settings.regionAssist).toBe('off');
   });
+
+  it('Review Focus #1: loadPersistedState falls back to "off" when regionAssist is an invalid corrupted string', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        settings: {
+          regionAssist: 'invalid_corrupted_value',
+        },
+      })
+    );
+    const loaded = loadPersistedState();
+    expect(loaded.settings.regionAssist).toBe('off');
+  });
 });

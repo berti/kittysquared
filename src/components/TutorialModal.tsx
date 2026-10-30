@@ -1,14 +1,16 @@
 import { useState } from 'preact/hooks';
-import { CatVariant, CellState } from '../types/puzzle';
+import { CatVariant, CellState, RegionAssistMode } from '../types/puzzle';
 import { TUTORIAL_STEPS } from '../data/tutorialSteps';
+import { REGION_GLYPHS } from './Board';
 import { CatSvg } from './CatSvg';
 
 export interface TutorialModalProps {
   catVariant: CatVariant;
+  regionAssist?: RegionAssistMode;
   onClose: () => void;
 }
 
-export function TutorialModal({ catVariant, onClose }: TutorialModalProps) {
+export function TutorialModal({ catVariant, regionAssist = 'off', onClose }: TutorialModalProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const currentStep = TUTORIAL_STEPS[stepIndex];
 
@@ -169,6 +171,15 @@ export function TutorialModal({ catVariant, onClose }: TutorialModalProps) {
                     cursor: isTarget ? 'pointer' : 'default',
                   }}
                 >
+                  {regionAssist === 'textures' && (
+                    <div className={`region-pattern pat-${regId % 9}`} />
+                  )}
+                  {regionAssist === 'glyphs' && (
+                    <span className="region-glyph-badge">{REGION_GLYPHS[regId % 9]}</span>
+                  )}
+                  {regionAssist === 'numbers' && (
+                    <span className="region-number-badge">{(regId % 9) + 1}</span>
+                  )}
                   {cellState === 'cross' && (
                     <svg viewBox="0 0 24 24" className="cross-mark">
                       <line x1="5" y1="5" x2="19" y2="19" />
@@ -176,7 +187,7 @@ export function TutorialModal({ catVariant, onClose }: TutorialModalProps) {
                     </svg>
                   )}
                   {cellState === 'cat' && (
-                    <div style={{ width: '80%', height: '80%' }}>
+                    <div className="board-cat-wrapper">
                       <CatSvg variant={catVariant} state="placed" />
                     </div>
                   )}

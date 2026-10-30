@@ -187,6 +187,8 @@ export function SettingsModal({
               return (
                 <button
                   key={item.id}
+                  type="button"
+                  aria-pressed={active}
                   data-testid={`select-region-assist-${item.id}`}
                   onClick={() =>
                     onUpdateSettings({ ...settings, regionAssist: item.id as RegionAssistMode })

@@ -169,7 +169,7 @@ export function Board({
                   </svg>
                 )}
                 {state === 'cat' && (
-                  <div style={{ width: '82%', height: '82%' }}>
+                  <div className="board-cat-wrapper">
                     <CatSvg variant={catVariant} state={catAnim} />
                   </div>
                 )}

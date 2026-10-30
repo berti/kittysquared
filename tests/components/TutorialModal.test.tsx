@@ -25,4 +25,17 @@ describe('components/TutorialModal', () => {
     fireEvent.click(nextBtn);
     expect(getByText(TUTORIAL_STEPS[1].title)).toBeTruthy();
   });
+
+  it('renders region assist indicators (textures, glyphs, numbers) on tutorial board cells when regionAssist is provided', () => {
+    const { container: glyContainer, unmount: unmountGly } = render(
+      <TutorialModal catVariant="black" regionAssist="glyphs" onClose={() => {}} />
+    );
+    expect(glyContainer.querySelector('.region-glyph-badge')).not.toBeNull();
+    unmountGly();
+
+    const { container: texContainer } = render(
+      <TutorialModal catVariant="black" regionAssist="textures" onClose={() => {}} />
+    );
+    expect(texContainer.querySelector('.region-pattern')).not.toBeNull();
+  });
 });
