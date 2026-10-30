@@ -49,7 +49,8 @@ export function applyCellTap(
   row: number,
   col: number,
   scheme: ControlScheme,
-  activeTool: 'cross' | 'cat'
+  activeTool: 'cross' | 'cat',
+  options?: { isDoubleTap?: boolean }
 ): LevelSessionState {
   if (state.status !== 'playing') return state;
 
@@ -68,10 +69,15 @@ export function applyCellTap(
       nextState = current === 'cat' ? 'empty' : 'cat';
     }
   } else {
-    // double-tap mode: empty -> cross -> cat -> empty
-    if (current === 'empty') nextState = 'cross';
-    else if (current === 'cross') nextState = 'cat';
-    else nextState = 'empty';
+    // double-tap mode with timing:
+    // If it's a confirmed double-tap (within timeout on the same cell):
+    // placing cat or toggling off cat
+    if (options?.isDoubleTap) {
+      nextState = current === 'cat' ? 'empty' : 'cat';
+    } else {
+      // Single tap: toggle cross (empty -> cross, cross -> empty, cat -> cross)
+      nextState = current === 'cross' ? 'empty' : 'cross';
+    }
   }
 
   // Handle Classic Mode validation when placing a cat

@@ -96,15 +96,22 @@ describe('state/gameState', () => {
     expect(s.board[0][1]).toBe('cat');
   });
 
-  it('Review Focus #3: double-tap scheme places cross on first tap without triggering Classic cat validation', () => {
+  it('Review Focus #3: double-tap scheme places cross on single tap without triggering Classic cat validation, and places cat on double tap', () => {
     let s = createLevelSession(samplePuzzle, 'classic');
-    // (0,0) is a wrong cat position, but 1st tap in double-tap mode only places a cross
-    s = applyCellTap(s, 0, 0, 'double-tap', 'cat');
+    // (0,0) is a wrong cat position, but single tap in double-tap mode only places a cross
+    s = applyCellTap(s, 0, 0, 'double-tap', 'cat', { isDoubleTap: false });
     expect(s.board[0][0]).toBe('cross');
     expect(s.mistakes).toBe(0);
-    // 2nd tap on (0,0) attempts to place a cat -> triggers Classic mistake
-    s = applyCellTap(s, 0, 0, 'double-tap', 'cat');
+
+    // Double tap on (0,0) attempts to place a cat -> triggers Classic mistake
+    s = applyCellTap(s, 0, 0, 'double-tap', 'cat', { isDoubleTap: true });
     expect(s.mistakes).toBe(1);
     expect(s.board[0][0]).toBe('empty');
+
+    // Double tap on valid position (0,1) places locked cat
+    s = applyCellTap(s, 0, 1, 'double-tap', 'cat', { isDoubleTap: true });
+    expect(s.board[0][1]).toBe('cat');
+    expect(s.lockedCats[0][1]).toBe(true);
+    expect(s.partialScore).toBe(10);
   });
 });

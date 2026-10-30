@@ -63,7 +63,7 @@ describe('components/CatSvg & Board', () => {
     const cell01 = getByTestId('cell-0-1');
 
     fireEvent.click(cell00);
-    expect(onCellTap).toHaveBeenCalledWith(0, 0);
+    expect(onCellTap).toHaveBeenCalledWith(0, 0, expect.anything());
 
     fireEvent.pointerDown(cell00, { button: 0 });
     fireEvent.pointerEnter(cell01);

@@ -39,11 +39,11 @@ export function GameScreen({
 
   const placedCatsCount = session.board.flat().filter((c) => c === 'cat').length;
 
-  const handleCellTap = (r: number, c: number) => {
+  const handleCellTap = (r: number, c: number, options?: { isDoubleTap?: boolean }) => {
     const prevCell = session.board[r][c];
     const prevMistakes = session.mistakes;
 
-    const next = applyCellTap(session, r, c, settings.controlScheme, activeTool);
+    const next = applyCellTap(session, r, c, settings.controlScheme, activeTool, options);
     onUpdateSession(next);
 
     // Audio effects

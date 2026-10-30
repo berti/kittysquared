@@ -12,9 +12,11 @@ export interface BoardProps {
   lastErrorCell: { row: number; col: number } | null;
   isVictory: boolean;
   catVariant: CatVariant;
-  onCellTap: (row: number, col: number) => void;
+  onCellTap: (row: number, col: number, options?: { isDoubleTap?: boolean }) => void;
   onDragCross: (row: number, col: number, targetState: 'cross' | 'empty') => void;
 }
+
+const DOUBLE_TAP_TIMEOUT_MS = 1000;
 
 export function Board({
   size,
@@ -32,6 +34,7 @@ export function Board({
   const isDraggingRef = useRef(false);
   const dragTargetStateRef = useRef<'cross' | 'empty'>('cross');
   const hasDraggedRef = useRef(false);
+  const lastTapRef = useRef<{ row: number; col: number; time: number } | null>(null);
 
   const handlePointerDown = (row: number, col: number, e: PointerEvent) => {
     // Only primary button
@@ -72,7 +75,25 @@ export function Board({
       hasDraggedRef.current = false;
       return;
     }
-    onCellTap(row, col);
+
+    const now = Date.now();
+    const lastTap = lastTapRef.current;
+    let isDoubleTap = false;
+
+    if (
+      lastTap &&
+      lastTap.row === row &&
+      lastTap.col === col &&
+      now - lastTap.time <= DOUBLE_TAP_TIMEOUT_MS
+    ) {
+      isDoubleTap = true;
+      // Reset after registering double tap
+      lastTapRef.current = null;
+    } else {
+      lastTapRef.current = { row, col, time: now };
+    }
+
+    onCellTap(row, col, { isDoubleTap });
   };
 
   const containerPointerProps = {
