@@ -50,6 +50,8 @@ export function TutorialModal({ catVariant, regionAssist = 'off', onClose }: Tut
 
   return (
     <div
+      data-testid="tutorial-modal-backdrop"
+      class="modal-backdrop-anim"
       style={{
         position: 'fixed',
         inset: 0,
@@ -63,6 +65,8 @@ export function TutorialModal({ catVariant, regionAssist = 'off', onClose }: Tut
       }}
     >
       <div
+        data-testid="tutorial-modal-card"
+        class="modal-card-flyin"
         style={{
           backgroundColor: '#FFFBF2',
           border: '4px solid #E2D6C1',

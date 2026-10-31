@@ -3,14 +3,13 @@ import { soundEngine } from '../audio/soundEngine';
 import {
   applyCellTap,
   applyDragCross,
-  clearCrosses,
   LevelSessionState,
-  undoMove,
 } from '../state/gameState';
 import { AppSettings, ModeProgress } from '../state/storage';
 import { PuzzleDef } from '../types/puzzle';
 import { Board } from './Board';
 import { CatSvg } from './CatSvg';
+import { ConfirmDialog } from './ConfirmDialog';
 
 export interface GameScreenProps {
   puzzle: PuzzleDef;
@@ -36,6 +35,7 @@ export function GameScreen({
   onOpenSettings,
 }: GameScreenProps) {
   const [activeTool, setActiveTool] = useState<'cross' | 'cat'>('cat');
+  const [showRestartConfirm, setShowRestartConfirm] = useState(false);
 
   const placedCatsCount = session.board.flat().filter((c) => c === 'cat').length;
 
@@ -62,16 +62,6 @@ export function GameScreen({
     const next = applyDragCross(session, r, c, target);
     onUpdateSession(next);
     soundEngine.playCross();
-  };
-
-  const handleUndo = () => {
-    const next = undoMove(session);
-    onUpdateSession(next);
-  };
-
-  const handleClear = () => {
-    const next = clearCrosses(session);
-    onUpdateSession(next);
   };
 
   // Hearts rendering in classic mode
@@ -119,32 +109,52 @@ export function GameScreen({
             ← Menú
           </button>
           <div style={{ fontWeight: 800, fontSize: '17px', color: '#3D3135' }}>
-            Nivel {puzzle.id}{' '}
-            <span style={{ fontWeight: 600, fontSize: '13px', color: '#8C7A80' }}>
-              ({session.mode === 'chill' ? 'Chill Out' : 'Classic'})
-            </span>
+            Nivel {puzzle.id}
           </div>
-          <button
-            onClick={onOpenSettings}
-            style={{
-              background: '#F3E9D2',
-              border: '2px solid #E2D6C1',
-              boxShadow: '0 2px 0 #E2D6C1',
-              borderRadius: '10px',
-              padding: '6px 12px',
-              fontWeight: 800,
-              fontSize: '13px',
-              color: '#5C4B51',
-              cursor: 'pointer',
-            }}
-          >
-            ⚙️
-          </button>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button
+              data-testid="restart-level-btn"
+              onClick={() => setShowRestartConfirm(true)}
+              title="Reiniciar nivel actual"
+              style={{
+                background: '#F3E9D2',
+                border: '2px solid #E2D6C1',
+                boxShadow: '0 2px 0 #E2D6C1',
+                borderRadius: '10px',
+                padding: '6px 10px',
+                fontWeight: 800,
+                fontSize: '14px',
+                color: '#5C4B51',
+                cursor: 'pointer',
+              }}
+            >
+              ↺
+            </button>
+            <button
+              data-testid="open-settings-btn"
+              onClick={onOpenSettings}
+              title="Ajustes"
+              style={{
+                background: '#F3E9D2',
+                border: '2px solid #E2D6C1',
+                boxShadow: '0 2px 0 #E2D6C1',
+                borderRadius: '10px',
+                padding: '6px 10px',
+                fontWeight: 800,
+                fontSize: '14px',
+                color: '#5C4B51',
+                cursor: 'pointer',
+              }}
+            >
+              ⚙️
+            </button>
+          </div>
         </div>
 
         {/* Status bar */}
         <div
           style={{
+            position: 'relative',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -162,7 +172,17 @@ export function GameScreen({
           </span>
           {session.mode === 'classic' && (
             <>
-              <span>{hearts.join(' ')}</span>
+              <span
+                style={{
+                  position: 'absolute',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  whiteSpace: 'nowrap',
+                  pointerEvents: 'none',
+                }}
+              >
+                {hearts.join(' ')}
+              </span>
               <span>
                 ⭐ {progress.totalScore}{' '}
                 {session.partialScore > 0 && (
@@ -189,6 +209,7 @@ export function GameScreen({
         isVictory={session.status === 'won'}
         catVariant={settings.catVariant}
         regionAssist={settings.regionAssist}
+        doubleTapTimeoutMs={settings.doubleTapTimeoutMs}
         onCellTap={handleCellTap}
         onDragCross={handleDragCross}
       />
@@ -248,50 +269,28 @@ export function GameScreen({
             1 toque: ✕ Cruz • 2 toques: 🐱 Gato
           </div>
         )}
-
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={handleUndo}
-            style={{
-              flex: 1,
-              background: '#F3E9D2',
-              border: '2px solid #E2D6C1',
-              boxShadow: '0 3px 0 #E2D6C1',
-              borderRadius: '12px',
-              padding: '9px 10px',
-              textAlign: 'center',
-              fontSize: '13px',
-              fontWeight: 800,
-              color: '#5C4B51',
-              cursor: 'pointer',
-            }}
-          >
-            ↩ Deshacer
-          </button>
-          <button
-            onClick={handleClear}
-            style={{
-              flex: 1,
-              background: '#F3E9D2',
-              border: '2px solid #E2D6C1',
-              boxShadow: '0 3px 0 #E2D6C1',
-              borderRadius: '12px',
-              padding: '9px 10px',
-              textAlign: 'center',
-              fontSize: '13px',
-              fontWeight: 800,
-              color: '#5C4B51',
-              cursor: 'pointer',
-            }}
-          >
-            🧹 Limpiar cruces
-          </button>
-        </div>
       </div>
+
+      {/* Confirmation Dialog for Restart Level */}
+      <ConfirmDialog
+        isOpen={showRestartConfirm}
+        title="¿Reiniciar este nivel?"
+        description="Se reiniciará el tablero actual, borrando todos los gatos y cruces colocados."
+        icon="↺"
+        confirmText="Reiniciar nivel"
+        cancelText="Cancelar"
+        onConfirm={() => {
+          setShowRestartConfirm(false);
+          onRetryLevel();
+        }}
+        onCancel={() => setShowRestartConfirm(false)}
+      />
 
       {/* Victory Modal */}
       {session.status === 'won' && (
         <div
+          data-testid="victory-modal-backdrop"
+          class="modal-backdrop-anim"
           style={{
             position: 'fixed',
             inset: 0,
@@ -305,6 +304,8 @@ export function GameScreen({
           }}
         >
           <div
+            data-testid="victory-modal-card"
+            class="modal-card-flyin"
             style={{
               backgroundColor: '#FFFBF2',
               border: '4px solid #E2D6C1',
@@ -359,6 +360,8 @@ export function GameScreen({
       {/* Lost Modal */}
       {session.status === 'lost' && (
         <div
+          data-testid="defeat-modal-backdrop"
+          class="modal-backdrop-anim"
           style={{
             position: 'fixed',
             inset: 0,
@@ -372,6 +375,8 @@ export function GameScreen({
           }}
         >
           <div
+            data-testid="defeat-modal-card"
+            class="modal-card-flyin"
             style={{
               backgroundColor: '#FFFBF2',
               border: '4px solid #E2D6C1',
