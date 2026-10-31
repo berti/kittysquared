@@ -17,13 +17,11 @@ const dummyPuzzle: PuzzleDef = {
     [2, 2, 3, 3],
     [2, 2, 3, 3],
   ],
-  solution: [
-    ['cat', 'empty', 'empty', 'empty'],
-    ['empty', 'cat', 'empty', 'empty'],
-    ['empty', 'empty', 'cat', 'empty'],
-    ['empty', 'empty', 'empty', 'cat'],
-  ],
+  solution: [0, 1, 2, 3],
+  maxRuleUsed: 1,
+  difficultyScore: 10,
 };
+
 
 describe('ModalTransitions', () => {
   beforeEach(() => {
@@ -79,6 +77,7 @@ describe('ModalTransitions', () => {
       <SettingsModal
         settings={{
           controlScheme: 'toggle',
+          doubleTapTimeoutMs: 500,
           catVariant: 'black',
           regionAssist: 'off',
           musicMuted: false,
@@ -120,6 +119,7 @@ describe('ModalTransitions', () => {
         progress={{ currentLevelId: 1, totalScore: 0, activeSnapshot: null }}
         settings={{
           controlScheme: 'toggle',
+          doubleTapTimeoutMs: 500,
           catVariant: 'black',
           regionAssist: 'off',
           musicMuted: true,
@@ -149,6 +149,7 @@ describe('ModalTransitions', () => {
         progress={{ currentLevelId: 1, totalScore: 0, activeSnapshot: null }}
         settings={{
           controlScheme: 'toggle',
+          doubleTapTimeoutMs: 500,
           catVariant: 'black',
           regionAssist: 'off',
           musicMuted: true,
