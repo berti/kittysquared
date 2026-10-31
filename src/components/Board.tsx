@@ -16,11 +16,12 @@ export interface BoardProps {
   isVictory: boolean;
   catVariant: CatVariant;
   regionAssist?: RegionAssistMode;
+  doubleTapTimeoutMs?: number;
   onCellTap: (row: number, col: number, options?: { isDoubleTap?: boolean }) => void;
   onDragCross: (row: number, col: number, targetState: 'cross' | 'empty') => void;
 }
 
-const DOUBLE_TAP_TIMEOUT_MS = 1000;
+const DEFAULT_DOUBLE_TAP_TIMEOUT_MS = 500;
 
 export function Board({
   size,
@@ -34,6 +35,7 @@ export function Board({
   isVictory,
   catVariant,
   regionAssist = 'off',
+  doubleTapTimeoutMs = DEFAULT_DOUBLE_TAP_TIMEOUT_MS,
   onCellTap,
   onDragCross,
 }: BoardProps) {
@@ -90,7 +92,7 @@ export function Board({
       lastTap &&
       lastTap.row === row &&
       lastTap.col === col &&
-      now - lastTap.time <= DOUBLE_TAP_TIMEOUT_MS
+      now - lastTap.time <= doubleTapTimeoutMs
     ) {
       isDoubleTap = true;
       // Reset after registering double tap

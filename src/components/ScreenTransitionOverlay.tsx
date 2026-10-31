@@ -13,12 +13,14 @@ export function ScreenTransitionOverlay({
     return null;
   }
 
-  let transform = 'translateX(0%)';
-  if (phase === 'covering') {
-    transform = 'translateX(0%)';
-  } else if (phase === 'uncovering') {
-    transform = direction === 'forward' ? 'translateX(-100%)' : 'translateX(100%)';
-  }
+  const animationClass =
+    direction === 'forward'
+      ? phase === 'covering'
+        ? 'screen-wipe-forward-cover'
+        : 'screen-wipe-forward-uncover'
+      : phase === 'covering'
+        ? 'screen-wipe-backward-cover'
+        : 'screen-wipe-backward-uncover';
 
   return (
     <>
@@ -28,12 +30,9 @@ export function ScreenTransitionOverlay({
       />
       <div
         data-testid="screen-wipe-curtain"
-        class="screen-wipe-curtain"
-        style={{
-          transform,
-          transition: 'transform 150ms cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
+        class={`screen-wipe-curtain ${animationClass}`}
       />
     </>
   );
 }
+

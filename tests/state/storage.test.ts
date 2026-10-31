@@ -87,4 +87,40 @@ describe('state/storage', () => {
     const loaded = loadPersistedState();
     expect(loaded.settings.regionAssist).toBe('off');
   });
+
+  it('migrates older state by adding default doubleTapTimeoutMs (500)', () => {
+    const legacyState = {
+      chill: { currentLevelId: 2, totalScore: 0, activeSnapshot: null },
+      classic: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
+      settings: {
+        controlScheme: 'double-tap',
+        catVariant: 'black',
+        regionAssist: 'off',
+        musicMuted: false,
+        sfxMuted: false,
+        tutorialSeen: true,
+      },
+    };
+    localStorage.setItem('kittysquared_state_v1', JSON.stringify(legacyState));
+    const loaded = loadPersistedState();
+    expect(loaded.settings.doubleTapTimeoutMs).toBe(500);
+  });
+
+  it('clamps out-of-range doubleTapTimeoutMs between 250 and 900', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        settings: { doubleTapTimeoutMs: 50000 },
+      })
+    );
+    expect(loadPersistedState().settings.doubleTapTimeoutMs).toBe(900);
+
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        settings: { doubleTapTimeoutMs: -100 },
+      })
+    );
+    expect(loadPersistedState().settings.doubleTapTimeoutMs).toBe(250);
+  });
 });

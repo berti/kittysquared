@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 
 export interface ConfirmDialogProps {
   isOpen: boolean;
@@ -25,7 +25,17 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const prevIsOpenRef = useRef(isOpen);
   const [isEntering, setIsEntering] = useState(() => isOpen && guardBackdropMs > 0);
+
+  if (!prevIsOpenRef.current && isOpen) {
+    prevIsOpenRef.current = true;
+    if (guardBackdropMs > 0 && !isEntering) {
+      setIsEntering(true);
+    }
+  } else if (prevIsOpenRef.current && !isOpen) {
+    prevIsOpenRef.current = false;
+  }
 
   useEffect(() => {
     if (!isOpen) return;
@@ -52,7 +62,6 @@ export function ConfirmDialog({
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, guardBackdropMs, onCancel]);
-
 
   if (!isOpen) return null;
 
@@ -84,7 +93,6 @@ export function ConfirmDialog({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-
         style={{
           backgroundColor: '#FFFBF2',
           border: '4px solid #E2D6C1',
@@ -98,8 +106,10 @@ export function ConfirmDialog({
           flexDirection: 'column',
           alignItems: 'center',
           gap: '12px',
+          pointerEvents: isEntering ? 'none' : 'auto',
         }}
       >
+
         {icon && (
           <div style={{ fontSize: '32px', lineHeight: 1, userSelect: 'none' }}>
             {icon}

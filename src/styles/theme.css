@@ -279,8 +279,17 @@ body {
 }
 
 .modal-backdrop-anim {
-  transition: background-color 300ms ease, opacity 300ms ease;
-  will-change: background-color, opacity;
+  animation: backdropFadeIn 300ms ease forwards;
+  will-change: opacity;
+}
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-card-flyin {
@@ -296,5 +305,59 @@ body {
     transform: translateY(0);
   }
 }
+
+/* Directional Wipe Keyframes */
+@keyframes wipeCoverForward {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0%);
+  }
+}
+
+@keyframes wipeCoverBackward {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0%);
+  }
+}
+
+@keyframes wipeUncoverForward {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes wipeUncoverBackward {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.screen-wipe-forward-cover {
+  animation: wipeCoverForward 150ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.screen-wipe-forward-uncover {
+  animation: wipeUncoverForward 150ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.screen-wipe-backward-cover {
+  animation: wipeCoverBackward 150ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.screen-wipe-backward-uncover {
+  animation: wipeUncoverBackward 150ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
 
 

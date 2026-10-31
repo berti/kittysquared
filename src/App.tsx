@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { soundEngine } from './audio/soundEngine';
 import { GameScreen } from './components/GameScreen';
 import { HomeScreen } from './components/HomeScreen';
@@ -40,25 +40,40 @@ export function App({
     phase: 'idle',
   });
 
+  const isTransitioningRef = useRef(false);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+    };
+  }, []);
+
   const navigateWithTransition = (direction: 'forward' | 'backward', action: () => void) => {
-    if (transitionState.isTransitioning) return;
+    if (isTransitioningRef.current || transitionState.isTransitioning) return;
     if (transitionDurationMs <= 0) {
       action();
       return;
     }
 
+    isTransitioningRef.current = true;
     const half = Math.floor(transitionDurationMs / 2);
     setTransitionState({ isTransitioning: true, direction, phase: 'covering' });
 
-    setTimeout(() => {
+    const t1 = setTimeout(() => {
       action();
       setTransitionState({ isTransitioning: true, direction, phase: 'uncovering' });
 
-      setTimeout(() => {
+      const t2 = setTimeout(() => {
+        isTransitioningRef.current = false;
         setTransitionState({ isTransitioning: false, direction, phase: 'idle' });
       }, half);
+      timersRef.current.push(t2);
     }, half);
+    timersRef.current.push(t1);
   };
+
 
   // Current session in play
   const [session, setSession] = useState<LevelSessionState>(() => {

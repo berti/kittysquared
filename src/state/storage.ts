@@ -17,6 +17,7 @@ export interface ModeProgress {
 
 export interface AppSettings {
   controlScheme: ControlScheme;
+  doubleTapTimeoutMs: number;
   catVariant: CatVariant;
   regionAssist: RegionAssistMode;
   musicMuted: boolean;
@@ -53,6 +54,7 @@ export function getDefaultAppState(): PersistedAppState {
     },
     settings: {
       controlScheme: 'toggle',
+      doubleTapTimeoutMs: 500,
       catVariant: 'black',
       regionAssist: 'off',
       musicMuted: false,
@@ -70,6 +72,13 @@ export function loadPersistedState(): PersistedAppState {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') return defaults;
 
+    const rawSettings = parsed.settings || {};
+    const rawTimeout = rawSettings.doubleTapTimeoutMs;
+    const doubleTapTimeoutMs =
+      typeof rawTimeout === 'number' && !isNaN(rawTimeout)
+        ? Math.max(250, Math.min(900, rawTimeout))
+        : 500;
+
     return {
       chill: {
         ...defaults.chill,
@@ -81,9 +90,10 @@ export function loadPersistedState(): PersistedAppState {
       },
       settings: {
         ...defaults.settings,
-        ...(parsed.settings || {}),
-        regionAssist: VALID_REGION_ASSIST_MODES.includes(parsed.settings?.regionAssist)
-          ? parsed.settings.regionAssist
+        ...rawSettings,
+        doubleTapTimeoutMs,
+        regionAssist: VALID_REGION_ASSIST_MODES.includes(rawSettings.regionAssist)
+          ? rawSettings.regionAssist
           : 'off',
       },
     };

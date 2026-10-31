@@ -15,7 +15,7 @@ describe('ScreenTransitionOverlay', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders input shield and curtain with covering transform for forward direction', () => {
+  it('renders input shield and curtain with covering animation class for forward direction', () => {
     const { getByTestId } = render(
       <ScreenTransitionOverlay isTransitioning={true} direction="forward" phase="covering" />
     );
@@ -25,25 +25,23 @@ describe('ScreenTransitionOverlay', () => {
     expect(shield).toBeTruthy();
     expect(curtain).toBeTruthy();
     expect(curtain.className).toContain('screen-wipe-curtain');
-    // Forward covering: should be at 0% after entering from 100%
-    expect(curtain.style.transform).toBe('translateX(0%)');
+    expect(curtain.className).toContain('screen-wipe-forward-cover');
   });
 
-  it('renders curtain with uncovering transform for forward direction', () => {
+  it('renders curtain with uncovering animation class for forward direction', () => {
     const { getByTestId } = render(
       <ScreenTransitionOverlay isTransitioning={true} direction="forward" phase="uncovering" />
     );
     const curtain = getByTestId('screen-wipe-curtain');
-    // Forward uncovering: exits to the left (-100%)
-    expect(curtain.style.transform).toBe('translateX(-100%)');
+    expect(curtain.className).toContain('screen-wipe-forward-uncover');
   });
 
-  it('renders curtain with uncovering transform for backward direction', () => {
+  it('renders curtain with uncovering animation class for backward direction', () => {
     const { getByTestId } = render(
       <ScreenTransitionOverlay isTransitioning={true} direction="backward" phase="uncovering" />
     );
     const curtain = getByTestId('screen-wipe-curtain');
-    // Backward uncovering: exits to the right (100%)
-    expect(curtain.style.transform).toBe('translateX(100%)');
+    expect(curtain.className).toContain('screen-wipe-backward-uncover');
   });
+
 });
