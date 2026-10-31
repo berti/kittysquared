@@ -21,4 +21,38 @@ describe('theme.css accessibility styles', () => {
     expect(css).toMatch(/\.region-glyph-badge\s*\{[^}]*z-index:\s*3/);
     expect(css).toMatch(/\.region-number-badge\s*\{[^}]*z-index:\s*3/);
   });
+
+  it('hides settings tab labels on mobile viewports up to 480px', () => {
+    const css = fs.readFileSync(path.resolve(__dirname, '../../src/styles/theme.css'), 'utf-8');
+    expect(css).toMatch(/@media\s*\(\s*max-width:\s*480px\s*\)\s*\{[^}]*\.settings-tab-label\s*\{[^}]*display:\s*none/);
+  });
+
+  it('clips region patterns to cell rounded corners using border-radius: inherit', () => {
+    const css = fs.readFileSync(path.resolve(__dirname, '../../src/styles/theme.css'), 'utf-8');
+    expect(css).toMatch(/\.region-pattern\s*\{[^}]*border-radius:\s*inherit/);
+  });
 });
+
+describe('theme.css screen wipe and modal animation styles', () => {
+  it('defines .screen-wipe-curtain with energetic coral #FF9770, fixed inset, z-index: 2000', () => {
+    const css = fs.readFileSync(path.resolve(__dirname, '../../src/styles/theme.css'), 'utf-8');
+    expect(css).toContain('.screen-wipe-curtain');
+    expect(css).toMatch(/\.screen-wipe-curtain\s*\{[^}]*z-index:\s*2000/);
+    expect(css).toMatch(/\.screen-wipe-curtain\s*\{[^}]*#FF9770/i);
+    expect(css).toMatch(/\.screen-wipe-curtain\s*\{[^}]*pointer-events:\s*none/);
+  });
+
+  it('defines .screen-transition-shield at z-index: 1999', () => {
+    const css = fs.readFileSync(path.resolve(__dirname, '../../src/styles/theme.css'), 'utf-8');
+    expect(css).toContain('.screen-transition-shield');
+    expect(css).toMatch(/\.screen-transition-shield\s*\{[^}]*z-index:\s*1999/);
+  });
+
+  it('defines .modal-backdrop-anim and .modal-card-flyin with cubic-bezier(0.16, 1, 0.3, 1)', () => {
+    const css = fs.readFileSync(path.resolve(__dirname, '../../src/styles/theme.css'), 'utf-8');
+    expect(css).toContain('.modal-backdrop-anim');
+    expect(css).toContain('.modal-card-flyin');
+    expect(css).toContain('cubic-bezier(0.16, 1, 0.3, 1)');
+  });
+});
+
