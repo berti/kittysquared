@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { fireEvent, render } from '@testing-library/preact';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { act, fireEvent, render } from '@testing-library/preact';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../src/App';
 
 describe('App integration', () => {
@@ -21,6 +21,9 @@ describe('App integration', () => {
     // Open settings from home
     fireEvent.click(getByTestId('open-settings-btn'));
     fireEvent.click(getByTestId('select-control-double-tap'));
+
+    // Switch to graphics tab for cat variant
+    fireEvent.click(getByTestId('tab-btn-graphics'));
     fireEvent.click(getByTestId('select-cat-white'));
     fireEvent.click(getByTestId('close-settings-btn'));
 
@@ -57,6 +60,9 @@ describe('App integration', () => {
     // Open settings
     fireEvent.click(getByTestId('open-settings-btn'));
 
+    // Switch to graphics tab
+    fireEvent.click(getByTestId('tab-btn-graphics'));
+
     // Select Glyphs
     fireEvent.click(getByTestId('select-region-assist-glyphs'));
     fireEvent.click(getByTestId('close-settings-btn'));
@@ -66,4 +72,153 @@ describe('App integration', () => {
     const cell = document.querySelector('[data-testid="cell-0-0"]');
     expect(cell?.querySelector('.region-glyph-badge')).not.toBeNull();
   });
+
+  it('GameScreen has restart button in top bar, no undo/clear buttons, and no mode text in status bar', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        chill: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
+        classic: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
+        settings: {
+          controlScheme: 'toggle',
+          doubleTapTimeoutMs: 500,
+          catVariant: 'black',
+          regionAssist: 'off',
+          musicMuted: true,
+          sfxMuted: true,
+          tutorialSeen: true,
+        },
+      })
+    );
+
+    const { getByTestId, queryByText, getByText } = render(<App />);
+    fireEvent.click(getByTestId('start-chill-btn'));
+
+    // Top bar restart button exists
+    const restartBtn = getByTestId('restart-level-btn');
+    expect(restartBtn).toBeDefined();
+
+    // Bottom undo and clear crosses buttons are gone
+    expect(queryByText(/Deshacer/i)).toBeNull();
+    expect(queryByText(/Limpiar cruces/i)).toBeNull();
+
+    // Mode name "(Chill Out)" or "(Classic)" is not in the header/status bar
+    expect(queryByText('(Chill Out)')).toBeNull();
+    expect(queryByText('(Classic)')).toBeNull();
+
+    // Place a cat on cell-0-0
+    fireEvent.click(getByTestId('cell-0-0'));
+    expect(getByTestId('cell-0-0').querySelector('[data-cat-part="head"]')).not.toBeNull();
+
+    // Click restart -> opens ConfirmDialog
+    fireEvent.click(restartBtn);
+    expect(getByText('¿Reiniciar este nivel?')).toBeDefined();
+
+    // Confirm restart -> board is reset
+    fireEvent.click(getByTestId('confirm-dialog-confirm-btn'));
+    expect(getByTestId('cell-0-0').querySelector('[data-cat-part="head"]')).toBeNull();
+  });
+
+  it('Classic mode status bar keeps hearts centered at 50% regardless of score width', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        chill: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
+        classic: { currentLevelId: 1, totalScore: 99999, activeSnapshot: null },
+        settings: {
+          controlScheme: 'toggle',
+          doubleTapTimeoutMs: 500,
+          catVariant: 'black',
+          regionAssist: 'off',
+          musicMuted: true,
+          sfxMuted: true,
+          tutorialSeen: true,
+        },
+      })
+    );
+
+    const { getByTestId, getByText } = render(<App />);
+    fireEvent.click(getByTestId('start-classic-btn'));
+
+    const heartsEl = getByText('❤️ ❤️ ❤️');
+    expect(heartsEl.style.position).toBe('absolute');
+    expect(heartsEl.style.left).toBe('50%');
+    expect(heartsEl.style.transform).toBe('translateX(-50%)');
+  });
+
+  describe('Screen transitions in App', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('triggers forward screen transition from Home to Game with 150ms midpoint swap', () => {
+      const { getByTestId, queryByTestId } = render(
+        <App transitionDurationMs={300} />
+      );
+
+      fireEvent.click(getByTestId('start-chill-btn'));
+
+      // Immediately after click: transition shield is active, curtain is covering
+      expect(getByTestId('screen-transition-shield')).toBeTruthy();
+      const curtain = getByTestId('screen-wipe-curtain');
+      expect(curtain).toBeTruthy();
+
+      // At 75ms: still transitioning, game screen not yet mounted (Home still visible)
+      act(() => {
+        vi.advanceTimersByTime(75);
+      });
+      expect(queryByTestId('restart-level-btn')).toBeNull();
+      expect(getByTestId('start-chill-btn')).toBeTruthy();
+
+      // At 150ms midpoint: screen state swaps to GameScreen
+      act(() => {
+        vi.advanceTimersByTime(75);
+      });
+      expect(getByTestId('restart-level-btn')).toBeTruthy();
+      expect(queryByTestId('start-chill-btn')).toBeNull();
+
+      // At 300ms: transition completes and shield is removed
+      act(() => {
+        vi.advanceTimersByTime(150);
+      });
+      expect(queryByTestId('screen-transition-shield')).toBeNull();
+    });
+
+    it('triggers backward screen transition when returning to Menu', () => {
+      const { getByTestId, queryByTestId, getByText } = render(
+        <App transitionDurationMs={300} />
+      );
+
+      // Enter Game
+      fireEvent.click(getByTestId('start-chill-btn'));
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+
+      // Verify GameScreen mounted
+      expect(getByTestId('restart-level-btn')).toBeTruthy();
+
+      // Click Menu back button
+      fireEvent.click(getByText('← Menú'));
+
+      // Shield active and curtain exiting backward at completion
+      expect(getByTestId('screen-transition-shield')).toBeTruthy();
+      act(() => {
+        vi.advanceTimersByTime(150);
+      });
+      // At midpoint, Home screen is restored
+      expect(getByTestId('start-chill-btn')).toBeTruthy();
+
+      act(() => {
+        vi.advanceTimersByTime(150);
+      });
+      expect(queryByTestId('screen-transition-shield')).toBeNull();
+    });
+
+  });
 });
+

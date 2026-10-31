@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { soundEngine } from './audio/soundEngine';
 import { GameScreen } from './components/GameScreen';
 import { HomeScreen } from './components/HomeScreen';
+import { ScreenTransitionOverlay } from './components/ScreenTransitionOverlay';
 import { SettingsModal } from './components/SettingsModal';
 import { TutorialModal } from './components/TutorialModal';
 import puzzlesData from './data/puzzles.json';
@@ -17,12 +18,47 @@ import { GameMode, PuzzleDef } from './types/puzzle';
 
 const puzzles = puzzlesData as PuzzleDef[];
 
-export function App() {
+export interface AppProps {
+  transitionDurationMs?: number;
+}
+
+export function App({
+  transitionDurationMs = typeof process !== 'undefined' && process.env.NODE_ENV === 'test' ? 0 : 300,
+}: AppProps = {}) {
   const [appState, setAppState] = useState<PersistedAppState>(() => loadPersistedState());
   const [activeScreen, setActiveScreen] = useState<'home' | 'game'>('home');
   const [activeMode, setActiveMode] = useState<GameMode>('chill');
   const [showSettings, setShowSettings] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [transitionState, setTransitionState] = useState<{
+    isTransitioning: boolean;
+    direction: 'forward' | 'backward';
+    phase: 'idle' | 'covering' | 'uncovering';
+  }>({
+    isTransitioning: false,
+    direction: 'forward',
+    phase: 'idle',
+  });
+
+  const navigateWithTransition = (direction: 'forward' | 'backward', action: () => void) => {
+    if (transitionState.isTransitioning) return;
+    if (transitionDurationMs <= 0) {
+      action();
+      return;
+    }
+
+    const half = Math.floor(transitionDurationMs / 2);
+    setTransitionState({ isTransitioning: true, direction, phase: 'covering' });
+
+    setTimeout(() => {
+      action();
+      setTransitionState({ isTransitioning: true, direction, phase: 'uncovering' });
+
+      setTimeout(() => {
+        setTransitionState({ isTransitioning: false, direction, phase: 'idle' });
+      }, half);
+    }, half);
+  };
 
   // Current session in play
   const [session, setSession] = useState<LevelSessionState>(() => {
@@ -41,31 +77,34 @@ export function App() {
   };
 
   const handleStartMode = (mode: GameMode) => {
-    setActiveMode(mode);
-    const currentLvlId = appState[mode].currentLevelId;
-    const puzzle = puzzles.find((p) => p.id === currentLvlId) || puzzles[0];
-    const newSession = createLevelSession(puzzle, mode);
+    navigateWithTransition('forward', () => {
+      setActiveMode(mode);
+      const currentLvlId = appState[mode].currentLevelId;
+      const puzzle = puzzles.find((p) => p.id === currentLvlId) || puzzles[0];
+      const newSession = createLevelSession(puzzle, mode);
 
-    // Restore saved board snapshot if exists
-    const snap = appState[mode].activeSnapshot;
-    if (snap && snap.levelId === currentLvlId) {
-      newSession.board = snap.board;
-      newSession.lockedCats = snap.lockedCats;
-      if (snap.errorCrosses) newSession.errorCrosses = snap.errorCrosses;
-      newSession.mistakes = snap.mistakes;
-      newSession.partialScore = snap.partialScore;
-    }
+      // Restore saved board snapshot if exists
+      const snap = appState[mode].activeSnapshot;
+      if (snap && snap.levelId === currentLvlId) {
+        newSession.board = snap.board;
+        newSession.lockedCats = snap.lockedCats;
+        if (snap.errorCrosses) newSession.errorCrosses = snap.errorCrosses;
+        newSession.mistakes = snap.mistakes;
+        newSession.partialScore = snap.partialScore;
+      }
 
-    setSession(newSession);
-    setActiveScreen('game');
+      setSession(newSession);
+      setActiveScreen('game');
 
-    // Auto-open tutorial on first visit if not seen
-    if (!appState.settings.tutorialSeen && currentLvlId === 1) {
-      setShowTutorial(true);
-      const nextSettings = { ...appState.settings, tutorialSeen: true };
-      updateAppState({ ...appState, settings: nextSettings });
-    }
+      // Auto-open tutorial on first visit if not seen
+      if (!appState.settings.tutorialSeen && currentLvlId === 1) {
+        setShowTutorial(true);
+        const nextSettings = { ...appState.settings, tutorialSeen: true };
+        updateAppState({ ...appState, settings: nextSettings });
+      }
+    });
   };
+
 
   const handleUpdateSession = (nextSession: LevelSessionState) => {
     setSession(nextSession);
@@ -94,32 +133,36 @@ export function App() {
   };
 
   const handleAdvanceLevel = () => {
-    const nextLvlId = Math.min(100, session.puzzle.id + 1);
-    const puzzle = puzzles.find((p) => p.id === nextLvlId) || puzzles[puzzles.length - 1];
+    navigateWithTransition('forward', () => {
+      const nextLvlId = Math.min(100, session.puzzle.id + 1);
+      const puzzle = puzzles.find((p) => p.id === nextLvlId) || puzzles[puzzles.length - 1];
 
-    let newTotalScore = appState[activeMode].totalScore;
-    if (activeMode === 'classic' && session.status === 'won') {
-      newTotalScore += session.partialScore + session.levelBonus;
-    }
+      let newTotalScore = appState[activeMode].totalScore;
+      if (activeMode === 'classic' && session.status === 'won') {
+        newTotalScore += session.partialScore + session.levelBonus;
+      }
 
-    const nextModeProgress = {
-      currentLevelId: nextLvlId,
-      totalScore: newTotalScore,
-      activeSnapshot: null,
-    };
+      const nextModeProgress = {
+        currentLevelId: nextLvlId,
+        totalScore: newTotalScore,
+        activeSnapshot: null,
+      };
 
-    const nextApp = {
-      ...appState,
-      [activeMode]: nextModeProgress,
-    };
-    updateAppState(nextApp);
+      const nextApp = {
+        ...appState,
+        [activeMode]: nextModeProgress,
+      };
+      updateAppState(nextApp);
 
-    setSession(createLevelSession(puzzle, activeMode));
+      setSession(createLevelSession(puzzle, activeMode));
+    });
   };
 
   const handleRetryLevel = () => {
-    const fresh = createLevelSession(session.puzzle, activeMode);
-    handleUpdateSession(fresh);
+    navigateWithTransition('forward', () => {
+      const fresh = createLevelSession(session.puzzle, activeMode);
+      handleUpdateSession(fresh);
+    });
   };
 
   const handleResetMode = (mode: GameMode) => {
@@ -142,6 +185,8 @@ export function App() {
 
   return (
     <div>
+      <ScreenTransitionOverlay {...transitionState} />
+
       {activeScreen === 'home' && (
         <HomeScreen
           chill={appState.chill}
@@ -162,14 +207,16 @@ export function App() {
           onUpdateSession={handleUpdateSession}
           onAdvanceLevel={handleAdvanceLevel}
           onRetryLevel={handleRetryLevel}
-          onBackToMenu={() => setActiveScreen('home')}
+          onBackToMenu={() => navigateWithTransition('backward', () => setActiveScreen('home'))}
           onOpenSettings={() => setShowSettings(true)}
         />
       )}
 
+
       {showSettings && (
         <SettingsModal
           settings={appState.settings}
+          activeMode={activeScreen === 'game' ? activeMode : null}
           onUpdateSettings={handleUpdateSettings}
           onResetMode={handleResetMode}
           onClose={() => setShowSettings(false)}
