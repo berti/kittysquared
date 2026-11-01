@@ -37,25 +37,25 @@
 - Test: `tests/components/GameScreen.test.tsx`
 - Test: `tests/App.test.tsx`
 
-- [ ] **Step 1.1**: Write failing component test in `tests/components/GameScreen.test.tsx` verifying that when `totalLevels={300}` and `puzzle.id={300}`:
+- [x] **Step 1.1**: Write failing component test in `tests/components/GameScreen.test.tsx` verifying that when `totalLevels={300}` and `puzzle.id={300}`:
   - Victory modal renders title "¡Juego completado!".
   - Button text renders "Volver al Menú Principal" (or "Volver al Menú") instead of "Siguiente Nivel ▶".
-- [ ] **Step 1.2**: Run test to verify it fails:
+- [x] **Step 1.2**: Run test to verify it fails:
   `npx vitest run tests/components/GameScreen.test.tsx`
-- [ ] **Step 1.3**: Update `GameScreenProps` in `src/components/GameScreen.tsx` to accept optional `totalLevels?: number`.
-- [ ] **Step 1.4**: Update the victory modal in `src/components/GameScreen.tsx` to branch on `isLastLevel = totalLevels !== undefined && puzzle.id >= totalLevels`:
+- [x] **Step 1.3**: Update `GameScreenProps` in `src/components/GameScreen.tsx` to accept optional `totalLevels?: number`.
+- [x] **Step 1.4**: Update the victory modal in `src/components/GameScreen.tsx` to branch on `isLastLevel = totalLevels !== undefined && puzzle.id >= totalLevels`:
   - Show "¡Juego completado!" as header.
   - Show celebratory description including points.
   - Show "Volver al Menú Principal" button.
-- [ ] **Step 1.5**: Update `handleAdvanceLevel` in `src/App.tsx`:
+- [x] **Step 1.5**: Update `handleAdvanceLevel` in `src/App.tsx`:
   - When `session.puzzle.id >= puzzles.length`:
     - Add level bonus and points to `newTotalScore`.
     - Update progress with `currentLevelId: session.puzzle.id + 1`, `totalScore: newTotalScore`, `activeSnapshot: null`.
     - Navigate back to `'home'` screen (`setActiveScreen('home')`).
   - Pass `totalLevels={puzzles.length}` to `GameScreen`.
-- [ ] **Step 1.6**: Run tests to verify they pass:
+- [x] **Step 1.6**: Run tests to verify they pass:
   `npx vitest run tests/components/GameScreen.test.tsx tests/App.test.tsx`
-- [ ] **Step 1.7**: Commit task 1 changes:
+- [x] **Step 1.7**: Commit task 1 changes:
   `git commit -am "feat: implement final level victory modal and completion navigation"`
 
 ---
@@ -66,22 +66,22 @@
 - Create: `src/components/PostGameModal.tsx`
 - Test: `tests/components/PostGameModal.test.tsx`
 
-- [ ] **Step 2.1**: Write failing component tests in `tests/components/PostGameModal.test.tsx` covering:
+- [x] **Step 2.1**: Write failing component tests in `tests/components/PostGameModal.test.tsx` covering:
   - Rendering modal when `isOpen=true` with title "¡Juego completado!" and total level info.
   - Clicking "Jugar último nivel" calls `onReplayLastLevel` and closes modal.
   - Clicking "Reiniciar progreso" opens the reset confirmation dialog.
   - Cancelling the confirmation dialog leaves progress intact.
   - Confirming the confirmation dialog calls `onResetProgress` and closes modal.
   - Clicking "Cerrar" or backdrop calls `onClose`.
-- [ ] **Step 2.2**: Run test to verify it fails:
+- [x] **Step 2.2**: Run test to verify it fails:
   `npx vitest run tests/components/PostGameModal.test.tsx`
-- [ ] **Step 2.3**: Implement `src/components/PostGameModal.tsx`:
+- [x] **Step 2.3**: Implement `src/components/PostGameModal.tsx`:
   - Uses `CatSvg` with `state="victory"`.
   - Reuses `ConfirmDialog` for the destructive reset confirmation step.
   - Follows established modal styles and animations (`modal-backdrop-anim`, `modal-card-flyin`).
-- [ ] **Step 2.4**: Run tests to verify they pass:
+- [x] **Step 2.4**: Run tests to verify they pass:
   `npx vitest run tests/components/PostGameModal.test.tsx`
-- [ ] **Step 2.5**: Commit task 2 changes:
+- [x] **Step 2.5**: Commit task 2 changes:
   `git add src/components/PostGameModal.tsx tests/components/PostGameModal.test.tsx && git commit -m "feat: add PostGameModal component with replay and reset confirmation"`
 
 ---
@@ -94,26 +94,26 @@
 - Test: `tests/components/HomeScreen.test.tsx`
 - Test: `tests/App.test.tsx`
 
-- [ ] **Step 3.1**: Write tests in `tests/components/HomeScreen.test.tsx`:
+- [x] **Step 3.1**: Write tests in `tests/components/HomeScreen.test.tsx`:
   - When `progress.currentLevelId <= totalLevels`: button displays "Nivel X / {totalLevels}".
   - When `progress.currentLevelId > totalLevels`:
     - Button displays "¡Juego completado! • {totalLevels} / {totalLevels}".
     - Clicking the button opens `PostGameModal`.
-- [ ] **Step 3.2**: Write test in `tests/App.test.tsx`:
+- [x] **Step 3.2**: Write test in `tests/App.test.tsx`:
   - Full flow: completing final level returns to home screen in completed state.
   - Replaying last level from post-game modal loads the final level (300).
   - Forward compatibility: if `currentLevelId` is 301 and `puzzles.length` is increased to 350, home screen shows level 301 and play starts puzzle 301 directly.
-- [ ] **Step 3.3**: Update `HomeScreen.tsx`:
+- [x] **Step 3.3**: Update `HomeScreen.tsx`:
   - Add `totalLevels?: number`, `onReplayLastLevel?: () => void`, `onResetProgress?: () => void` to `HomeScreenProps`.
   - Replace hardcoded `300` with `totalLevels ?? 300`.
   - Add state `showPostGameModal: boolean`.
   - When `progress.currentLevelId > totalLevels`, render completed text and open `PostGameModal` on click.
-- [ ] **Step 3.4**: Update `App.tsx`:
+- [x] **Step 3.4**: Update `App.tsx`:
   - Provide `totalLevels={puzzles.length}`, `onReplayLastLevel={handleReplayLastLevel}`, and `onResetProgress={handleResetProgress}` to `HomeScreen`.
   - Implement `handleReplayLastLevel`: creates session for `puzzles[puzzles.length - 1]`, updates session, transitions to `'game'`.
-- [ ] **Step 3.5**: Run tests:
+- [x] **Step 3.5**: Run tests:
   `npx vitest run tests/components/HomeScreen.test.tsx tests/App.test.tsx`
-- [ ] **Step 3.6**: Commit task 3 changes:
+- [x] **Step 3.6**: Commit task 3 changes:
   `git commit -am "feat: integrate post-game options dialog on home screen"`
 
 ---
@@ -124,9 +124,9 @@
 - All project files
 - Tests
 
-- [ ] **Step 4.1**: Run full test suite:
+- [x] **Step 4.1**: Run full test suite:
   `npm test`
-- [ ] **Step 4.2**: Run production build:
+- [x] **Step 4.2**: Run production build:
   `npm run build`
-- [ ] **Step 4.3**: Commit any remaining changes and verify clean git status:
+- [x] **Step 4.3**: Commit any remaining changes and verify clean git status:
   `git status`
