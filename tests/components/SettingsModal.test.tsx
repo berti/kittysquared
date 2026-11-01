@@ -11,6 +11,9 @@ const defaultSettings: AppSettings = {
   musicMuted: false,
   sfxMuted: false,
   tutorialSeen: true,
+  musicVolume: 0.75,
+  sfxVolume: 0.75,
+  musicTrack: 'auto',
 };
 
 describe('SettingsModal component', () => {
@@ -222,6 +225,95 @@ describe('SettingsModal component', () => {
     fireEvent.click(getByTestId('toggle-sfx-btn'));
     expect(onUpdateSettings).toHaveBeenCalledWith(
       expect.objectContaining({ sfxMuted: true })
+    );
+  });
+
+  it('Sound tab: renders 5-step volume selectors for music and sfx, and soundtrack selector', () => {
+    const { getByTestId } = render(
+      <SettingsModal
+        settings={{
+          ...defaultSettings,
+          musicVolume: 0.75,
+          sfxVolume: 0.75,
+          musicTrack: 'auto',
+        }}
+        onUpdateSettings={vi.fn()}
+        onResetProgress={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    fireEvent.click(getByTestId('tab-btn-sound'));
+
+    // Music volume steps
+    expect(getByTestId('music-vol-step-0')).toBeDefined();
+    expect(getByTestId('music-vol-step-0.25')).toBeDefined();
+    expect(getByTestId('music-vol-step-0.5')).toBeDefined();
+    expect(getByTestId('music-vol-step-0.75')).toBeDefined();
+    expect(getByTestId('music-vol-step-1')).toBeDefined();
+
+    // SFX volume steps
+    expect(getByTestId('sfx-vol-step-0')).toBeDefined();
+    expect(getByTestId('sfx-vol-step-0.25')).toBeDefined();
+    expect(getByTestId('sfx-vol-step-0.5')).toBeDefined();
+    expect(getByTestId('sfx-vol-step-0.75')).toBeDefined();
+    expect(getByTestId('sfx-vol-step-1')).toBeDefined();
+
+    // Track options
+    expect(getByTestId('track-opt-auto')).toBeDefined();
+    expect(getByTestId('track-opt-bossa')).toBeDefined();
+    expect(getByTestId('track-opt-waltz')).toBeDefined();
+    expect(getByTestId('track-opt-samba')).toBeDefined();
+  });
+
+  it('Sound tab: clicking 0% volume step automatically mutes; clicking >0% unmutes and sets volume', () => {
+    const onUpdateSettings = vi.fn();
+    const { getByTestId } = render(
+      <SettingsModal
+        settings={{
+          ...defaultSettings,
+          musicVolume: 0.75,
+          musicMuted: false,
+        }}
+        onUpdateSettings={onUpdateSettings}
+        onResetProgress={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    fireEvent.click(getByTestId('tab-btn-sound'));
+
+    // Click 0% -> sets musicMuted: true
+    fireEvent.click(getByTestId('music-vol-step-0'));
+    expect(onUpdateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ musicVolume: 0, musicMuted: true })
+    );
+
+    // Click 50% -> sets musicVolume: 0.5 and musicMuted: false
+    fireEvent.click(getByTestId('music-vol-step-0.5'));
+    expect(onUpdateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ musicVolume: 0.5, musicMuted: false })
+    );
+  });
+
+  it('Sound tab: selecting a specific soundtrack option updates settings', () => {
+    const onUpdateSettings = vi.fn();
+    const { getByTestId } = render(
+      <SettingsModal
+        settings={{
+          ...defaultSettings,
+          musicTrack: 'auto',
+        }}
+        onUpdateSettings={onUpdateSettings}
+        onResetProgress={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    fireEvent.click(getByTestId('tab-btn-sound'));
+    fireEvent.click(getByTestId('track-opt-bossa'));
+    expect(onUpdateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ musicTrack: 'bossa' })
     );
   });
 

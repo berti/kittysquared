@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { AppSettings } from '../state/storage';
+import { AppSettings, MusicTrackOption, SteppedVolume, VALID_STEPPED_VOLUMES } from '../state/storage';
 import { CatVariant, RegionAssistMode } from '../types/puzzle';
 import { REGION_GLYPHS } from './Board';
 import { CatSvg } from './CatSvg';
@@ -488,46 +488,162 @@ export function SettingsModal({
               data-testid="pane-sound"
               role="tabpanel"
               aria-labelledby="tab-btn-sound"
-              style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}
             >
               <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51' }}>
                 AUDIO Y MÚSICA
               </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  type="button"
-                  data-testid="toggle-music-btn"
-                  onClick={toggleMusic}
-                  style={{
-                    flex: 1,
-                    padding: '14px 10px',
-                    borderRadius: '12px',
-                    fontSize: '15px',
-                    fontWeight: 800,
-                    border: '2px solid #E2D6C1',
-                    background: settings.musicMuted ? '#EFE6D5' : '#FFF',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {settings.musicMuted ? '🔇 Música: Off' : '🎵 Música: On'}
-                </button>
-                <button
-                  type="button"
-                  data-testid="toggle-sfx-btn"
-                  onClick={toggleSfx}
-                  style={{
-                    flex: 1,
-                    padding: '14px 10px',
-                    borderRadius: '12px',
-                    fontSize: '15px',
-                    fontWeight: 800,
-                    border: '2px solid #E2D6C1',
-                    background: settings.sfxMuted ? '#EFE6D5' : '#FFF',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {settings.sfxMuted ? '🔇 Efectos: Off' : '🔊 Efectos: On'}
-                </button>
+
+              {/* Music Section */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#5C4B51' }}>
+                    🎵 Volumen de Música
+                  </span>
+                  <button
+                    type="button"
+                    data-testid="toggle-music-btn"
+                    onClick={toggleMusic}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      color: settings.musicMuted ? '#DC2626' : '#2A9D8F',
+                      cursor: 'pointer',
+                      padding: '2px 6px',
+                    }}
+                  >
+                    {settings.musicMuted ? 'Silenciada' : 'Activa'}
+                  </button>
+                </div>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {VALID_STEPPED_VOLUMES.map((step) => {
+                    const isSelected = settings.musicMuted ? step === 0 : settings.musicVolume === step;
+                    return (
+                      <button
+                        key={step}
+                        type="button"
+                        data-testid={`music-vol-step-${step}`}
+                        onClick={() => {
+                          if (step === 0) {
+                            onUpdateSettings({ ...settings, musicVolume: 0, musicMuted: true });
+                          } else {
+                            onUpdateSettings({ ...settings, musicVolume: step, musicMuted: false });
+                          }
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '8px 2px',
+                          borderRadius: '10px',
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          border: isSelected ? '2px solid #E76F51' : '2px solid #E2D6C1',
+                          background: isSelected ? '#FCE8E2' : '#FFF',
+                          color: isSelected ? '#E76F51' : '#5C4B51',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {step === 0 ? '0%' : `${Math.round(step * 100)}%`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* SFX Section */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#5C4B51' }}>
+                    🔊 Volumen de Efectos
+                  </span>
+                  <button
+                    type="button"
+                    data-testid="toggle-sfx-btn"
+                    onClick={toggleSfx}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      color: settings.sfxMuted ? '#DC2626' : '#2A9D8F',
+                      cursor: 'pointer',
+                      padding: '2px 6px',
+                    }}
+                  >
+                    {settings.sfxMuted ? 'Silenciados' : 'Activos'}
+                  </button>
+                </div>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {VALID_STEPPED_VOLUMES.map((step) => {
+                    const isSelected = settings.sfxMuted ? step === 0 : settings.sfxVolume === step;
+                    return (
+                      <button
+                        key={step}
+                        type="button"
+                        data-testid={`sfx-vol-step-${step}`}
+                        onClick={() => {
+                          if (step === 0) {
+                            onUpdateSettings({ ...settings, sfxVolume: 0, sfxMuted: true });
+                          } else {
+                            onUpdateSettings({ ...settings, sfxVolume: step, sfxMuted: false });
+                          }
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '8px 2px',
+                          borderRadius: '10px',
+                          fontSize: '12px',
+                          fontWeight: 800,
+                          border: isSelected ? '2px solid #2A9D8F' : '2px solid #E2D6C1',
+                          background: isSelected ? '#E6F4F1' : '#FFF',
+                          color: isSelected ? '#2A9D8F' : '#5C4B51',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {step === 0 ? '0%' : `${Math.round(step * 100)}%`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Soundtrack Selector Section */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 800, color: '#5C4B51' }}>
+                  🎼 Banda Sonora
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  {[
+                    { id: 'auto' as const, label: '🔄 Auto (3 temas)' },
+                    { id: 'bossa' as const, label: '🐱 Bossa Meow' },
+                    { id: 'waltz' as const, label: '🥐 Catnip Waltz' },
+                    { id: 'samba' as const, label: '🎉 Samba de Gatinho' },
+                  ].map((track) => {
+                    const isSelected = (settings.musicTrack || 'auto') === track.id;
+                    return (
+                      <button
+                        key={track.id}
+                        type="button"
+                        data-testid={`track-opt-${track.id}`}
+                        onClick={() => onUpdateSettings({ ...settings, musicTrack: track.id })}
+                        style={{
+                          padding: '10px 8px',
+                          borderRadius: '12px',
+                          fontSize: '12.5px',
+                          fontWeight: 800,
+                          border: isSelected ? '2px solid #E76F51' : '2px solid #E2D6C1',
+                          background: isSelected ? '#FCE8E2' : '#FFF',
+                          color: isSelected ? '#E76F51' : '#5C4B51',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                      >
+                        {track.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
