@@ -57,4 +57,30 @@ describe('audio/soundEngine', () => {
     );
     expect(highMelodyNotes.length).toBe(0);
   });
+
+  it('synchronizes volume levels with mute state correctly', () => {
+    const engine = new SoundEngine();
+    engine.setVolume(0.5, 0.75);
+    expect(engine.getEffectiveMusicVolume()).toBe(0.5);
+    expect(engine.getEffectiveSfxVolume()).toBe(0.75);
+
+    // Muting music drops effective volume to 0 while preserving stored level
+    engine.setMuted(true, false);
+    expect(engine.getEffectiveMusicVolume()).toBe(0);
+    expect(engine.getEffectiveSfxVolume()).toBe(0.75);
+
+    // Unmuting music restores effective volume back to 0.5
+    engine.setMuted(false, false);
+    expect(engine.getEffectiveMusicVolume()).toBe(0.5);
+  });
+
+  it('smoothly ducks music volume when playVictory is triggered', () => {
+    const engine = new SoundEngine();
+    engine.setVolume(0.75, 0.75);
+    engine.setMuted(false, false);
+    expect(engine.isDucking()).toBe(false);
+
+    engine.playVictory();
+    expect(engine.isDucking()).toBe(true);
+  });
 });

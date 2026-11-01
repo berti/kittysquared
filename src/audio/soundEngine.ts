@@ -878,24 +878,25 @@ export class SoundEngine {
 
   public playVictory(): void {
     if (this.sfxMuted) return;
+
+    // Duck background music during victory fanfare
+    this.isDuckingActive = true;
+    this.updateGainLevels();
+
+    if (this.duckingTimeout) {
+      clearTimeout(this.duckingTimeout);
+    }
+    this.duckingTimeout = window.setTimeout(() => {
+      this.isDuckingActive = false;
+      this.updateGainLevels();
+      this.duckingTimeout = null;
+    }, 900);
+
     const ctx = this.getContext();
     if (!ctx || !this.sfxGainNode) return;
 
     try {
       if (ctx.state === 'suspended') ctx.resume();
-
-      // Duck background music during victory fanfare
-      this.isDuckingActive = true;
-      this.updateGainLevels();
-
-      if (this.duckingTimeout) {
-        clearTimeout(this.duckingTimeout);
-      }
-      this.duckingTimeout = window.setTimeout(() => {
-        this.isDuckingActive = false;
-        this.updateGainLevels();
-        this.duckingTimeout = null;
-      }, 900);
 
       const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
       const start = ctx.currentTime;
