@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "generate-puzzles": "tsx scripts/generate-puzzles.ts"
+    "generate-puzzles": "tsx scripts/generate-puzzles.ts",
+    "generate-icons": "tsx scripts/generate-icons.ts"
   },
   "dependencies": {
     "preact": "^10.25.4"
