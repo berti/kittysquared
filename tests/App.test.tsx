@@ -10,9 +10,9 @@ describe('App integration', () => {
   });
 
   it('renders Home screen with single Play card, Tutorial, and Settings', () => {
-    const { getByTestId, getByText } = render(<App />);
+    const { getByTestId, getByText, queryByText } = render(<App />);
     expect(getByText('KittySquared')).toBeTruthy();
-    expect(getByText('300 puzzles de lógica felina')).toBeTruthy();
+    expect(queryByText('300 puzzles de lógica felina')).toBeNull();
     expect(getByText(/Nivel 1 \/ 300/i)).toBeTruthy();
     expect(getByTestId('start-game-btn')).toBeTruthy();
   });

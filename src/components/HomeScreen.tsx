@@ -35,88 +35,79 @@ export function HomeScreen({
           <CatSvg variant={catVariant} state="idle" />
         </div>
         <h1 style={{ margin: '0 0 4px', fontSize: '30px', color: '#3D3135' }}>KittySquared</h1>
-        <p style={{ margin: 0, fontSize: '14px', color: '#8C7A80' }}>300 puzzles de lógica felina</p>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', margin: '32px 0' }}>
-        <div
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', margin: '32px 0', width: '100%' }}>
+        <button
+          type="button"
           data-testid="start-game-btn"
           onClick={onPlay}
           style={{
-            background: '#FFFFFF',
-            border: '2px solid #E6DEC8',
-            boxShadow: '0 4px 0 #E6DEC8',
-            borderRadius: '18px',
-            padding: '18px',
+            width: '100%',
+            background: '#FF9770',
+            border: '2px solid #E07A5F',
+            boxShadow: '0 4px 0 #D9724C',
+            borderRadius: '16px',
+            padding: '18px 20px',
             cursor: 'pointer',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            color: '#FFFFFF',
             transition: 'transform 0.1s ease',
+            boxSizing: 'border-box',
+            fontFamily: 'inherit',
           }}
         >
-          <div>
-            <div style={{ fontWeight: 800, fontSize: '18px', color: '#3D3135', marginBottom: '4px' }}>
-              🎮 Jugar
-            </div>
-            <div style={{ fontSize: '13.5px', color: '#7A686E' }}>
-              Nivel {progress.currentLevelId} / 300 • ⭐ {progress.totalScore} pts
-            </div>
+          <div style={{ fontWeight: 900, fontSize: '20px', letterSpacing: '0.2px' }}>
+            Jugar
           </div>
-          <div
-            style={{
-              background: '#FF9770',
-              color: '#FFF',
-              fontWeight: 800,
-              fontSize: '14px',
-              padding: '10px 16px',
-              borderRadius: '12px',
-              boxShadow: '0 3px 0 #D9724C',
-            }}
-          >
-            Jugar ▶
+          <div style={{ fontSize: '14.5px', fontWeight: 700, color: '#FFFBF2', opacity: 0.95 }}>
+            Nivel {progress.currentLevelId} / 300 • {progress.totalScore} pts
           </div>
-        </div>
-      </div>
+        </button>
 
-      <div style={{ display: 'flex', gap: '12px' }}>
         <button
           data-testid="open-tutorial-btn"
           onClick={onOpenTutorial}
           style={{
-            flex: 1,
+            width: '100%',
             background: '#F3E9D2',
             border: '2px solid #E2D6C1',
             boxShadow: '0 3px 0 #E2D6C1',
             borderRadius: '14px',
-            padding: '12px 10px',
-            fontSize: '14px',
+            padding: '14px',
+            fontSize: '15.5px',
             fontWeight: 800,
             color: '#5C4B51',
             cursor: 'pointer',
+            boxSizing: 'border-box',
           }}
         >
-          📖 Tutorial
+          Tutorial
         </button>
         <button
           data-testid="open-settings-btn"
           onClick={onOpenSettings}
           style={{
-            flex: 1,
+            width: '100%',
             background: '#F3E9D2',
             border: '2px solid #E2D6C1',
             boxShadow: '0 3px 0 #E2D6C1',
             borderRadius: '14px',
-            padding: '12px 10px',
-            fontSize: '14px',
+            padding: '14px',
+            fontSize: '15.5px',
             fontWeight: 800,
             color: '#5C4B51',
             cursor: 'pointer',
+            boxSizing: 'border-box',
           }}
         >
-          ⚙️ Ajustes
+          Ajustes
         </button>
       </div>
+
+      <div style={{ height: '8px' }} />
     </div>
   );
 }

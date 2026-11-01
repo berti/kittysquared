@@ -79,7 +79,7 @@ describe('SettingsModal component', () => {
 
   it('Controls tab: directly renders speed slider and tap tester without scheme buttons', () => {
     const onUpdateSettings = vi.fn();
-    const { getByTestId, queryByTestId } = render(
+    const { getByTestId, queryByTestId, queryByText, getByText } = render(
       <SettingsModal
         settings={{ ...defaultSettings, doubleTapTimeoutMs: 500 }}
         onUpdateSettings={onUpdateSettings}
@@ -105,6 +105,15 @@ describe('SettingsModal component', () => {
     // Tap tester exists
     const tester = getByTestId('double-tap-tester');
     expect(tester).toBeDefined();
+
+    // Clean speed labels without milliseconds and without Área de prueba title
+    expect(getByText('Rápido')).toBeDefined();
+    expect(getByText('Medio')).toBeDefined();
+    expect(getByText('Lento')).toBeDefined();
+    expect(queryByText(/250ms/i)).toBeNull();
+    expect(queryByText(/500ms/i)).toBeNull();
+    expect(queryByText(/900ms/i)).toBeNull();
+    expect(queryByText('ÁREA DE PRUEBA')).toBeNull();
   });
 
   it('Controls tab: double-tap tester provides interactive feedback for single and double taps', () => {
@@ -138,7 +147,7 @@ describe('SettingsModal component', () => {
   });
 
   it('Graphics tab: renders cat variants, region assist options, and mini-board preview', () => {
-    const { getByTestId } = render(
+    const { getByTestId, queryByText } = render(
       <SettingsModal
         settings={defaultSettings}
         onUpdateSettings={vi.fn()}
@@ -153,6 +162,13 @@ describe('SettingsModal component', () => {
     expect(getByTestId('select-region-assist-off')).toBeDefined();
     expect(getByTestId('select-region-assist-textures')).toBeDefined();
     expect(getByTestId('mini-board-preview')).toBeDefined();
+
+    // Verify micro-descriptions and preview footer text are removed
+    expect(queryByText('Colores puros')).toBeNull();
+    expect(queryByText('Tramas rayadas')).toBeNull();
+    expect(queryByText('Iconos en esquina')).toBeNull();
+    expect(queryByText('Dígitos en esquina')).toBeNull();
+    expect(queryByText(/Muestra cómo lucen los gatos/i)).toBeNull();
   });
 
   it('Graphics tab: mini-board preview renders distinct glyphs and textures matching region IDs', () => {

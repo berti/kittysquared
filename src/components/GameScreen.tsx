@@ -98,9 +98,9 @@ export function GameScreen({
               border: '2px solid #E2D6C1',
               boxShadow: '0 2px 0 #E2D6C1',
               borderRadius: '10px',
-              padding: '6px 12px',
+              padding: '7px 14px',
               fontWeight: 800,
-              fontSize: '13px',
+              fontSize: '15px',
               color: '#5C4B51',
               cursor: 'pointer',
             }}
@@ -108,11 +108,11 @@ export function GameScreen({
             ← Menú
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ fontWeight: 800, fontSize: '17px', color: '#3D3135' }}>
+            <div style={{ fontWeight: 900, fontSize: '19px', color: '#3D3135' }}>
               Nivel {puzzle.id}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '6px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
             <button
               data-testid="restart-level-btn"
               onClick={() => setShowRestartConfirm(true)}
@@ -122,9 +122,9 @@ export function GameScreen({
                 border: '2px solid #E2D6C1',
                 boxShadow: '0 2px 0 #E2D6C1',
                 borderRadius: '10px',
-                padding: '6px 10px',
+                padding: '7px 11px',
                 fontWeight: 800,
-                fontSize: '14px',
+                fontSize: '16px',
                 color: '#5C4B51',
                 cursor: 'pointer',
               }}
@@ -140,9 +140,9 @@ export function GameScreen({
                 border: '2px solid #E2D6C1',
                 boxShadow: '0 2px 0 #E2D6C1',
                 borderRadius: '10px',
-                padding: '6px 10px',
+                padding: '7px 11px',
                 fontWeight: 800,
-                fontSize: '14px',
+                fontSize: '16px',
                 color: '#5C4B51',
                 cursor: 'pointer',
               }}
@@ -154,22 +154,25 @@ export function GameScreen({
 
         {/* Status bar */}
         <div
+          data-testid="game-status-bar"
           style={{
             position: 'relative',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             background: '#F3E9D2',
-            padding: '8px 16px',
-            borderRadius: '14px',
-            fontSize: '13.5px',
-            fontWeight: 800,
+            border: '2px solid #E2D6C1',
+            padding: '10px 16px',
+            borderRadius: '16px',
+            fontSize: '16.5px',
+            fontWeight: 900,
             color: '#3D3135',
             marginBottom: '16px',
+            boxShadow: '0 2px 0 rgba(0,0,0,0.03)',
           }}
         >
-          <span>
-            🐱 {placedCatsCount} / {puzzle.size}
+          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <span style={{ fontSize: '20px', lineHeight: 1 }}>🐱</span> {placedCatsCount} / {puzzle.size}
           </span>
           <span
             style={{
@@ -178,12 +181,14 @@ export function GameScreen({
               transform: 'translateX(-50%)',
               whiteSpace: 'nowrap',
               pointerEvents: 'none',
+              fontSize: '19px',
+              letterSpacing: '2px',
             }}
           >
             {hearts.join(' ')}
           </span>
-          <span>
-            ⭐ {progress.totalScore}{' '}
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span style={{ fontSize: '19px', lineHeight: 1 }}>⭐</span> {progress.totalScore}{' '}
             {session.partialScore > 0 && (
               <span style={{ color: '#E07A5F' }}>
                 (+{session.partialScore + session.levelBonus})
@@ -213,7 +218,7 @@ export function GameScreen({
 
       {/* Controls Bar */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-        <div style={{ textAlign: 'center', fontSize: '12.5px', color: '#8C7A80', fontWeight: 600 }}>
+        <div style={{ textAlign: 'center', fontSize: '14.5px', color: '#7A686E', fontWeight: 700 }}>
           1 toque: ✕ Cruz • 2 toques: 🐱 Gato
         </div>
       </div>
@@ -267,10 +272,10 @@ export function GameScreen({
             <div style={{ width: '72px', height: '72px', margin: '0 auto 10px' }}>
               <CatSvg variant={settings.catVariant} state="victory" />
             </div>
-            <h2 style={{ margin: '0 0 6px', fontSize: '22px', color: '#3D3135' }}>
+            <h2 style={{ margin: '0 0 6px', fontSize: '24px', fontWeight: 900, color: '#3D3135' }}>
               ¡Nivel {puzzle.id} superado!
             </h2>
-            <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#7A686E' }}>
+            <p style={{ margin: '0 0 16px', fontSize: '15.5px', color: '#7A686E' }}>
               Puntos gatos: +{session.partialScore}
               <br />
               Bono por fallos: +{session.levelBonus}
@@ -285,9 +290,9 @@ export function GameScreen({
                 color: '#FFF',
                 border: 'none',
                 borderRadius: '14px',
-                padding: '12px',
+                padding: '14px',
                 fontWeight: 800,
-                fontSize: '15px',
+                fontSize: '16.5px',
                 boxShadow: '0 4px 0 #D9724C',
                 cursor: 'pointer',
               }}
@@ -332,10 +337,10 @@ export function GameScreen({
             <div style={{ width: '72px', height: '72px', margin: '0 auto 10px' }}>
               <CatSvg variant={settings.catVariant} state="conflict" />
             </div>
-            <h2 style={{ margin: '0 0 6px', fontSize: '22px', color: '#EF4444' }}>
+            <h2 style={{ margin: '0 0 6px', fontSize: '24px', fontWeight: 900, color: '#EF4444' }}>
               3 fallos alcanzados
             </h2>
-            <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#7A686E' }}>
+            <p style={{ margin: '0 0 16px', fontSize: '15.5px', color: '#7A686E' }}>
               Se han perdido los puntos parciales de este intento. Puedes reintentar el nivel manteniendo tu puntuación anterior.
             </p>
             <button
@@ -346,9 +351,9 @@ export function GameScreen({
                 color: '#FFF',
                 border: 'none',
                 borderRadius: '14px',
-                padding: '12px',
+                padding: '14px',
                 fontWeight: 800,
-                fontSize: '15px',
+                fontSize: '16.5px',
                 boxShadow: '0 4px 0 #D9724C',
                 cursor: 'pointer',
               }}

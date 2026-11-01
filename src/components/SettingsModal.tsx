@@ -122,7 +122,7 @@ export function SettingsModal({
         >
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ margin: 0, fontSize: '20px', color: '#3D3135' }}>⚙️ Ajustes</h2>
+            <h2 style={{ margin: 0, fontSize: '21px', fontWeight: 900, color: '#3D3135' }}>⚙️ Ajustes</h2>
             <button
               data-testid="close-settings-btn"
               onClick={onClose}
@@ -133,6 +133,7 @@ export function SettingsModal({
                 width: '32px',
                 height: '32px',
                 fontWeight: 800,
+                fontSize: '14px',
                 cursor: 'pointer',
               }}
             >
@@ -174,19 +175,19 @@ export function SettingsModal({
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '5px',
-                    padding: '8px 2px',
+                    padding: '9px 2px',
                     borderRadius: '12px',
                     border: 'none',
                     background: active ? '#FFFFFF' : 'transparent',
                     color: active ? '#3D3135' : '#7A686E',
                     fontWeight: 800,
-                    fontSize: '12px',
+                    fontSize: '13.5px',
                     cursor: 'pointer',
                     boxShadow: active ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <span style={{ fontSize: '15px', lineHeight: 1 }}>{tab.icon}</span>
+                  <span style={{ fontSize: '16px', lineHeight: 1 }}>{tab.icon}</span>
                   <span className="settings-tab-label">{tab.label}</span>
                 </button>
               );
@@ -206,17 +207,17 @@ export function SettingsModal({
                   background: '#F8F3E8',
                   border: '2px solid #E2D6C1',
                   borderRadius: '16px',
-                  padding: '12px',
+                  padding: '14px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '10px',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#7A686E' }}>
+                  <span style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51' }}>
                     VELOCIDAD DE DOBLE TOQUE
                   </span>
-                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#F3722C' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 800, color: '#F3722C' }}>
                     {currentTimeout} ms ({speedCategory})
                   </span>
                 </div>
@@ -235,17 +236,14 @@ export function SettingsModal({
                   style={{ width: '100%', accentColor: '#F3722C', cursor: 'pointer' }}
                 />
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 700, color: '#8C7A80' }}>
-                  <span>Rápido (250ms)</span>
-                  <span>Medio (500ms)</span>
-                  <span>Lento (900ms)</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 800, color: '#7A686E' }}>
+                  <span>Rápido</span>
+                  <span>Medio</span>
+                  <span>Lento</span>
                 </div>
 
                 {/* Interactive tap tester */}
-                <div style={{ textAlign: 'center', marginTop: '2px' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#7A686E', marginBottom: '6px' }}>
-                    ÁREA DE PRUEBA
-                  </div>
+                <div style={{ textAlign: 'center', marginTop: '6px' }}>
                   <div
                     data-testid="double-tap-tester"
                     onClick={handleTesterClick}
@@ -263,13 +261,13 @@ export function SettingsModal({
                           ? '2px solid #FF9770'
                           : '2px dashed #E2D6C1',
                       borderRadius: '14px',
-                      padding: '12px',
+                      padding: '14px',
                       cursor: 'pointer',
                       userSelect: 'none',
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    <div style={{ fontSize: '24px', lineHeight: 1 }}>
+                    <div style={{ fontSize: '26px', lineHeight: 1 }}>
                       {testerFeedback.status === 'double'
                         ? settings.catVariant === 'white'
                           ? '🤍'
@@ -278,7 +276,7 @@ export function SettingsModal({
                         ? '✕'
                         : '👆'}
                     </div>
-                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#3D3135', marginTop: '4px' }}>
+                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#3D3135', marginTop: '4px' }}>
                       {testerFeedback.status === 'double'
                         ? `¡Doble toque detectado! 🐾 (${testerFeedback.interval}ms)`
                         : testerFeedback.status === 'single'
@@ -297,10 +295,10 @@ export function SettingsModal({
               data-testid="pane-graphics"
               role="tabpanel"
               aria-labelledby="tab-btn-graphics"
-              style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}
             >
               <div>
-                <div style={{ fontSize: '11px', fontWeight: 800, color: '#7A686E', marginBottom: '6px' }}>
+                <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51', marginBottom: '8px' }}>
                   DISEÑO DE GATITO
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -309,7 +307,7 @@ export function SettingsModal({
                     onClick={() => setVariant('black')}
                     style={{
                       flex: 1,
-                      height: '62px',
+                      height: '66px',
                       boxSizing: 'border-box',
                       background: settings.catVariant === 'black' ? '#FFF' : '#EFE6D5',
                       border: '2px solid',
@@ -327,7 +325,7 @@ export function SettingsModal({
                     <div style={{ width: '32px', height: '32px', marginBottom: '2px' }}>
                       <CatSvg variant="black" state="idle" />
                     </div>
-                    <span style={{ fontSize: '11.5px', fontWeight: 700 }}>Gato Negro</span>
+                    <span style={{ fontSize: '13.5px', fontWeight: 800 }}>Gato Negro</span>
                   </div>
 
                   <div
@@ -335,7 +333,7 @@ export function SettingsModal({
                     onClick={() => setVariant('white')}
                     style={{
                       flex: 1,
-                      height: '62px',
+                      height: '66px',
                       boxSizing: 'border-box',
                       background: settings.catVariant === 'white' ? '#FFF' : '#EFE6D5',
                       border: '2px solid',
@@ -353,22 +351,22 @@ export function SettingsModal({
                     <div style={{ width: '32px', height: '32px', marginBottom: '2px' }}>
                       <CatSvg variant="white" state="idle" />
                     </div>
-                    <span style={{ fontSize: '11.5px', fontWeight: 700 }}>Gato Blanco</span>
+                    <span style={{ fontSize: '13.5px', fontWeight: 800 }}>Gato Blanco</span>
                   </div>
                 </div>
               </div>
 
               {/* Region Assist */}
               <div>
-                <div style={{ fontSize: '11px', fontWeight: 800, color: '#7A686E', marginBottom: '6px' }}>
+                <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51', marginBottom: '8px' }}>
                   AYUDA VISUAL DE REGIONES (ACCESIBILIDAD)
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                   {[
-                    { id: 'off', label: 'Desactivado', desc: 'Colores puros' },
-                    { id: 'textures', label: 'Rayas', desc: 'Tramas rayadas' },
-                    { id: 'glyphs', label: 'Gatitos 🐾', desc: 'Iconos en esquina' },
-                    { id: 'numbers', label: 'Números 1-9', desc: 'Dígitos en esquina' },
+                    { id: 'off', label: 'Desactivado' },
+                    { id: 'textures', label: 'Rayas' },
+                    { id: 'glyphs', label: 'Gatitos 🐾' },
+                    { id: 'numbers', label: 'Números 1-9' },
                   ].map((item) => {
                     const active = (settings.regionAssist || 'off') === item.id;
                     return (
@@ -383,25 +381,21 @@ export function SettingsModal({
                         style={{
                           height: '46px',
                           boxSizing: 'border-box',
-                          padding: '6px 8px',
-                          borderRadius: '10px',
+                          padding: '8px 10px',
+                          borderRadius: '12px',
                           border: '2px solid',
                           borderColor: active ? '#6366F1' : '#E2D6C1',
                           boxShadow: active ? '0 0 0 1px #6366F1' : 'none',
                           background: active ? '#FFF' : '#EFE6D5',
                           color: '#3D3135',
                           cursor: 'pointer',
-                          textAlign: 'left',
+                          textAlign: 'center',
                           display: 'flex',
-                          flexDirection: 'column',
+                          alignItems: 'center',
                           justifyContent: 'center',
-                          gap: '1px',
                         }}
                       >
-                        <span style={{ fontSize: '11.5px', fontWeight: 800, lineHeight: 1.2 }}>{item.label}</span>
-                        <span style={{ fontSize: '9.5px', color: '#7A686E', fontWeight: 600, lineHeight: 1.2 }}>
-                          {item.desc}
-                        </span>
+                        <span style={{ fontSize: '14px', fontWeight: 800, lineHeight: 1.2 }}>{item.label}</span>
                       </button>
                     );
                   })}
@@ -415,11 +409,11 @@ export function SettingsModal({
                   background: '#F8F3E8',
                   border: '2px solid #E2D6C1',
                   borderRadius: '14px',
-                  padding: '8px',
+                  padding: '10px',
                   textAlign: 'center',
                 }}
               >
-                <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#7A686E', marginBottom: '4px' }}>
+                <div style={{ fontSize: '12.5px', fontWeight: 900, color: '#5C4B51', marginBottom: '6px' }}>
                   VISTA PREVIA DEL TABLERO
                 </div>
                 <div
@@ -428,7 +422,7 @@ export function SettingsModal({
                     gridTemplateColumns: 'repeat(3, 32px)',
                     gridTemplateRows: 'repeat(3, 32px)',
                     gap: '3px',
-                    margin: '0 auto 4px',
+                    margin: '0 auto',
                     padding: '4px',
                     background: '#EFE6D5',
                     borderRadius: '10px',
@@ -484,9 +478,6 @@ export function SettingsModal({
                     );
                   })}
                 </div>
-                <span style={{ fontSize: '10px', color: '#8C7A80', fontWeight: 600 }}>
-                  Muestra cómo lucen los gatos y las ayudas de región juntos
-                </span>
               </div>
             </div>
           )}
@@ -499,7 +490,7 @@ export function SettingsModal({
               aria-labelledby="tab-btn-sound"
               style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}
             >
-              <div style={{ fontSize: '12px', fontWeight: 800, color: '#7A686E' }}>
+              <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51' }}>
                 AUDIO Y MÚSICA
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
@@ -509,10 +500,10 @@ export function SettingsModal({
                   onClick={toggleMusic}
                   style={{
                     flex: 1,
-                    padding: '12px 8px',
+                    padding: '14px 10px',
                     borderRadius: '12px',
-                    fontSize: '13px',
-                    fontWeight: 700,
+                    fontSize: '15px',
+                    fontWeight: 800,
                     border: '2px solid #E2D6C1',
                     background: settings.musicMuted ? '#EFE6D5' : '#FFF',
                     cursor: 'pointer',
@@ -526,10 +517,10 @@ export function SettingsModal({
                   onClick={toggleSfx}
                   style={{
                     flex: 1,
-                    padding: '12px 8px',
+                    padding: '14px 10px',
                     borderRadius: '12px',
-                    fontSize: '13px',
-                    fontWeight: 700,
+                    fontSize: '15px',
+                    fontWeight: 800,
                     border: '2px solid #E2D6C1',
                     background: settings.sfxMuted ? '#EFE6D5' : '#FFF',
                     cursor: 'pointer',
@@ -549,7 +540,7 @@ export function SettingsModal({
               aria-labelledby="tab-btn-reset"
               style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}
             >
-              <div style={{ fontSize: '12px', fontWeight: 800, color: '#7A686E' }}>
+              <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51' }}>
                 REINICIAR PROGRESO DE PARTIDA
               </div>
 
@@ -560,8 +551,8 @@ export function SettingsModal({
                 style={{
                   background: '#FFF',
                   border: '2px solid #FCA5A5',
-                  borderRadius: '12px',
-                  padding: '12px',
+                  borderRadius: '14px',
+                  padding: '14px',
                   textAlign: 'left',
                   cursor: 'pointer',
                   display: 'flex',
@@ -570,14 +561,14 @@ export function SettingsModal({
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#DC2626' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 800, color: '#DC2626' }}>
                     Reiniciar progreso
                   </div>
-                  <div style={{ fontSize: '11px', color: '#EF4444', marginTop: '2px' }}>
+                  <div style={{ fontSize: '13px', color: '#EF4444', marginTop: '3px' }}>
                     Volver al nivel 1 y puntuación a 0
                   </div>
                 </div>
-                <span style={{ fontSize: '16px' }}>⚠️</span>
+                <span style={{ fontSize: '18px' }}>⚠️</span>
               </button>
             </div>
           )}

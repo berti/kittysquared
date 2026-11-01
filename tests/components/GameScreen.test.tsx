@@ -46,4 +46,36 @@ describe('GameScreen component', () => {
     expect(queryByTestId('tool-toggle-switch')).toBeNull();
     expect(getByText(/1 toque: ✕ Cruz • 2 toques: 🐱 Gato/i)).not.toBeNull();
   });
+
+  it('renders top bar buttons and enlarged status bar with cats, lives, and score', () => {
+    const session = createLevelSession(samplePuzzle);
+    const defaultState = getDefaultAppState();
+
+    const { getByTestId, getByText } = render(
+      <GameScreen
+        puzzle={samplePuzzle}
+        progress={defaultState.progress}
+        settings={defaultState.settings}
+        session={session}
+        onUpdateSession={vi.fn()}
+        onAdvanceLevel={vi.fn()}
+        onRetryLevel={vi.fn()}
+        onBackToMenu={vi.fn()}
+        onOpenSettings={vi.fn()}
+      />
+    );
+
+    // Top bar elements
+    expect(getByText('← Menú')).toBeDefined();
+    expect(getByText('Nivel 42')).toBeDefined();
+    expect(getByTestId('restart-level-btn')).toBeDefined();
+    expect(getByTestId('open-settings-btn')).toBeDefined();
+
+    // Status bar contents and style
+    const statusBar = getByTestId('game-status-bar');
+    expect(statusBar.textContent).toContain('0 / 4');
+    expect(statusBar.textContent).toContain('❤️ ❤️ ❤️');
+    expect(statusBar.textContent).toContain('⭐ 0');
+    expect(statusBar.style.fontSize).toBe('16.5px');
+  });
 });
