@@ -11,29 +11,22 @@ import {
   AppSettings,
   loadPersistedState,
   PersistedAppState,
-  resetModeProgress,
+  resetProgress,
   savePersistedState,
 } from './state/storage';
-import { GameMode, PuzzleDef } from './types/puzzle';
-import { clearDebugRoute, parseDebugRoute, updateDebugRoute } from './utils/route';
+import { PuzzleDef } from './types/puzzle';
 
 const puzzles = puzzlesData as PuzzleDef[];
 
 export interface AppProps {
   transitionDurationMs?: number;
-  initialPath?: string;
 }
 
 export function App({
   transitionDurationMs = typeof process !== 'undefined' && process.env.NODE_ENV === 'test' ? 0 : 300,
-  initialPath,
 }: AppProps = {}) {
-  const initialRoute = parseDebugRoute(initialPath);
-
   const [appState, setAppState] = useState<PersistedAppState>(() => loadPersistedState());
-  const [isDebug, setIsDebug] = useState<boolean>(!!initialRoute);
-  const [activeScreen, setActiveScreen] = useState<'home' | 'game'>(initialRoute ? 'game' : 'home');
-  const [activeMode, setActiveMode] = useState<GameMode>(initialRoute ? initialRoute.mode : 'chill');
+  const [activeScreen, setActiveScreen] = useState<'home' | 'game'>('home');
   const [showSettings, setShowSettings] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [transitionState, setTransitionState] = useState<{
@@ -80,41 +73,10 @@ export function App({
     timersRef.current.push(t1);
   };
 
-
   // Current session in play
-  const [session, setSession] = useState<LevelSessionState>(() => {
-    if (initialRoute) {
-      const puzzle = puzzles.find((p) => p.id === initialRoute.levelId) || puzzles[0];
-      return createLevelSession(puzzle, initialRoute.mode, true);
-    }
-    return createLevelSession(puzzles[0], 'chill');
-  });
-
-  // Listen for browser navigation (popstate & hashchange)
-  useEffect(() => {
-    const handleRouteChange = () => {
-      const route = parseDebugRoute();
-      if (route) {
-        setIsDebug(true);
-        setActiveMode(route.mode);
-        const puzzle = puzzles.find((p) => p.id === route.levelId) || puzzles[0];
-        setSession(createLevelSession(puzzle, route.mode, true));
-        setActiveScreen('game');
-      } else {
-        setIsDebug(false);
-        setActiveScreen('home');
-      }
-    };
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('popstate', handleRouteChange);
-      window.addEventListener('hashchange', handleRouteChange);
-      return () => {
-        window.removeEventListener('popstate', handleRouteChange);
-        window.removeEventListener('hashchange', handleRouteChange);
-      };
-    }
-  }, []);
+  const [session, setSession] = useState<LevelSessionState>(() =>
+    createLevelSession(puzzles[0])
+  );
 
   // Sync mute settings with soundEngine
   useEffect(() => {
@@ -127,16 +89,14 @@ export function App({
     savePersistedState(next);
   };
 
-  const handleStartMode = (mode: GameMode) => {
+  const handlePlay = () => {
     navigateWithTransition('forward', () => {
-      setIsDebug(false);
-      setActiveMode(mode);
-      const currentLvlId = appState[mode].currentLevelId;
+      const currentLvlId = appState.progress.currentLevelId;
       const puzzle = puzzles.find((p) => p.id === currentLvlId) || puzzles[0];
-      const newSession = createLevelSession(puzzle, mode);
+      const newSession = createLevelSession(puzzle);
 
       // Restore saved board snapshot if exists
-      const snap = appState[mode].activeSnapshot;
+      const snap = appState.progress.activeSnapshot;
       if (snap && snap.levelId === currentLvlId) {
         newSession.board = snap.board;
         newSession.lockedCats = snap.lockedCats;
@@ -157,12 +117,8 @@ export function App({
     });
   };
 
-
   const handleUpdateSession = (nextSession: LevelSessionState) => {
     setSession(nextSession);
-    if (isDebug) {
-      return;
-    }
     // Auto-save snapshot
     const snap =
       nextSession.status === 'playing'
@@ -176,14 +132,12 @@ export function App({
           }
         : null;
 
-    const nextModeProgress = {
-      ...appState[activeMode],
-      activeSnapshot: snap,
-    };
-
     updateAppState({
       ...appState,
-      [activeMode]: nextModeProgress,
+      progress: {
+        ...appState.progress,
+        activeSnapshot: snap,
+      },
     });
   };
 
@@ -192,45 +146,36 @@ export function App({
       const nextLvlId = Math.min(puzzles.length, session.puzzle.id + 1);
       const puzzle = puzzles.find((p) => p.id === nextLvlId) || puzzles[puzzles.length - 1];
 
-      if (isDebug) {
-        updateDebugRoute(activeMode, nextLvlId);
-        setSession(createLevelSession(puzzle, activeMode, true));
-        return;
-      }
-
-      let newTotalScore = appState[activeMode].totalScore;
-      if (activeMode === 'classic' && session.status === 'won') {
+      let newTotalScore = appState.progress.totalScore;
+      if (session.status === 'won') {
         newTotalScore += session.partialScore + session.levelBonus;
       }
 
-      const nextModeProgress = {
-        currentLevelId: nextLvlId,
-        totalScore: newTotalScore,
-        activeSnapshot: null,
-      };
-
-      const nextApp = {
+      updateAppState({
         ...appState,
-        [activeMode]: nextModeProgress,
-      };
-      updateAppState(nextApp);
+        progress: {
+          currentLevelId: nextLvlId,
+          totalScore: newTotalScore,
+          activeSnapshot: null,
+        },
+      });
 
-      setSession(createLevelSession(puzzle, activeMode));
+      setSession(createLevelSession(puzzle));
     });
   };
 
   const handleRetryLevel = () => {
     navigateWithTransition('forward', () => {
-      const fresh = createLevelSession(session.puzzle, activeMode, isDebug);
+      const fresh = createLevelSession(session.puzzle);
       handleUpdateSession(fresh);
     });
   };
 
-  const handleResetMode = (mode: GameMode) => {
-    const next = resetModeProgress(appState, mode);
+  const handleResetProgress = () => {
+    const next = resetProgress(appState);
     setAppState(next);
-    if (activeScreen === 'game' && activeMode === mode) {
-      setSession(createLevelSession(puzzles[0], mode));
+    if (activeScreen === 'game') {
+      setSession(createLevelSession(puzzles[0]));
     }
   };
 
@@ -242,7 +187,7 @@ export function App({
   };
 
   const currentPuzzle =
-    puzzles.find((p) => p.id === appState[activeMode].currentLevelId) || puzzles[0];
+    puzzles.find((p) => p.id === appState.progress.currentLevelId) || puzzles[0];
 
   return (
     <div>
@@ -250,10 +195,9 @@ export function App({
 
       {activeScreen === 'home' && (
         <HomeScreen
-          chill={appState.chill}
-          classic={appState.classic}
+          progress={appState.progress}
           catVariant={appState.settings.catVariant}
-          onSelectMode={handleStartMode}
+          onPlay={handlePlay}
           onOpenTutorial={() => setShowTutorial(true)}
           onOpenSettings={() => setShowSettings(true)}
         />
@@ -262,7 +206,7 @@ export function App({
       {activeScreen === 'game' && (
         <GameScreen
           puzzle={session.puzzle || currentPuzzle}
-          progress={appState[activeMode]}
+          progress={appState.progress}
           settings={appState.settings}
           session={session}
           onUpdateSession={handleUpdateSession}
@@ -270,10 +214,6 @@ export function App({
           onRetryLevel={handleRetryLevel}
           onBackToMenu={() =>
             navigateWithTransition('backward', () => {
-              if (isDebug) {
-                setIsDebug(false);
-                clearDebugRoute();
-              }
               setActiveScreen('home');
             })
           }
@@ -281,13 +221,11 @@ export function App({
         />
       )}
 
-
       {showSettings && (
         <SettingsModal
           settings={appState.settings}
-          activeMode={activeScreen === 'game' ? activeMode : null}
           onUpdateSettings={handleUpdateSettings}
-          onResetMode={handleResetMode}
+          onResetProgress={handleResetProgress}
           onClose={() => setShowSettings(false)}
         />
       )}

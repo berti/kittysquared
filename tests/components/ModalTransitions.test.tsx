@@ -84,7 +84,7 @@ describe('ModalTransitions', () => {
           tutorialSeen: true,
         }}
         onUpdateSettings={vi.fn()}
-        onResetMode={vi.fn()}
+        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -109,7 +109,7 @@ describe('ModalTransitions', () => {
   });
 
   it('GameScreen won and lost modals apply animation classes to backdrop and card', () => {
-    const wonSession = createLevelSession(dummyPuzzle, 'chill');
+    const wonSession = createLevelSession(dummyPuzzle);
     wonSession.status = 'won';
 
     const { getByTestId, rerender } = render(
@@ -138,7 +138,7 @@ describe('ModalTransitions', () => {
     expect(wonBackdrop.className).toContain('modal-backdrop-anim');
     expect(wonCard.className).toContain('modal-card-flyin');
 
-    const lostSession = createLevelSession(dummyPuzzle, 'chill');
+    const lostSession = createLevelSession(dummyPuzzle);
     lostSession.status = 'lost';
 
     rerender(

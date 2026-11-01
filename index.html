@@ -11,17 +11,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="KittySquared" />
-    <script>
-      (function() {
-        var p = window.location.pathname;
-        var idx = p.indexOf('/debug/');
-        if (idx >= 0) {
-          var base = p.slice(0, idx);
-          var route = p.slice(idx + 1);
-          window.location.replace((base ? base + '/' : '/') + '#/' + route + window.location.search + window.location.hash);
-        }
-      })();
-    </script>
   </head>
   <body>
     <div id="app"></div>

@@ -1,21 +1,19 @@
-import { CatVariant, GameMode } from '../types/puzzle';
+import { CatVariant } from '../types/puzzle';
 import { ModeProgress } from '../state/storage';
 import { CatSvg } from './CatSvg';
 
 export interface HomeScreenProps {
-  chill: ModeProgress;
-  classic: ModeProgress;
+  progress: ModeProgress;
   catVariant: CatVariant;
-  onSelectMode: (mode: GameMode) => void;
+  onPlay: () => void;
   onOpenTutorial: () => void;
   onOpenSettings: () => void;
 }
 
 export function HomeScreen({
-  chill,
-  classic,
+  progress,
   catVariant,
-  onSelectMode,
+  onPlay,
   onOpenTutorial,
   onOpenSettings,
 }: HomeScreenProps) {
@@ -41,16 +39,15 @@ export function HomeScreen({
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', margin: '32px 0' }}>
-        {/* Chill Out Card */}
         <div
-          data-testid="start-chill-btn"
-          onClick={() => onSelectMode('chill')}
+          data-testid="start-game-btn"
+          onClick={onPlay}
           style={{
             background: '#FFFFFF',
             border: '2px solid #E6DEC8',
             boxShadow: '0 4px 0 #E6DEC8',
             borderRadius: '18px',
-            padding: '16px',
+            padding: '18px',
             cursor: 'pointer',
             display: 'flex',
             justifyContent: 'space-between',
@@ -59,51 +56,11 @@ export function HomeScreen({
           }}
         >
           <div>
-            <div style={{ fontWeight: 800, fontSize: '17px', color: '#3D3135', marginBottom: '4px' }}>
-              🌿 Chill Out
+            <div style={{ fontWeight: 800, fontSize: '18px', color: '#3D3135', marginBottom: '4px' }}>
+              🎮 Jugar
             </div>
-            <div style={{ fontSize: '13px', color: '#7A686E' }}>
-              Sin límite de fallos • Nivel {chill.currentLevelId} / 300
-            </div>
-          </div>
-          <div
-            style={{
-              background: '#4ECDC4',
-              color: '#FFF',
-              fontWeight: 800,
-              fontSize: '13px',
-              padding: '9px 14px',
-              borderRadius: '12px',
-              boxShadow: '0 3px 0 #36A69E',
-            }}
-          >
-            Jugar ▶
-          </div>
-        </div>
-
-        {/* Classic Card */}
-        <div
-          data-testid="start-classic-btn"
-          onClick={() => onSelectMode('classic')}
-          style={{
-            background: '#FFFFFF',
-            border: '2px solid #E6DEC8',
-            boxShadow: '0 4px 0 #E6DEC8',
-            borderRadius: '18px',
-            padding: '16px',
-            cursor: 'pointer',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            transition: 'transform 0.1s ease',
-          }}
-        >
-          <div>
-            <div style={{ fontWeight: 800, fontSize: '17px', color: '#3D3135', marginBottom: '4px' }}>
-              🏆 Classic
-            </div>
-            <div style={{ fontSize: '13px', color: '#7A686E' }}>
-              Máx. 3 fallos • Nivel {classic.currentLevelId} • ⭐ {classic.totalScore} pts
+            <div style={{ fontSize: '13.5px', color: '#7A686E' }}>
+              Nivel {progress.currentLevelId} / 300 • ⭐ {progress.totalScore} pts
             </div>
           </div>
           <div
@@ -111,8 +68,8 @@ export function HomeScreen({
               background: '#FF9770',
               color: '#FFF',
               fontWeight: 800,
-              fontSize: '13px',
-              padding: '9px 14px',
+              fontSize: '14px',
+              padding: '10px 16px',
               borderRadius: '12px',
               boxShadow: '0 3px 0 #D9724C',
             }}

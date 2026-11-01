@@ -10,16 +10,6 @@
         var search = window.location.search || '';
         var hash = window.location.hash || '';
 
-        // Match /debug/<mode>/<level> anywhere in the pathname
-        var debugIndex = pathname.indexOf('/debug/');
-        if (debugIndex >= 0) {
-          var base = pathname.slice(0, debugIndex);
-          var debugPart = pathname.slice(debugIndex + 1); // e.g. "debug/classic/84"
-          var redirectTarget = (base ? base + '/' : '/') + '#/' + debugPart + search + hash;
-          window.location.replace(redirectTarget);
-          return;
-        }
-
         // Generic fallback for GitHub Pages repo subpaths (e.g. /kittysquared/unknown -> /kittysquared/)
         var segments = pathname.split('/').filter(Boolean);
         var baseDir = segments.length > 0 ? '/' + segments[0] + '/' : '/';

@@ -20,62 +20,19 @@ const samplePuzzle: PuzzleDef = {
   difficultyScore: 10,
 };
 
-describe('GameScreen Debug Mode badge', () => {
+describe('GameScreen component', () => {
   beforeEach(() => {
     cleanup();
   });
 
-  it('renders Debug Mode badge when session.isDebug is true', () => {
-    const session = createLevelSession(samplePuzzle, 'classic', true);
-    const defaultState = getDefaultAppState();
-
-    const { getByTestId, getByText } = render(
-      <GameScreen
-        puzzle={samplePuzzle}
-        progress={defaultState.classic}
-        settings={defaultState.settings}
-        session={session}
-        onUpdateSession={vi.fn()}
-        onAdvanceLevel={vi.fn()}
-        onRetryLevel={vi.fn()}
-        onBackToMenu={vi.fn()}
-        onOpenSettings={vi.fn()}
-      />
-    );
-
-    expect(getByTestId('debug-mode-badge')).not.toBeNull();
-    expect(getByText(/Debug Mode/i)).not.toBeNull();
-  });
-
-  it('does not render Debug Mode badge when session.isDebug is false or undefined', () => {
-    const session = createLevelSession(samplePuzzle, 'classic', false);
-    const defaultState = getDefaultAppState();
-
-    const { queryByTestId } = render(
-      <GameScreen
-        puzzle={samplePuzzle}
-        progress={defaultState.classic}
-        settings={defaultState.settings}
-        session={session}
-        onUpdateSession={vi.fn()}
-        onAdvanceLevel={vi.fn()}
-        onRetryLevel={vi.fn()}
-        onBackToMenu={vi.fn()}
-        onOpenSettings={vi.fn()}
-      />
-    );
-
-    expect(queryByTestId('debug-mode-badge')).toBeNull();
-  });
-
   it('Review Focus #5: always displays gesture hint text and never renders tool-toggle-switch', () => {
-    const session = createLevelSession(samplePuzzle, 'chill');
+    const session = createLevelSession(samplePuzzle);
     const defaultState = getDefaultAppState();
 
     const { queryByTestId, getByText } = render(
       <GameScreen
         puzzle={samplePuzzle}
-        progress={defaultState.chill}
+        progress={defaultState.progress}
         settings={defaultState.settings}
         session={session}
         onUpdateSession={vi.fn()}

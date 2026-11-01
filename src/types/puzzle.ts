@@ -1,7 +1,5 @@
 export type CellState = 'empty' | 'cross' | 'cat';
 
-export type GameMode = 'chill' | 'classic';
-
 export type CatVariant = 'black' | 'white';
 
 export type RegionAssistMode = 'off' | 'textures' | 'glyphs' | 'numbers';

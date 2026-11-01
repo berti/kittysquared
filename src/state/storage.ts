@@ -1,4 +1,4 @@
-import { CatVariant, CellState, GameMode, RegionAssistMode } from '../types/puzzle';
+import { CatVariant, CellState, RegionAssistMode } from '../types/puzzle';
 
 export interface SavedBoardSnapshot {
   levelId: number;
@@ -25,8 +25,7 @@ export interface AppSettings {
 }
 
 export interface PersistedAppState {
-  chill: ModeProgress;
-  classic: ModeProgress;
+  progress: ModeProgress;
   settings: AppSettings;
 }
 
@@ -41,12 +40,7 @@ export const VALID_REGION_ASSIST_MODES: RegionAssistMode[] = [
 
 export function getDefaultAppState(): PersistedAppState {
   return {
-    chill: {
-      currentLevelId: 1,
-      totalScore: 0,
-      activeSnapshot: null,
-    },
-    classic: {
+    progress: {
       currentLevelId: 1,
       totalScore: 0,
       activeSnapshot: null,
@@ -78,14 +72,12 @@ export function loadPersistedState(): PersistedAppState {
         ? Math.max(250, Math.min(900, rawTimeout))
         : 500;
 
+    const rawProgress = parsed.progress || parsed.classic || parsed.chill || {};
+
     return {
-      chill: {
-        ...defaults.chill,
-        ...(parsed.chill || {}),
-      },
-      classic: {
-        ...defaults.classic,
-        ...(parsed.classic || {}),
+      progress: {
+        ...defaults.progress,
+        ...rawProgress,
       },
       settings: {
         ...defaults.settings,
@@ -109,10 +101,10 @@ export function savePersistedState(state: PersistedAppState): void {
   }
 }
 
-export function resetModeProgress(state: PersistedAppState, mode: GameMode): PersistedAppState {
+export function resetProgress(state: PersistedAppState): PersistedAppState {
   const next: PersistedAppState = {
     ...state,
-    [mode]: {
+    progress: {
       currentLevelId: 1,
       totalScore: 0,
       activeSnapshot: null,

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   getDefaultAppState,
   loadPersistedState,
-  resetModeProgress,
+  resetProgress,
   savePersistedState,
 } from '../../src/state/storage';
 
@@ -12,31 +12,53 @@ describe('state/storage', () => {
     localStorage.clear();
   });
 
-  it('persists and reloads independent progress for Chill Out and Classic modes', () => {
+  it('persists and reloads progress', () => {
     const state = getDefaultAppState();
-    state.chill.currentLevelId = 14;
-    state.classic.currentLevelId = 8;
-    state.classic.totalScore = 640;
+    state.progress.currentLevelId = 8;
+    state.progress.totalScore = 640;
     state.settings.catVariant = 'white';
     savePersistedState(state);
 
     const loaded = loadPersistedState();
-    expect(loaded.chill.currentLevelId).toBe(14);
-    expect(loaded.classic.currentLevelId).toBe(8);
-    expect(loaded.classic.totalScore).toBe(640);
+    expect(loaded.progress.currentLevelId).toBe(8);
+    expect(loaded.progress.totalScore).toBe(640);
     expect(loaded.settings.catVariant).toBe('white');
   });
 
-  it('resets only the requested mode progress back to level 1 and 0 points', () => {
+  it('resets progress back to level 1 and 0 points while preserving settings', () => {
     const state = getDefaultAppState();
-    state.chill.currentLevelId = 10;
-    state.classic.currentLevelId = 5;
-    state.classic.totalScore = 320;
-    const afterReset = resetModeProgress(state, 'classic');
-    expect(afterReset.classic.currentLevelId).toBe(1);
-    expect(afterReset.classic.totalScore).toBe(0);
-    expect(afterReset.classic.activeSnapshot).toBeNull();
-    expect(afterReset.chill.currentLevelId).toBe(10);
+    state.progress.currentLevelId = 5;
+    state.progress.totalScore = 320;
+    state.settings.catVariant = 'white';
+    const afterReset = resetProgress(state);
+    expect(afterReset.progress.currentLevelId).toBe(1);
+    expect(afterReset.progress.totalScore).toBe(0);
+    expect(afterReset.progress.activeSnapshot).toBeNull();
+    expect(afterReset.settings.catVariant).toBe('white');
+  });
+
+  it('migrates legacy save format with classic progress to unified progress', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        classic: { currentLevelId: 42, totalScore: 1200, activeSnapshot: null },
+        chill: { currentLevelId: 5, totalScore: 0, activeSnapshot: null },
+      })
+    );
+    const loaded = loadPersistedState();
+    expect(loaded.progress.currentLevelId).toBe(42);
+    expect(loaded.progress.totalScore).toBe(1200);
+  });
+
+  it('migrates legacy save format with only chill progress if classic is missing', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        chill: { currentLevelId: 15, totalScore: 0, activeSnapshot: null },
+      })
+    );
+    const loaded = loadPersistedState();
+    expect(loaded.progress.currentLevelId).toBe(15);
   });
 
   it('Review Focus #5: loadPersistedState falls back to defaults when localStorage contains malformed JSON', () => {
@@ -60,7 +82,6 @@ describe('state/storage', () => {
     localStorage.setItem(
       'kittysquared_state_v1',
       JSON.stringify({
-        chill: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
         classic: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
         settings: {
           controlScheme: 'toggle',
@@ -90,7 +111,6 @@ describe('state/storage', () => {
 
   it('migrates older state by adding default doubleTapTimeoutMs (500)', () => {
     const legacyState = {
-      chill: { currentLevelId: 2, totalScore: 0, activeSnapshot: null },
       classic: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
       settings: {
         controlScheme: 'double-tap',

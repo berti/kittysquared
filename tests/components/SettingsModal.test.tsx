@@ -24,7 +24,7 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={defaultSettings}
         onUpdateSettings={vi.fn()}
-        onResetMode={vi.fn()}
+        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -40,7 +40,7 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={defaultSettings}
         onUpdateSettings={vi.fn()}
-        onResetMode={vi.fn()}
+        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -54,7 +54,7 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={defaultSettings}
         onUpdateSettings={vi.fn()}
-        onResetMode={vi.fn()}
+        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -83,7 +83,7 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={{ ...defaultSettings, doubleTapTimeoutMs: 500 }}
         onUpdateSettings={onUpdateSettings}
-        onResetMode={vi.fn()}
+        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -113,7 +113,7 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={{ ...defaultSettings, doubleTapTimeoutMs: 500 }}
         onUpdateSettings={vi.fn()}
-        onResetMode={vi.fn()}
+        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -142,7 +142,7 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={defaultSettings}
         onUpdateSettings={vi.fn()}
-        onResetMode={vi.fn()}
+        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -160,7 +160,7 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={{ ...defaultSettings, regionAssist: 'glyphs' }}
         onUpdateSettings={vi.fn()}
-        onResetMode={vi.fn()}
+        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -177,7 +177,7 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={{ ...defaultSettings, regionAssist: 'textures' }}
         onUpdateSettings={vi.fn()}
-        onResetMode={vi.fn()}
+        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -192,7 +192,7 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={defaultSettings}
         onUpdateSettings={onUpdateSettings}
-        onResetMode={vi.fn()}
+        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -209,57 +209,28 @@ describe('SettingsModal component', () => {
     );
   });
 
-  it('Reset tab: shows only active mode reset button during game play, and opens ConfirmDialog on click', () => {
-    const onResetMode = vi.fn();
+  it('Reset tab: shows single reset button, and opens ConfirmDialog on click', () => {
+    const onResetProgress = vi.fn();
 
-    // 1. Chill mode active -> only Chill reset visible
-    const { getByTestId, queryByTestId, rerender } = render(
+    const { getByTestId } = render(
       <SettingsModal
         settings={defaultSettings}
-        activeMode="chill"
         onUpdateSettings={vi.fn()}
-        onResetMode={onResetMode}
+        onResetProgress={onResetProgress}
         onClose={vi.fn()}
       />
     );
 
     fireEvent.click(getByTestId('tab-btn-reset'));
-    expect(getByTestId('reset-chill-btn')).toBeDefined();
-    expect(queryByTestId('reset-classic-btn')).toBeNull();
+    expect(getByTestId('reset-progress-btn')).toBeDefined();
 
-    // Click reset chill -> opens ConfirmDialog (does not call onResetMode yet)
-    fireEvent.click(getByTestId('reset-chill-btn'));
+    // Click reset progress -> opens ConfirmDialog (does not call onResetProgress yet)
+    fireEvent.click(getByTestId('reset-progress-btn'));
     expect(getByTestId('confirm-dialog-confirm-btn')).toBeDefined();
-    expect(onResetMode).not.toHaveBeenCalled();
+    expect(onResetProgress).not.toHaveBeenCalled();
 
     // Confirm in dialog
     fireEvent.click(getByTestId('confirm-dialog-confirm-btn'));
-    expect(onResetMode).toHaveBeenCalledWith('chill');
-
-    // 2. Classic mode active -> only Classic reset visible
-    rerender(
-      <SettingsModal
-        settings={defaultSettings}
-        activeMode="classic"
-        onUpdateSettings={vi.fn()}
-        onResetMode={onResetMode}
-        onClose={vi.fn()}
-      />
-    );
-    expect(queryByTestId('reset-chill-btn')).toBeNull();
-    expect(getByTestId('reset-classic-btn')).toBeDefined();
-
-    // 3. Home menu (activeMode = null) -> both visible
-    rerender(
-      <SettingsModal
-        settings={defaultSettings}
-        activeMode={null}
-        onUpdateSettings={vi.fn()}
-        onResetMode={onResetMode}
-        onClose={vi.fn()}
-      />
-    );
-    expect(getByTestId('reset-chill-btn')).toBeDefined();
-    expect(getByTestId('reset-classic-btn')).toBeDefined();
+    expect(onResetProgress).toHaveBeenCalledTimes(1);
   });
 });

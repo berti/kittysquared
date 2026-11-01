@@ -1,10 +1,8 @@
-import { CellState, GameMode, PuzzleDef } from '../types/puzzle';
-import { findConflictingCats, getDirectEliminations, isBoardSolved } from '../engine/rules';
+import { CellState, PuzzleDef } from '../types/puzzle';
+import { isBoardSolved } from '../engine/rules';
 
 export interface LevelSessionState {
   puzzle: PuzzleDef;
-  mode: GameMode;
-  isDebug?: boolean;
   board: CellState[][];
   lockedCats: boolean[][];
   errorCrosses: boolean[][];
@@ -19,16 +17,10 @@ export interface LevelSessionState {
   history: { board: CellState[][]; lockedCats: boolean[][] }[];
 }
 
-export function createLevelSession(
-  puzzle: PuzzleDef,
-  mode: GameMode,
-  isDebug = false
-): LevelSessionState {
+export function createLevelSession(puzzle: PuzzleDef): LevelSessionState {
   const size = puzzle.size;
   return {
     puzzle,
-    mode,
-    isDebug,
     board: Array.from({ length: size }, () => Array(size).fill('empty')),
     lockedCats: Array.from({ length: size }, () => Array(size).fill(false)),
     errorCrosses: Array.from({ length: size }, () => Array(size).fill(false)),
@@ -60,8 +52,8 @@ export function applyCellTap(
 ): LevelSessionState {
   if (state.status !== 'playing') return state;
 
-  // If in classic mode and this cell is locked (cat or error cross), tap does nothing
-  if (state.mode === 'classic' && (state.lockedCats[row][col] || state.errorCrosses?.[row][col])) {
+  // If this cell is locked (cat or error cross), tap does nothing
+  if (state.lockedCats[row][col] || state.errorCrosses?.[row][col]) {
     return state;
   }
 
@@ -79,7 +71,7 @@ export function applyCellTap(
   }
 
   // Handle Classic Mode validation when placing a cat
-  if (state.mode === 'classic' && nextState === 'cat') {
+  if (nextState === 'cat') {
     const isCorrect = state.puzzle.solution[row] === col;
     if (!isCorrect) {
       const nextMistakes = state.mistakes + 1;
@@ -100,25 +92,11 @@ export function applyCellTap(
         lastPlacedCat: null,
       };
     } else {
-      // Correct cat placement in Classic
+      // Correct cat placement
       const newBoard = cloneBoard(state.board);
       const newLocked = cloneLocked(state.lockedCats);
       newBoard[row][col] = 'cat';
       newLocked[row][col] = true;
-
-      if (state.isDebug) {
-        const directEliminations = getDirectEliminations(
-          state.puzzle.size,
-          state.puzzle.regions,
-          row,
-          col
-        );
-        for (const coord of directEliminations) {
-          if (newBoard[coord.row][coord.col] !== 'cat') {
-            newBoard[coord.row][coord.col] = 'cross';
-          }
-        }
-      }
 
       const solved = isBoardSolved(newBoard, state.puzzle.regions);
       let bonus = 0;
@@ -144,20 +122,16 @@ export function applyCellTap(
     }
   }
 
-  // Chill out mode or non-cat changes in Classic
+  // Non-cat changes (toggling cross)
   const newBoard = cloneBoard(state.board);
   newBoard[row][col] = nextState;
-
-  const conflicts = findConflictingCats(newBoard, state.puzzle.regions);
-  const solved = isBoardSolved(newBoard, state.puzzle.regions);
 
   return {
     ...state,
     board: newBoard,
-    conflictingKeys: conflicts,
-    status: solved ? 'won' : 'playing',
+    conflictingKeys: new Set(),
     lastErrorCell: null,
-    lastPlacedCat: nextState === 'cat' ? { row, col } : null,
+    lastPlacedCat: null,
     history: [...state.history, { board: cloneBoard(state.board), lockedCats: cloneLocked(state.lockedCats) }],
   };
 }
@@ -170,11 +144,11 @@ export function applyDragCross(
 ): LevelSessionState {
   if (state.status !== 'playing') return state;
 
-  // Never overwrite or erase a cell that contains a cat or locked cell (including classic error cross)
+  // Never overwrite or erase a cell that contains a cat or locked cell (including error cross)
   if (
     state.board[row][col] === 'cat' ||
     state.lockedCats[row][col] ||
-    (state.mode === 'classic' && state.errorCrosses?.[row][col])
+    state.errorCrosses?.[row][col]
   ) {
     return state;
   }
@@ -202,8 +176,8 @@ export function undoMove(state: LevelSessionState): LevelSessionState {
   const newHistory = state.history.slice(0, -1);
   const restoredBoard = cloneBoard(prev.board);
 
-  // In classic mode, preserve errorCrosses on restored board
-  if (state.mode === 'classic' && state.errorCrosses) {
+  // Preserve errorCrosses on restored board
+  if (state.errorCrosses) {
     for (let r = 0; r < state.puzzle.size; r++) {
       for (let c = 0; c < state.puzzle.size; c++) {
         if (state.errorCrosses[r][c]) {
@@ -213,13 +187,11 @@ export function undoMove(state: LevelSessionState): LevelSessionState {
     }
   }
 
-  const conflicts = findConflictingCats(restoredBoard, state.puzzle.regions);
-
   return {
     ...state,
     board: restoredBoard,
     lockedCats: prev.lockedCats,
-    conflictingKeys: conflicts,
+    conflictingKeys: new Set(),
     history: newHistory,
     lastErrorCell: null,
   };
@@ -243,6 +215,6 @@ export function clearCrosses(state: LevelSessionState): LevelSessionState {
     ...state,
     board: newBoard,
     history: [...state.history, { board: cloneBoard(state.board), lockedCats: cloneLocked(state.lockedCats) }],
-    conflictingKeys: findConflictingCats(newBoard, state.puzzle.regions),
+    conflictingKeys: new Set(),
   };
 }

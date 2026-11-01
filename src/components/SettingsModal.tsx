@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { AppSettings } from '../state/storage';
-import { CatVariant, GameMode, RegionAssistMode } from '../types/puzzle';
+import { CatVariant, RegionAssistMode } from '../types/puzzle';
 import { REGION_GLYPHS } from './Board';
 import { CatSvg } from './CatSvg';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -9,21 +9,19 @@ export type SettingsTab = 'controls' | 'graphics' | 'sound' | 'reset';
 
 export interface SettingsModalProps {
   settings: AppSettings;
-  activeMode?: GameMode | null;
   onUpdateSettings: (settings: AppSettings) => void;
-  onResetMode: (mode: GameMode) => void;
+  onResetProgress: () => void;
   onClose: () => void;
 }
 
 export function SettingsModal({
   settings,
-  activeMode,
   onUpdateSettings,
-  onResetMode,
+  onResetProgress,
   onClose,
 }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>('controls');
-  const [confirmResetMode, setConfirmResetMode] = useState<GameMode | null>(null);
+  const [showConfirmReset, setShowConfirmReset] = useState(false);
 
   // Tap tester state
   const [lastTesterTapTime, setLastTesterTapTime] = useState(0);
@@ -555,88 +553,51 @@ export function SettingsModal({
                 REINICIAR PROGRESO DE PARTIDA
               </div>
 
-              {(!activeMode || activeMode === 'chill') && (
-                <button
-                  type="button"
-                  data-testid="reset-chill-btn"
-                  onClick={() => setConfirmResetMode('chill')}
-                  style={{
-                    background: '#FFF',
-                    border: '2px solid #E2D6C1',
-                    borderRadius: '12px',
-                    padding: '12px',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#3D3135' }}>
-                      Reiniciar Chill Out
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#7A686E', marginTop: '2px' }}>
-                      Volver al nivel 1 conservando ajustes
-                    </div>
+              <button
+                type="button"
+                data-testid="reset-progress-btn"
+                onClick={() => setShowConfirmReset(true)}
+                style={{
+                  background: '#FFF',
+                  border: '2px solid #FCA5A5',
+                  borderRadius: '12px',
+                  padding: '12px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#DC2626' }}>
+                    Reiniciar progreso
                   </div>
-                  <span style={{ fontSize: '16px' }}>🔄</span>
-                </button>
-              )}
-
-              {(!activeMode || activeMode === 'classic') && (
-                <button
-                  type="button"
-                  data-testid="reset-classic-btn"
-                  onClick={() => setConfirmResetMode('classic')}
-                  style={{
-                    background: '#FFF',
-                    border: '2px solid #FCA5A5',
-                    borderRadius: '12px',
-                    padding: '12px',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#DC2626' }}>
-                      Reiniciar Classic
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#EF4444', marginTop: '2px' }}>
-                      Volver al nivel 1 y puntuación a 0
-                    </div>
+                  <div style={{ fontSize: '11px', color: '#EF4444', marginTop: '2px' }}>
+                    Volver al nivel 1 y puntuación a 0
                   </div>
-                  <span style={{ fontSize: '16px' }}>⚠️</span>
-                </button>
-              )}
+                </div>
+                <span style={{ fontSize: '16px' }}>⚠️</span>
+              </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Confirmation Dialog for Mode Reset */}
+      {/* Confirmation Dialog for Progress Reset */}
       <ConfirmDialog
-        isOpen={confirmResetMode !== null}
-        title={confirmResetMode === 'chill' ? '¿Reiniciar Chill Out?' : '¿Reiniciar Classic?'}
-        description={
-          confirmResetMode === 'chill'
-            ? 'Volverás al nivel 1 de Chill Out conservando los ajustes de la partida.'
-            : 'Perderás el nivel alcanzado y todos los puntos acumulados de Classic volverán a 0.'
-        }
-        icon={confirmResetMode === 'chill' ? '🔄' : '⚠️'}
+        isOpen={showConfirmReset}
+        title="¿Reiniciar progreso?"
+        description="Perderás el nivel alcanzado y todos los puntos acumulados volverán a 0."
+        icon="⚠️"
         confirmText="Sí, reiniciar"
         cancelText="Cancelar"
         isDestructive={true}
         onConfirm={() => {
-          if (confirmResetMode) {
-            onResetMode(confirmResetMode);
-            setConfirmResetMode(null);
-          }
+          onResetProgress();
+          setShowConfirmReset(false);
         }}
-        onCancel={() => setConfirmResetMode(null)}
+        onCancel={() => setShowConfirmReset(false)}
       />
     </>
   );

@@ -111,22 +111,6 @@ export function GameScreen({
             <div style={{ fontWeight: 800, fontSize: '17px', color: '#3D3135' }}>
               Nivel {puzzle.id}
             </div>
-            {session.isDebug && (
-              <span
-                data-testid="debug-mode-badge"
-                style={{
-                  background: '#E76F51',
-                  color: '#FFFFFF',
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  letterSpacing: '0.4px',
-                }}
-              >
-                🛠️ Debug Mode
-              </span>
-            )}
           </div>
           <div style={{ display: 'flex', gap: '6px' }}>
             <button
@@ -187,29 +171,25 @@ export function GameScreen({
           <span>
             🐱 {placedCatsCount} / {puzzle.size}
           </span>
-          {session.mode === 'classic' && (
-            <>
-              <span
-                style={{
-                  position: 'absolute',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  whiteSpace: 'nowrap',
-                  pointerEvents: 'none',
-                }}
-              >
-                {hearts.join(' ')}
+          <span
+            style={{
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+            }}
+          >
+            {hearts.join(' ')}
+          </span>
+          <span>
+            ⭐ {progress.totalScore}{' '}
+            {session.partialScore > 0 && (
+              <span style={{ color: '#E07A5F' }}>
+                (+{session.partialScore + session.levelBonus})
               </span>
-              <span>
-                ⭐ {progress.totalScore}{' '}
-                {session.partialScore > 0 && (
-                  <span style={{ color: '#E07A5F' }}>
-                    (+{session.partialScore + session.levelBonus})
-                  </span>
-                )}
-              </span>
-            </>
-          )}
+            )}
+          </span>
         </div>
       </div>
 
@@ -290,19 +270,13 @@ export function GameScreen({
             <h2 style={{ margin: '0 0 6px', fontSize: '22px', color: '#3D3135' }}>
               ¡Nivel {puzzle.id} superado!
             </h2>
-            {session.mode === 'classic' ? (
-              <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#7A686E' }}>
-                Puntos gatos: +{session.partialScore}
-                <br />
-                Bono por fallos: +{session.levelBonus}
-                <br />
-                <strong>Nuevo total: {progress.totalScore + session.partialScore + session.levelBonus} pts</strong>
-              </p>
-            ) : (
-              <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#7A686E' }}>
-                ¡Perfecto! Has resuelto el puzzle sin conflictos.
-              </p>
-            )}
+            <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#7A686E' }}>
+              Puntos gatos: +{session.partialScore}
+              <br />
+              Bono por fallos: +{session.levelBonus}
+              <br />
+              <strong>Nuevo total: {progress.totalScore + session.partialScore + session.levelBonus} pts</strong>
+            </p>
             <button
               onClick={onAdvanceLevel}
               style={{
