@@ -108,8 +108,26 @@ export function GameScreen({
           >
             ← Menú
           </button>
-          <div style={{ fontWeight: 800, fontSize: '17px', color: '#3D3135' }}>
-            Nivel {puzzle.id}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ fontWeight: 800, fontSize: '17px', color: '#3D3135' }}>
+              Nivel {puzzle.id}
+            </div>
+            {session.isDebug && (
+              <span
+                data-testid="debug-mode-badge"
+                style={{
+                  background: '#E76F51',
+                  color: '#FFFFFF',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  letterSpacing: '0.4px',
+                }}
+              >
+                🛠️ Debug Mode
+              </span>
+            )}
           </div>
           <div style={{ display: 'flex', gap: '6px' }}>
             <button

@@ -1,9 +1,10 @@
 import { CellState, ControlScheme, GameMode, PuzzleDef } from '../types/puzzle';
-import { findConflictingCats, isBoardSolved } from '../engine/rules';
+import { findConflictingCats, getDirectEliminations, isBoardSolved } from '../engine/rules';
 
 export interface LevelSessionState {
   puzzle: PuzzleDef;
   mode: GameMode;
+  isDebug?: boolean;
   board: CellState[][];
   lockedCats: boolean[][];
   errorCrosses: boolean[][];
@@ -18,11 +19,16 @@ export interface LevelSessionState {
   history: { board: CellState[][]; lockedCats: boolean[][] }[];
 }
 
-export function createLevelSession(puzzle: PuzzleDef, mode: GameMode): LevelSessionState {
+export function createLevelSession(
+  puzzle: PuzzleDef,
+  mode: GameMode,
+  isDebug = false
+): LevelSessionState {
   const size = puzzle.size;
   return {
     puzzle,
     mode,
+    isDebug,
     board: Array.from({ length: size }, () => Array(size).fill('empty')),
     lockedCats: Array.from({ length: size }, () => Array(size).fill(false)),
     errorCrosses: Array.from({ length: size }, () => Array(size).fill(false)),
@@ -109,6 +115,20 @@ export function applyCellTap(
       const newLocked = cloneLocked(state.lockedCats);
       newBoard[row][col] = 'cat';
       newLocked[row][col] = true;
+
+      if (state.isDebug) {
+        const directEliminations = getDirectEliminations(
+          state.puzzle.size,
+          state.puzzle.regions,
+          row,
+          col
+        );
+        for (const coord of directEliminations) {
+          if (newBoard[coord.row][coord.col] !== 'cat') {
+            newBoard[coord.row][coord.col] = 'cross';
+          }
+        }
+      }
 
       const solved = isBoardSolved(newBoard, state.puzzle.regions);
       let bonus = 0;
