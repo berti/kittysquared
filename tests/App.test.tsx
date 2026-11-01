@@ -2,6 +2,7 @@
 import { act, fireEvent, render } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../src/App';
+import { soundEngine } from '../src/audio/soundEngine';
 
 describe('App integration', () => {
   beforeEach(() => {
@@ -71,6 +72,24 @@ describe('App integration', () => {
     fireEvent.click(getByTestId('start-game-btn'));
     const cell = document.querySelector('[data-testid="cell-0-0"]');
     expect(cell?.querySelector('.region-glyph-badge')).not.toBeNull();
+  });
+
+  it('synchronizes volume and music track settings with soundEngine', () => {
+    const setVolumeSpy = vi.spyOn(soundEngine, 'setVolume');
+    const setTrackSpy = vi.spyOn(soundEngine, 'setTrackPreference');
+
+    const { getByTestId } = render(<App />);
+    fireEvent.click(getByTestId('open-settings-btn'));
+    fireEvent.click(getByTestId('tab-btn-sound'));
+
+    fireEvent.click(getByTestId('music-vol-step-0.5'));
+    expect(setVolumeSpy).toHaveBeenCalledWith(0.5, expect.any(Number));
+
+    fireEvent.click(getByTestId('track-opt-samba'));
+    expect(setTrackSpy).toHaveBeenCalledWith('samba');
+
+    setVolumeSpy.mockRestore();
+    setTrackSpy.mockRestore();
   });
 
   it('GameScreen has restart button in top bar, no undo/clear buttons, and no mode text in status bar', () => {
