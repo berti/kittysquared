@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KittySquared — Redirigiendo...</title>
+    <script>
+      (function() {
+        var pathname = window.location.pathname;
+        var search = window.location.search || '';
+        var hash = window.location.hash || '';
+
+        // Match /debug/<mode>/<level> anywhere in the pathname
+        var debugIndex = pathname.indexOf('/debug/');
+        if (debugIndex >= 0) {
+          var base = pathname.slice(0, debugIndex);
+          var debugPart = pathname.slice(debugIndex + 1); // e.g. "debug/classic/84"
+          var redirectTarget = (base ? base + '/' : '/') + '#/' + debugPart + search + hash;
+          window.location.replace(redirectTarget);
+          return;
+        }
+
+        // Generic fallback for GitHub Pages repo subpaths (e.g. /kittysquared/unknown -> /kittysquared/)
+        var segments = pathname.split('/').filter(Boolean);
+        var baseDir = segments.length > 0 ? '/' + segments[0] + '/' : '/';
+        window.location.replace(baseDir);
+      })();
+    </script>
+  </head>
+  <body style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #FBF9F5; color: #2C2C2A; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;">
+    <p>Cargando KittySquared...</p>
+  </body>
+</html>

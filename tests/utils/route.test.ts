@@ -41,6 +41,58 @@ describe('route utilities', () => {
         mode: 'classic',
         levelId: 84,
       });
+
+      // Hash routing support (for static hosts like GitHub Pages)
+      expect(parseDebugRoute('#/debug/classic/84')).toEqual({
+        isDebug: true,
+        mode: 'classic',
+        levelId: 84,
+      });
+
+      expect(parseDebugRoute('#debug/chill/12')).toEqual({
+        isDebug: true,
+        mode: 'chill',
+        levelId: 12,
+      });
+
+      expect(parseDebugRoute('/kittysquared/#/debug/classic/84')).toEqual({
+        isDebug: true,
+        mode: 'classic',
+        levelId: 84,
+      });
+
+      expect(parseDebugRoute('https://berti.github.io/kittysquared/#/debug/chill/50')).toEqual({
+        isDebug: true,
+        mode: 'chill',
+        levelId: 50,
+      });
+
+      // Query parameter support
+      expect(parseDebugRoute('?debug=classic/42')).toEqual({
+        isDebug: true,
+        mode: 'classic',
+        levelId: 42,
+      });
+
+      expect(parseDebugRoute('https://berti.github.io/kittysquared/?debug/chill/18')).toEqual({
+        isDebug: true,
+        mode: 'chill',
+        levelId: 18,
+      });
+    });
+
+    it('reads from window.location if no path is provided', () => {
+      const origHash = window.location.hash;
+      try {
+        window.location.hash = '#/debug/chill/77';
+        expect(parseDebugRoute()).toEqual({
+          isDebug: true,
+          mode: 'chill',
+          levelId: 77,
+        });
+      } finally {
+        window.location.hash = origHash;
+      }
     });
 
     it('clamps level between 1 and 300', () => {
@@ -82,6 +134,19 @@ describe('route utilities', () => {
         replaceStateSpy.mockRestore();
       } finally {
         window.history.pushState(null, '', origPathname);
+      }
+    });
+
+    it('updates URL preserving hash format when hash routing is active', () => {
+      const origHref = window.location.href;
+      try {
+        window.history.pushState(null, '', '/kittysquared/#/debug/chill/10');
+        const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+        updateDebugRoute('chill', 11);
+        expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/kittysquared/#/debug/chill/11');
+        replaceStateSpy.mockRestore();
+      } finally {
+        window.history.pushState(null, '', origHref);
       }
     });
 

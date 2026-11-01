@@ -28,9 +28,7 @@ export function App({
   transitionDurationMs = typeof process !== 'undefined' && process.env.NODE_ENV === 'test' ? 0 : 300,
   initialPath,
 }: AppProps = {}) {
-  const initialRoute = parseDebugRoute(
-    initialPath ?? (typeof window !== 'undefined' ? window.location.pathname : '')
-  );
+  const initialRoute = parseDebugRoute(initialPath);
 
   const [appState, setAppState] = useState<PersistedAppState>(() => loadPersistedState());
   const [isDebug, setIsDebug] = useState<boolean>(!!initialRoute);
@@ -92,12 +90,10 @@ export function App({
     return createLevelSession(puzzles[0], 'chill');
   });
 
-  // Listen for browser navigation (popstate)
+  // Listen for browser navigation (popstate & hashchange)
   useEffect(() => {
-    const handlePopState = () => {
-      const route = parseDebugRoute(
-        typeof window !== 'undefined' ? window.location.pathname : ''
-      );
+    const handleRouteChange = () => {
+      const route = parseDebugRoute();
       if (route) {
         setIsDebug(true);
         setActiveMode(route.mode);
@@ -111,8 +107,12 @@ export function App({
     };
 
     if (typeof window !== 'undefined') {
-      window.addEventListener('popstate', handlePopState);
-      return () => window.removeEventListener('popstate', handlePopState);
+      window.addEventListener('popstate', handleRouteChange);
+      window.addEventListener('hashchange', handleRouteChange);
+      return () => {
+        window.removeEventListener('popstate', handleRouteChange);
+        window.removeEventListener('hashchange', handleRouteChange);
+      };
     }
   }, []);
 
