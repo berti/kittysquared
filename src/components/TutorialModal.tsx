@@ -169,20 +169,20 @@ export function TutorialModal({ catVariant, regionAssist = 'off', onClose }: Tut
                   key={`${r}-${c}`}
                   data-testid={`tutorial-cell-${r}-${c}`}
                   onClick={() => handleCellClick(r, c)}
-                  className={`board-cell reg-${regId % 9}`}
+                  className={`board-cell reg-${regId}`}
                   style={{
                     boxShadow: isTarget ? '0 0 0 3px #6366F1' : undefined,
                     cursor: isTarget ? 'pointer' : 'default',
                   }}
                 >
                   {regionAssist === 'textures' && (
-                    <div className={`region-pattern pat-${regId % 9}`} />
+                    <div className={`region-pattern pat-${regId}`} />
                   )}
                   {regionAssist === 'glyphs' && (
-                    <span className="region-glyph-badge">{REGION_GLYPHS[regId % 9]}</span>
+                    <span className="region-glyph-badge">{REGION_GLYPHS[regId]}</span>
                   )}
                   {regionAssist === 'numbers' && (
-                    <span className="region-number-badge">{(regId % 9) + 1}</span>
+                    <span className="region-number-badge">{regId + 1}</span>
                   )}
                   {cellState === 'cross' && (
                     <svg viewBox="0 0 24 24" className="cross-mark">

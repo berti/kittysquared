@@ -37,7 +37,7 @@ export function HomeScreen({
           <CatSvg variant={catVariant} state="idle" />
         </div>
         <h1 style={{ margin: '0 0 4px', fontSize: '30px', color: '#3D3135' }}>KittySquared</h1>
-        <p style={{ margin: 0, fontSize: '14px', color: '#8C7A80' }}>100 puzzles de lógica felina</p>
+        <p style={{ margin: 0, fontSize: '14px', color: '#8C7A80' }}>300 puzzles de lógica felina</p>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', margin: '32px 0' }}>
@@ -63,7 +63,7 @@ export function HomeScreen({
               🌿 Chill Out
             </div>
             <div style={{ fontSize: '13px', color: '#7A686E' }}>
-              Sin límite de fallos • Nivel {chill.currentLevelId} / 100
+              Sin límite de fallos • Nivel {chill.currentLevelId} / 300
             </div>
           </div>
           <div

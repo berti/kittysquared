@@ -2,7 +2,7 @@ import { useRef } from 'preact/hooks';
 import { CatVariant, CellState, RegionAssistMode } from '../types/puzzle';
 import { CatSvg } from './CatSvg';
 
-export const REGION_GLYPHS = ['🐾', '🐟', '🧶', '🔔', '⭐', '🌙', '🐭', '👑', '💖'];
+export const REGION_GLYPHS = ['🐾', '🐟', '🧶', '🔔', '⭐', '🌙', '🐭', '👑', '💖', '🥛'];
 
 export interface BoardProps {
   size: number;
@@ -144,7 +144,7 @@ export function Board({
               <div
                 key={`${r}-${c}`}
                 data-testid={`cell-${r}-${c}`}
-                className={`board-cell reg-${regId % 9} ${isConflict ? 'has-conflict' : ''} ${
+                className={`board-cell reg-${regId} ${isConflict ? 'has-conflict' : ''} ${
                   isError ? 'has-error' : ''
                 } ${isLocked ? 'is-locked' : ''} ${isErrorCross ? 'has-error-cross' : ''}`}
                 onClick={() => handleClick(r, c)}
@@ -153,13 +153,13 @@ export function Board({
                 {...nativePointerProps}
               >
                 {regionAssist === 'textures' && (
-                  <div className={`region-pattern pat-${regId % 9}`} />
+                  <div className={`region-pattern pat-${regId}`} />
                 )}
                 {regionAssist === 'glyphs' && (
-                  <span className="region-glyph-badge">{REGION_GLYPHS[regId % 9]}</span>
+                  <span className="region-glyph-badge">{REGION_GLYPHS[regId]}</span>
                 )}
                 {regionAssist === 'numbers' && (
-                  <span className="region-number-badge">{(regId % 9) + 1}</span>
+                  <span className="region-number-badge">{regId + 1}</span>
                 )}
                 {state === 'cross' && (
                   <svg

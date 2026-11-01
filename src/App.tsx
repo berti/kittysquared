@@ -15,19 +15,27 @@ import {
   savePersistedState,
 } from './state/storage';
 import { GameMode, PuzzleDef } from './types/puzzle';
+import { clearDebugRoute, parseDebugRoute, updateDebugRoute } from './utils/route';
 
 const puzzles = puzzlesData as PuzzleDef[];
 
 export interface AppProps {
   transitionDurationMs?: number;
+  initialPath?: string;
 }
 
 export function App({
   transitionDurationMs = typeof process !== 'undefined' && process.env.NODE_ENV === 'test' ? 0 : 300,
+  initialPath,
 }: AppProps = {}) {
+  const initialRoute = parseDebugRoute(
+    initialPath ?? (typeof window !== 'undefined' ? window.location.pathname : '')
+  );
+
   const [appState, setAppState] = useState<PersistedAppState>(() => loadPersistedState());
-  const [activeScreen, setActiveScreen] = useState<'home' | 'game'>('home');
-  const [activeMode, setActiveMode] = useState<GameMode>('chill');
+  const [isDebug, setIsDebug] = useState<boolean>(!!initialRoute);
+  const [activeScreen, setActiveScreen] = useState<'home' | 'game'>(initialRoute ? 'game' : 'home');
+  const [activeMode, setActiveMode] = useState<GameMode>(initialRoute ? initialRoute.mode : 'chill');
   const [showSettings, setShowSettings] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [transitionState, setTransitionState] = useState<{
@@ -77,8 +85,36 @@ export function App({
 
   // Current session in play
   const [session, setSession] = useState<LevelSessionState>(() => {
+    if (initialRoute) {
+      const puzzle = puzzles.find((p) => p.id === initialRoute.levelId) || puzzles[0];
+      return createLevelSession(puzzle, initialRoute.mode, true);
+    }
     return createLevelSession(puzzles[0], 'chill');
   });
+
+  // Listen for browser navigation (popstate)
+  useEffect(() => {
+    const handlePopState = () => {
+      const route = parseDebugRoute(
+        typeof window !== 'undefined' ? window.location.pathname : ''
+      );
+      if (route) {
+        setIsDebug(true);
+        setActiveMode(route.mode);
+        const puzzle = puzzles.find((p) => p.id === route.levelId) || puzzles[0];
+        setSession(createLevelSession(puzzle, route.mode, true));
+        setActiveScreen('game');
+      } else {
+        setIsDebug(false);
+        setActiveScreen('home');
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('popstate', handlePopState);
+      return () => window.removeEventListener('popstate', handlePopState);
+    }
+  }, []);
 
   // Sync mute settings with soundEngine
   useEffect(() => {
@@ -93,6 +129,7 @@ export function App({
 
   const handleStartMode = (mode: GameMode) => {
     navigateWithTransition('forward', () => {
+      setIsDebug(false);
       setActiveMode(mode);
       const currentLvlId = appState[mode].currentLevelId;
       const puzzle = puzzles.find((p) => p.id === currentLvlId) || puzzles[0];
@@ -123,6 +160,9 @@ export function App({
 
   const handleUpdateSession = (nextSession: LevelSessionState) => {
     setSession(nextSession);
+    if (isDebug) {
+      return;
+    }
     // Auto-save snapshot
     const snap =
       nextSession.status === 'playing'
@@ -149,8 +189,14 @@ export function App({
 
   const handleAdvanceLevel = () => {
     navigateWithTransition('forward', () => {
-      const nextLvlId = Math.min(100, session.puzzle.id + 1);
+      const nextLvlId = Math.min(puzzles.length, session.puzzle.id + 1);
       const puzzle = puzzles.find((p) => p.id === nextLvlId) || puzzles[puzzles.length - 1];
+
+      if (isDebug) {
+        updateDebugRoute(activeMode, nextLvlId);
+        setSession(createLevelSession(puzzle, activeMode, true));
+        return;
+      }
 
       let newTotalScore = appState[activeMode].totalScore;
       if (activeMode === 'classic' && session.status === 'won') {
@@ -175,7 +221,7 @@ export function App({
 
   const handleRetryLevel = () => {
     navigateWithTransition('forward', () => {
-      const fresh = createLevelSession(session.puzzle, activeMode);
+      const fresh = createLevelSession(session.puzzle, activeMode, isDebug);
       handleUpdateSession(fresh);
     });
   };
@@ -222,7 +268,15 @@ export function App({
           onUpdateSession={handleUpdateSession}
           onAdvanceLevel={handleAdvanceLevel}
           onRetryLevel={handleRetryLevel}
-          onBackToMenu={() => navigateWithTransition('backward', () => setActiveScreen('home'))}
+          onBackToMenu={() =>
+            navigateWithTransition('backward', () => {
+              if (isDebug) {
+                setIsDebug(false);
+                clearDebugRoute();
+              }
+              setActiveScreen('home');
+            })
+          }
           onOpenSettings={() => setShowSettings(true)}
         />
       )}

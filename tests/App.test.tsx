@@ -12,6 +12,8 @@ describe('App integration', () => {
   it('renders Home screen with Chill Out and Classic mode cards, Tutorial, and Settings', () => {
     const { getByTestId, getByText } = render(<App />);
     expect(getByText('KittySquared')).toBeTruthy();
+    expect(getByText('300 puzzles de lógica felina')).toBeTruthy();
+    expect(getByText(/Nivel 1 \/ 300/i)).toBeTruthy();
     expect(getByTestId('start-chill-btn')).toBeTruthy();
     expect(getByTestId('start-classic-btn')).toBeTruthy();
   });
@@ -219,6 +221,64 @@ describe('App integration', () => {
       expect(queryByTestId('screen-transition-shield')).toBeNull();
     });
 
+    it('enters debug mode directly on /debug/<mode>/<level>, isolates local storage, and exits to menu', () => {
+      const savedData = {
+        chill: { currentLevelId: 5, totalScore: 100, activeSnapshot: null },
+        classic: { currentLevelId: 10, totalScore: 500, activeSnapshot: null },
+        settings: {
+          controlScheme: 'toggle',
+          doubleTapTimeoutMs: 500,
+          catVariant: 'black',
+          regionAssist: 'off',
+          musicMuted: true,
+          sfxMuted: true,
+          tutorialSeen: true,
+        },
+      };
+      localStorage.setItem('kittysquared_state_v1', JSON.stringify(savedData));
+
+      const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+      const pushStateSpy = vi.spyOn(window.history, 'pushState');
+
+      const { getByTestId, getByText, queryByTestId } = render(
+        <App initialPath="/debug/classic/84" transitionDurationMs={0} />
+      );
+
+      // Verify direct entry to game screen on level 84 with debug mode badge
+      expect(getByText(/Nivel 84/i)).toBeTruthy();
+      expect(getByTestId('debug-mode-badge')).toBeTruthy();
+
+      // Local storage must remain unchanged
+      expect(JSON.parse(localStorage.getItem('kittysquared_state_v1')!)).toEqual(savedData);
+
+      // Advance level (simulate clicking win next level)
+      // Level 84 advances to 85, replacing URL
+      const advanceBtn = queryByTestId('next-level-btn');
+      if (advanceBtn) {
+        fireEvent.click(advanceBtn);
+        expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/debug/classic/85');
+      }
+
+      // Clicking menu exits debug mode, cleans URL to '/', and shows Home
+      fireEvent.click(getByText('← Menú'));
+      expect(pushStateSpy).toHaveBeenCalledWith(null, '', '/');
+      expect(getByTestId('start-classic-btn')).toBeTruthy();
+
+      // Local storage still untouched
+      expect(JSON.parse(localStorage.getItem('kittysquared_state_v1')!)).toEqual(savedData);
+
+      replaceStateSpy.mockRestore();
+      pushStateSpy.mockRestore();
+    });
+
+    it('navigates directly to level 300 via debug route', () => {
+      const { getByTestId, getByText } = render(
+        <App initialPath="/debug/classic/300" transitionDurationMs={0} />
+      );
+
+      expect(getByText(/Nivel 300/i)).toBeTruthy();
+      expect(getByTestId('debug-mode-badge')).toBeTruthy();
+    });
   });
 });
 

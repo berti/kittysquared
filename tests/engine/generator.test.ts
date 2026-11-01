@@ -14,8 +14,8 @@ describe('engine/generator & puzzles.json', () => {
     expect(solveLogically(puzzle.regions, 3).solved).toBe(true);
   });
 
-  it('validates all 100 pre-generated puzzles in src/data/puzzles.json match the spec tier distribution and uniqueness', () => {
-    expect(puzzles).toHaveLength(100);
+  it('validates all 300 pre-generated puzzles in src/data/puzzles.json match the spec tier distribution and uniqueness', () => {
+    expect(puzzles).toHaveLength(300);
     expect(puzzles[0].size).toBe(5);
     expect(puzzles[14].size).toBe(5);
     expect(puzzles[15].size).toBe(6);
@@ -26,6 +26,8 @@ describe('engine/generator & puzzles.json', () => {
     expect(puzzles[84].size).toBe(8);
     expect(puzzles[85].size).toBe(9);
     expect(puzzles[99].size).toBe(9);
+    expect(puzzles[100].size).toBe(10);
+    expect(puzzles[299].size).toBe(10);
 
     for (const p of puzzles) {
       expect(areRegionsContiguous(p.regions)).toBe(true);

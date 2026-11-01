@@ -9,7 +9,7 @@
   --accent-teal: #2EC4B6;
   --danger-red: #991B1B;
 
-  /* 9 Region Colors */
+  /* 10 Region Colors */
   --reg-0: #FFD166;
   --reg-1: #4EA8DE;
   --reg-2: #FF8FA3;
@@ -19,6 +19,7 @@
   --reg-6: #2EC4B6;
   --reg-7: #90BE6D;
   --reg-8: #7209B7;
+  --reg-9: #B07D62;
 
   /* Accessibility Patterns */
   --pattern-opacity: 0.22;
@@ -70,6 +71,15 @@
 .pat-8 {
   background-image: repeating-radial-gradient(circle at 0 0, transparent 0, transparent 4px, var(--pattern-color) 4px, var(--pattern-color) 6px);
   background-size: 10px 10px;
+}
+.pat-9 {
+  background-image: 
+    linear-gradient(135deg, var(--pattern-color) 25%, transparent 25%),
+    linear-gradient(225deg, var(--pattern-color) 25%, transparent 25%),
+    linear-gradient(315deg, var(--pattern-color) 25%, transparent 25%),
+    linear-gradient(45deg, var(--pattern-color) 25%, transparent 25%);
+  background-size: 8px 8px;
+  background-position: -4px 0, -4px 0, 0 0, 0 0;
 }
 
 .region-glyph-badge {
@@ -248,6 +258,7 @@ body {
 .reg-6 { background: var(--reg-6); }
 .reg-7 { background: var(--reg-7); }
 .reg-8 { background: var(--reg-8); }
+.reg-9 { background: var(--reg-9); }
 
 /* Responsive Settings Tabs */
 .settings-tab-label {
