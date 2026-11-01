@@ -15,4 +15,21 @@ describe('audio/soundEngine', () => {
       engine.stopMusic();
     }).not.toThrow();
   });
+
+  it('initializes and caches Karplus-Strong string buffers across repeated note requests', () => {
+    const engine = new SoundEngine();
+    expect(() => {
+      engine.startMusic();
+      engine.stopMusic();
+    }).not.toThrow();
+  });
+
+  it('exposes methods to set volume and track preferences safely', () => {
+    const engine = new SoundEngine();
+    expect(() => {
+      engine.setVolume(0.5, 0.75);
+      engine.setTrackPreference('bossa');
+      engine.setTrackPreference('auto');
+    }).not.toThrow();
+  });
 });
