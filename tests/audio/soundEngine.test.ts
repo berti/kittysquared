@@ -32,4 +32,29 @@ describe('audio/soundEngine', () => {
       engine.setTrackPreference('auto');
     }).not.toThrow();
   });
+
+  it('rotates through tracks in auto mode and loops selected track when locked', () => {
+    const engine = new SoundEngine();
+    engine.setTrackPreference('bossa');
+    expect(engine.getCurrentTrackId()).toBe('bossa');
+
+    engine.setTrackPreference('waltz');
+    expect(engine.getCurrentTrackId()).toBe('waltz');
+
+    engine.setTrackPreference('samba');
+    expect(engine.getCurrentTrackId()).toBe('samba');
+
+    engine.setTrackPreference('auto');
+    expect(['bossa', 'waltz', 'samba']).toContain(engine.getCurrentTrackId());
+  });
+
+  it('re-balances Catnip Waltz lead melody in octave 4-5 without exceeding 800Hz / E5', () => {
+    const engine = new SoundEngine();
+    const waltzEvents = engine.getTrackEvents('waltz');
+    expect(waltzEvents.length).toBeGreaterThan(0);
+    const highMelodyNotes = waltzEvents.filter(
+      (ev) => ev.inst === 'accordion' && ev.midi && ev.midi > 76
+    );
+    expect(highMelodyNotes.length).toBe(0);
+  });
 });

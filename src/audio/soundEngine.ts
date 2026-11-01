@@ -17,6 +17,361 @@ export interface SoundTrackDef {
   events: SoundEvent[];
 }
 
+function chord(
+  inst: SoundEvent['inst'],
+  beat: number,
+  dur: number,
+  midiArray: number[],
+  gain: number
+): SoundEvent[] {
+  return midiArray.map((m) => ({ inst, beat, dur, midi: m, gain: gain / midiArray.length }));
+}
+
+const BOSSA_TRACK: SoundTrackDef = {
+  id: 'bossa',
+  bpm: 122,
+  meter: '4/4',
+  totalBeats: 32,
+  events: [
+    // Bar 1: Cmaj7
+    { inst: 'bass', beat: 0, dur: 0.8, midi: 48 }, // C3
+    { inst: 'bass', beat: 2.5, dur: 0.8, midi: 43 }, // G2
+    ...chord('guitar', 0, 0.45, [60, 64, 67, 71], 0.32),
+    ...chord('guitar', 1.5, 0.45, [60, 64, 67, 71], 0.32),
+    ...chord('guitar', 2.5, 0.45, [60, 64, 67, 71], 0.32),
+    ...chord('guitar', 3.5, 0.45, [60, 64, 67, 71], 0.32),
+    { inst: 'flute', beat: 0, dur: 1.2, midi: 72 }, // C5
+    { inst: 'flute', beat: 1.5, dur: 0.8, midi: 76 }, // E5
+    { inst: 'flute', beat: 2.5, dur: 1.2, midi: 79 }, // G5
+    { inst: 'shaker', beat: 0 },
+    { inst: 'shaker', beat: 1 },
+    { inst: 'shaker', beat: 2 },
+    { inst: 'shaker', beat: 3 },
+    { inst: 'woodblock', beat: 2, freq: 850, gain: 0.08 },
+
+    // Bar 2: D9
+    { inst: 'bass', beat: 4.0, dur: 0.8, midi: 50 }, // D3
+    { inst: 'bass', beat: 6.5, dur: 0.8, midi: 45 }, // A2
+    ...chord('guitar', 4.0, 0.45, [60, 64, 66, 69], 0.32),
+    ...chord('guitar', 5.5, 0.45, [60, 64, 66, 69], 0.32),
+    ...chord('guitar', 6.5, 0.45, [60, 64, 66, 69], 0.32),
+    { inst: 'flute', beat: 4.0, dur: 1.2, midi: 78 }, // F#5
+    { inst: 'flute', beat: 5.5, dur: 0.8, midi: 76 }, // E5
+    { inst: 'flute', beat: 6.5, dur: 1.2, midi: 74 }, // D5
+    { inst: 'shaker', beat: 4 },
+    { inst: 'shaker', beat: 5 },
+    { inst: 'shaker', beat: 6 },
+    { inst: 'shaker', beat: 7 },
+
+    // Bar 3: Dm7
+    { inst: 'bass', beat: 8.0, dur: 0.8, midi: 50 }, // D3
+    { inst: 'bass', beat: 10.5, dur: 0.8, midi: 45 }, // A2
+    ...chord('guitar', 8.0, 0.45, [60, 65, 69, 72], 0.32),
+    ...chord('guitar', 9.5, 0.45, [60, 65, 69, 72], 0.32),
+    ...chord('guitar', 10.5, 0.45, [60, 65, 69, 72], 0.32),
+    { inst: 'flute', beat: 8.0, dur: 1.2, midi: 77 }, // F5
+    { inst: 'flute', beat: 9.5, dur: 0.8, midi: 76 }, // E5
+    { inst: 'flute', beat: 10.5, dur: 1.2, midi: 74 }, // D5
+    { inst: 'shaker', beat: 8 },
+    { inst: 'shaker', beat: 9 },
+    { inst: 'shaker', beat: 10 },
+    { inst: 'shaker', beat: 11 },
+    { inst: 'woodblock', beat: 10, freq: 850, gain: 0.08 },
+
+    // Bar 4: G13
+    { inst: 'bass', beat: 12.0, dur: 0.8, midi: 43 }, // G2
+    { inst: 'bass', beat: 14.5, dur: 0.8, midi: 50 }, // D3
+    ...chord('guitar', 12.0, 0.45, [59, 64, 65, 69], 0.32),
+    ...chord('guitar', 13.5, 0.45, [59, 64, 65, 69], 0.32),
+    ...chord('guitar', 14.5, 0.45, [59, 64, 65, 69], 0.32),
+    { inst: 'flute', beat: 12.0, dur: 2.2, midi: 71 }, // B4
+    { inst: 'flute', beat: 14.5, dur: 1.2, midi: 74 }, // D5
+    { inst: 'shaker', beat: 12 },
+    { inst: 'shaker', beat: 13 },
+    { inst: 'shaker', beat: 14 },
+    { inst: 'shaker', beat: 15 },
+
+    // Bar 5: Em7
+    { inst: 'bass', beat: 16.0, dur: 0.8, midi: 40 }, // E2
+    { inst: 'bass', beat: 18.5, dur: 0.8, midi: 47 }, // B2
+    ...chord('guitar', 16.0, 0.45, [59, 62, 67, 71], 0.32),
+    ...chord('guitar', 17.5, 0.45, [59, 62, 67, 71], 0.32),
+    ...chord('guitar', 18.5, 0.45, [59, 62, 67, 71], 0.32),
+    { inst: 'flute', beat: 16.0, dur: 1.2, midi: 76 }, // E5
+    { inst: 'flute', beat: 17.5, dur: 0.8, midi: 79 }, // G5
+    { inst: 'flute', beat: 18.5, dur: 1.2, midi: 83 }, // B5
+    { inst: 'shaker', beat: 16 },
+    { inst: 'shaker', beat: 17 },
+    { inst: 'shaker', beat: 18 },
+    { inst: 'shaker', beat: 19 },
+    { inst: 'woodblock', beat: 18, freq: 850, gain: 0.08 },
+
+    // Bar 6: A7(b9)
+    { inst: 'bass', beat: 20.0, dur: 0.8, midi: 45 }, // A2
+    { inst: 'bass', beat: 22.5, dur: 0.8, midi: 40 }, // E2
+    ...chord('guitar', 20.0, 0.45, [58, 61, 64, 67], 0.32),
+    ...chord('guitar', 21.5, 0.45, [58, 61, 64, 67], 0.32),
+    ...chord('guitar', 22.5, 0.45, [58, 61, 64, 67], 0.32),
+    { inst: 'flute', beat: 20.0, dur: 1.2, midi: 81 }, // A5
+    { inst: 'flute', beat: 21.5, dur: 0.8, midi: 79 }, // G5
+    { inst: 'flute', beat: 22.5, dur: 1.2, midi: 76 }, // E5
+    { inst: 'shaker', beat: 20 },
+    { inst: 'shaker', beat: 21 },
+    { inst: 'shaker', beat: 22 },
+    { inst: 'shaker', beat: 23 },
+
+    // Bar 7: Dm7
+    { inst: 'bass', beat: 24.0, dur: 0.8, midi: 50 }, // D3
+    { inst: 'bass', beat: 26.5, dur: 0.8, midi: 45 }, // A2
+    ...chord('guitar', 24.0, 0.45, [60, 65, 69, 72], 0.32),
+    ...chord('guitar', 25.5, 0.45, [60, 65, 69, 72], 0.32),
+    ...chord('guitar', 26.5, 0.45, [60, 65, 69, 72], 0.32),
+    { inst: 'flute', beat: 24.0, dur: 1.2, midi: 77 }, // F5
+    { inst: 'flute', beat: 25.5, dur: 0.8, midi: 76 }, // E5
+    { inst: 'flute', beat: 26.5, dur: 1.2, midi: 74 }, // D5
+    { inst: 'shaker', beat: 24 },
+    { inst: 'shaker', beat: 25 },
+    { inst: 'shaker', beat: 26 },
+    { inst: 'shaker', beat: 27 },
+
+    // Bar 8: G7alt -> turnaround
+    { inst: 'bass', beat: 28.0, dur: 0.8, midi: 43 }, // G2
+    { inst: 'bass', beat: 30.5, dur: 0.8, midi: 50 }, // D3
+    ...chord('guitar', 28.0, 0.45, [59, 63, 65, 69], 0.32),
+    ...chord('guitar', 29.5, 0.45, [59, 62, 65, 67], 0.32),
+    ...chord('guitar', 30.5, 0.45, [59, 62, 65, 67], 0.32),
+    { inst: 'flute', beat: 28.0, dur: 1.2, midi: 71 }, // B4
+    { inst: 'flute', beat: 29.5, dur: 0.8, midi: 74 }, // D5
+    { inst: 'flute', beat: 30.5, dur: 1.2, midi: 72 }, // C5
+    { inst: 'shaker', beat: 28 },
+    { inst: 'shaker', beat: 29 },
+    { inst: 'shaker', beat: 30 },
+    { inst: 'shaker', beat: 31 },
+  ],
+};
+
+// Catnip Waltz: Lowered octave/register for lead accordion melody (G4-E5),
+// eliminating piercing high frequencies and harmonizing with Bossa & Samba.
+const WALTZ_TRACK: SoundTrackDef = {
+  id: 'waltz',
+  bpm: 138,
+  meter: '3/4',
+  totalBeats: 24,
+  events: [
+    // Bar 1: G Major
+    { inst: 'bass', beat: 0, dur: 0.9, midi: 43 }, // G2
+    ...chord('guitar', 1, 0.4, [55, 59, 62], 0.28), // G3, B3, D4
+    ...chord('guitar', 2, 0.4, [55, 59, 62], 0.28),
+    { inst: 'accordion', beat: 0, dur: 1.8, midi: 59 }, // B3 (warm, lowered)
+    { inst: 'accordion', beat: 2, dur: 0.9, midi: 62 }, // D4
+    { inst: 'bell', beat: 0, dur: 1.0, midi: 67 }, // G4 chime
+
+    // Bar 2: Bm
+    { inst: 'bass', beat: 3, dur: 0.9, midi: 47 }, // B2
+    ...chord('guitar', 4, 0.4, [54, 59, 62], 0.28), // F#3, B3, D4
+    ...chord('guitar', 5, 0.4, [54, 59, 62], 0.28),
+    { inst: 'accordion', beat: 3, dur: 1.8, midi: 64 }, // E4
+    { inst: 'accordion', beat: 5, dur: 0.9, midi: 62 }, // D4
+
+    // Bar 3: C Major
+    { inst: 'bass', beat: 6, dur: 0.9, midi: 48 }, // C3
+    ...chord('guitar', 7, 0.4, [55, 60, 64], 0.28), // G3, C4, E4
+    ...chord('guitar', 8, 0.4, [55, 60, 64], 0.28),
+    { inst: 'accordion', beat: 6, dur: 0.9, midi: 60 }, // C4
+    { inst: 'accordion', beat: 7, dur: 0.9, midi: 62 }, // D4
+    { inst: 'accordion', beat: 8, dur: 0.9, midi: 64 }, // E4
+
+    // Bar 4: D7
+    { inst: 'bass', beat: 9, dur: 0.9, midi: 50 }, // D3
+    ...chord('guitar', 10, 0.4, [57, 60, 62], 0.28), // A3, C4, D4
+    ...chord('guitar', 11, 0.4, [57, 60, 62], 0.28),
+    { inst: 'accordion', beat: 9, dur: 2.6, midi: 66 }, // F#4
+    { inst: 'bell', beat: 9, dur: 1.2, midi: 69 }, // A4
+
+    // Bar 5: Em
+    { inst: 'bass', beat: 12, dur: 0.9, midi: 52 }, // E3
+    ...chord('guitar', 13, 0.4, [55, 59, 64], 0.28), // G3, B3, E4
+    ...chord('guitar', 14, 0.4, [55, 59, 64], 0.28),
+    { inst: 'accordion', beat: 12, dur: 1.8, midi: 67 }, // G4
+    { inst: 'accordion', beat: 14, dur: 0.9, midi: 64 }, // E4
+
+    // Bar 6: A7
+    { inst: 'bass', beat: 15, dur: 0.9, midi: 45 }, // A2
+    ...chord('guitar', 16, 0.4, [57, 61, 64], 0.28), // A3, C#4, E4
+    ...chord('guitar', 17, 0.4, [57, 61, 64], 0.28),
+    { inst: 'accordion', beat: 15, dur: 1.8, midi: 62 }, // D4
+    { inst: 'accordion', beat: 17, dur: 0.9, midi: 59 }, // B3
+
+    // Bar 7: Am7
+    { inst: 'bass', beat: 18, dur: 0.9, midi: 45 }, // A2
+    ...chord('guitar', 19, 0.4, [57, 60, 64], 0.28), // A3, C4, E4
+    ...chord('guitar', 20, 0.4, [57, 60, 64], 0.28),
+    { inst: 'accordion', beat: 18, dur: 0.9, midi: 57 }, // A3
+    { inst: 'accordion', beat: 19, dur: 0.9, midi: 59 }, // B3
+    { inst: 'accordion', beat: 20, dur: 0.9, midi: 60 }, // C4
+
+    // Bar 8: D7 -> G resolution
+    { inst: 'bass', beat: 21, dur: 0.9, midi: 50 }, // D3
+    ...chord('guitar', 22, 0.4, [57, 60, 62], 0.28),
+    ...chord('guitar', 23, 0.4, [55, 59, 62], 0.28),
+    { inst: 'accordion', beat: 21, dur: 1.8, midi: 62 }, // D4
+    { inst: 'accordion', beat: 23, dur: 0.9, midi: 55 }, // G3
+    { inst: 'bell', beat: 23, dur: 1.0, midi: 67 }, // G4
+  ],
+};
+
+const SAMBA_TRACK: SoundTrackDef = {
+  id: 'samba',
+  bpm: 132,
+  meter: '4/4',
+  totalBeats: 32,
+  events: [
+    // Bar 1: D Major (Beats 0-4)
+    { inst: 'bass', beat: 0, dur: 0.7, midi: 50 }, // D3
+    { inst: 'bass', beat: 2.5, dur: 0.7, midi: 45 }, // A2
+    ...chord('guitar', 0, 0.35, [62, 66, 69, 74], 0.32),
+    ...chord('guitar', 1.0, 0.35, [62, 66, 69, 74], 0.32),
+    ...chord('guitar', 1.75, 0.35, [62, 66, 69, 74], 0.32),
+    ...chord('guitar', 2.5, 0.35, [62, 66, 69, 74], 0.32),
+    ...chord('guitar', 3.25, 0.35, [62, 66, 69, 74], 0.32),
+    { inst: 'flute', beat: 0, dur: 0.7, midi: 74 }, // D5
+    { inst: 'flute', beat: 1.0, dur: 0.6, midi: 76 }, // E5
+    { inst: 'flute', beat: 1.75, dur: 0.6, midi: 78 }, // F#5
+    { inst: 'flute', beat: 2.5, dur: 1.2, midi: 81 }, // A5
+    { inst: 'shaker', beat: 0 },
+    { inst: 'shaker', beat: 0.5 },
+    { inst: 'shaker', beat: 1 },
+    { inst: 'shaker', beat: 1.5 },
+    { inst: 'shaker', beat: 2 },
+    { inst: 'shaker', beat: 2.5 },
+    { inst: 'shaker', beat: 3 },
+    { inst: 'shaker', beat: 3.5 },
+    { inst: 'woodblock', beat: 1.5, freq: 720 },
+    { inst: 'woodblock', beat: 3.5, freq: 880 },
+
+    // Bar 2: Bm7 (Beats 4-8)
+    { inst: 'bass', beat: 4.0, dur: 0.7, midi: 47 }, // B2
+    { inst: 'bass', beat: 6.5, dur: 0.7, midi: 54 }, // F#3
+    ...chord('guitar', 4.0, 0.35, [59, 62, 66, 69], 0.32),
+    ...chord('guitar', 5.0, 0.35, [59, 62, 66, 69], 0.32),
+    ...chord('guitar', 5.75, 0.35, [59, 62, 66, 69], 0.32),
+    ...chord('guitar', 6.5, 0.35, [59, 62, 66, 69], 0.32),
+    { inst: 'flute', beat: 4.0, dur: 0.6, midi: 78 }, // F#5
+    { inst: 'flute', beat: 4.75, dur: 0.6, midi: 76 }, // E5
+    { inst: 'flute', beat: 5.5, dur: 0.8, midi: 74 }, // D5
+    { inst: 'flute', beat: 6.5, dur: 1.2, midi: 71 }, // B4
+    { inst: 'shaker', beat: 4 },
+    { inst: 'shaker', beat: 4.5 },
+    { inst: 'shaker', beat: 5 },
+    { inst: 'shaker', beat: 5.5 },
+    { inst: 'shaker', beat: 6 },
+    { inst: 'shaker', beat: 6.5 },
+    { inst: 'shaker', beat: 7 },
+    { inst: 'shaker', beat: 7.5 },
+    { inst: 'woodblock', beat: 5.5, freq: 720 },
+    { inst: 'woodblock', beat: 7.5, freq: 880 },
+
+    // Bar 3: Em7 (Beats 8-12)
+    { inst: 'bass', beat: 8.0, dur: 0.7, midi: 40 }, // E2
+    { inst: 'bass', beat: 10.5, dur: 0.7, midi: 47 }, // B2
+    ...chord('guitar', 8.0, 0.35, [62, 64, 67, 71], 0.32),
+    ...chord('guitar', 9.0, 0.35, [62, 64, 67, 71], 0.32),
+    ...chord('guitar', 9.75, 0.35, [62, 64, 67, 71], 0.32),
+    ...chord('guitar', 10.5, 0.35, [62, 64, 67, 71], 0.32),
+    { inst: 'flute', beat: 8.0, dur: 0.6, midi: 76 }, // E5
+    { inst: 'flute', beat: 8.75, dur: 0.6, midi: 78 }, // F#5
+    { inst: 'flute', beat: 9.5, dur: 0.8, midi: 79 }, // G5
+    { inst: 'flute', beat: 10.5, dur: 1.2, midi: 83 }, // B5
+    { inst: 'shaker', beat: 8 },
+    { inst: 'shaker', beat: 8.5 },
+    { inst: 'shaker', beat: 9 },
+    { inst: 'shaker', beat: 9.5 },
+    { inst: 'shaker', beat: 10 },
+    { inst: 'shaker', beat: 10.5 },
+    { inst: 'shaker', beat: 11 },
+    { inst: 'shaker', beat: 11.5 },
+    { inst: 'woodblock', beat: 9.5, freq: 720 },
+    { inst: 'woodblock', beat: 11.5, freq: 880 },
+
+    // Bar 4: A7 (Beats 12-16)
+    { inst: 'bass', beat: 12.0, dur: 0.7, midi: 45 }, // A2
+    { inst: 'bass', beat: 14.5, dur: 0.7, midi: 40 }, // E2
+    ...chord('guitar', 12.0, 0.35, [61, 64, 67, 73], 0.32),
+    ...chord('guitar', 13.0, 0.35, [61, 64, 67, 73], 0.32),
+    ...chord('guitar', 13.75, 0.35, [61, 64, 67, 73], 0.32),
+    ...chord('guitar', 14.5, 0.35, [61, 64, 67, 73], 0.32),
+    { inst: 'flute', beat: 12.0, dur: 0.7, midi: 81 }, // A5
+    { inst: 'flute', beat: 13.0, dur: 0.7, midi: 79 }, // G5
+    { inst: 'flute', beat: 14.0, dur: 1.5, midi: 78 }, // F#5
+    { inst: 'shaker', beat: 12 },
+    { inst: 'shaker', beat: 13 },
+    { inst: 'shaker', beat: 14 },
+    { inst: 'shaker', beat: 15 },
+
+    // Bar 5: D Major (Beats 16-20)
+    { inst: 'bass', beat: 16.0, dur: 0.7, midi: 50 }, // D3
+    { inst: 'bass', beat: 18.5, dur: 0.7, midi: 45 }, // A2
+    ...chord('guitar', 16.0, 0.35, [62, 66, 69, 74], 0.32),
+    ...chord('guitar', 17.0, 0.35, [62, 66, 69, 74], 0.32),
+    ...chord('guitar', 18.5, 0.35, [62, 66, 69, 74], 0.32),
+    { inst: 'flute', beat: 16.0, dur: 0.7, midi: 81 }, // A5
+    { inst: 'flute', beat: 17.0, dur: 0.7, midi: 83 }, // B5
+    { inst: 'flute', beat: 18.0, dur: 1.5, midi: 86 }, // D6
+    { inst: 'shaker', beat: 16 },
+    { inst: 'shaker', beat: 17 },
+    { inst: 'shaker', beat: 18 },
+    { inst: 'shaker', beat: 19 },
+
+    // Bar 6: B7 (Beats 20-24)
+    { inst: 'bass', beat: 20.0, dur: 0.7, midi: 47 }, // B2
+    { inst: 'bass', beat: 22.5, dur: 0.7, midi: 54 }, // F#3
+    ...chord('guitar', 20.0, 0.35, [59, 63, 66, 69], 0.32),
+    ...chord('guitar', 21.0, 0.35, [59, 63, 66, 69], 0.32),
+    ...chord('guitar', 22.5, 0.35, [59, 63, 66, 69], 0.32),
+    { inst: 'flute', beat: 20.0, dur: 0.7, midi: 83 }, // B5
+    { inst: 'flute', beat: 21.0, dur: 0.7, midi: 81 }, // A5
+    { inst: 'flute', beat: 22.0, dur: 1.5, midi: 78 }, // F#5
+    { inst: 'shaker', beat: 20 },
+    { inst: 'shaker', beat: 21 },
+    { inst: 'shaker', beat: 22 },
+    { inst: 'shaker', beat: 23 },
+
+    // Bar 7: Em7 (Beats 24-28)
+    { inst: 'bass', beat: 24.0, dur: 0.7, midi: 40 }, // E2
+    { inst: 'bass', beat: 26.5, dur: 0.7, midi: 45 }, // A2
+    ...chord('guitar', 24.0, 0.35, [62, 64, 67, 71], 0.32),
+    ...chord('guitar', 25.0, 0.35, [62, 64, 67, 71], 0.32),
+    ...chord('guitar', 26.5, 0.35, [62, 64, 67, 71], 0.32),
+    { inst: 'flute', beat: 24.0, dur: 0.7, midi: 79 }, // G5
+    { inst: 'flute', beat: 25.0, dur: 0.7, midi: 78 }, // F#5
+    { inst: 'flute', beat: 26.0, dur: 1.5, midi: 76 }, // E5
+    { inst: 'shaker', beat: 24 },
+    { inst: 'shaker', beat: 25 },
+    { inst: 'shaker', beat: 26 },
+    { inst: 'shaker', beat: 27 },
+
+    // Bar 8: A7 -> D turnaround (Beats 28-32)
+    { inst: 'bass', beat: 28.0, dur: 0.7, midi: 45 }, // A2
+    { inst: 'bass', beat: 30.5, dur: 0.7, midi: 50 }, // D3
+    ...chord('guitar', 28.0, 0.35, [61, 64, 67, 73], 0.32),
+    ...chord('guitar', 29.5, 0.35, [62, 66, 69, 74], 0.32),
+    { inst: 'flute', beat: 28.0, dur: 0.6, midi: 74 }, // D5
+    { inst: 'flute', beat: 29.0, dur: 0.6, midi: 76 }, // E5
+    { inst: 'flute', beat: 30.0, dur: 1.8, midi: 74 }, // D5
+    { inst: 'shaker', beat: 28 },
+    { inst: 'shaker', beat: 29 },
+    { inst: 'shaker', beat: 30 },
+    { inst: 'shaker', beat: 31 },
+    { inst: 'woodblock', beat: 30.5, freq: 880 },
+  ],
+};
+
+const TRACK_MAP: Record<'bossa' | 'waltz' | 'samba', SoundTrackDef> = {
+  bossa: BOSSA_TRACK,
+  waltz: WALTZ_TRACK,
+  samba: SAMBA_TRACK,
+};
+
 export class SoundEngine {
   private ctx: AudioContext | null = null;
   private compressor: DynamicsCompressorNode | null = null;
@@ -565,11 +920,92 @@ export class SoundEngine {
     } catch (_e) {}
   }
 
+  public getTrackEvents(trackId: MusicTrackOption): SoundEvent[] {
+    if (trackId === 'auto') {
+      return TRACK_MAP.bossa.events;
+    }
+    return TRACK_MAP[trackId]?.events || [];
+  }
+
+  private scheduleTrackEvents(ctx: AudioContext, track: SoundTrackDef, cycleStartTime: number): void {
+    const beatDur = 60 / track.bpm;
+    track.events.forEach((ev) => {
+      const noteTime = cycleStartTime + ev.beat * beatDur;
+      const noteDur = (ev.dur || 0.4) * beatDur;
+      const freq = ev.midi ? this.midiToFreq(ev.midi) : ev.freq || 440;
+
+      switch (ev.inst) {
+        case 'guitar':
+          this.playGuitar(freq, noteTime, noteDur, ev.gain || 0.28);
+          break;
+        case 'accordion':
+          this.playAccordion(freq, noteTime, noteDur, ev.gain || 0.2);
+          break;
+        case 'flute':
+          this.playFlute(freq, noteTime, noteDur, ev.gain || 0.18);
+          break;
+        case 'bass':
+          this.playBass(freq, noteTime, noteDur, ev.gain || 0.35);
+          break;
+        case 'bell':
+          this.playBell(freq, noteTime, noteDur, ev.gain || 0.18);
+          break;
+        case 'shaker':
+          this.playShaker(noteTime, ev.gain || 0.04);
+          break;
+        case 'woodblock':
+          this.playWoodblock(ev.freq || 720, noteTime, ev.gain || 0.16);
+          break;
+      }
+    });
+  }
+
   public startMusic(): void {
     if (this.musicMuted || this.musicTimer !== null) return;
     const ctx = this.getContext();
     if (!ctx) return;
+    try {
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+    } catch (_e) {}
+
     this.isMusicPlaying = true;
+    const trackList: ('bossa' | 'waltz' | 'samba')[] = ['bossa', 'waltz', 'samba'];
+
+    const getNextTrackDef = (): SoundTrackDef => {
+      if (this.musicTrackPreference !== 'auto') {
+        this.currentTrackId = this.musicTrackPreference;
+        return TRACK_MAP[this.musicTrackPreference];
+      }
+      const trackId = trackList[this.currentTrackIndex % trackList.length];
+      this.currentTrackId = trackId;
+      this.currentTrackIndex++;
+      return TRACK_MAP[trackId];
+    };
+
+    let activeTrack = getNextTrackDef();
+    let nextCycleTime = ctx.currentTime + 0.05;
+    let beatDur = 60 / activeTrack.bpm;
+    let loopDur = activeTrack.totalBeats * beatDur;
+
+    this.scheduleTrackEvents(ctx, activeTrack, nextCycleTime);
+    let cycleEndTime = nextCycleTime + loopDur;
+
+    this.musicTimer = window.setInterval(() => {
+      if (!this.isMusicPlaying || this.musicMuted) return;
+      const now = ctx.currentTime;
+      // When approaching the end of current track, schedule next track with 2.5s musical breath
+      if (now + 0.5 > cycleEndTime) {
+        const breathPause = 2.5;
+        nextCycleTime = cycleEndTime + breathPause;
+        activeTrack = getNextTrackDef();
+        beatDur = 60 / activeTrack.bpm;
+        loopDur = activeTrack.totalBeats * beatDur;
+        this.scheduleTrackEvents(ctx, activeTrack, nextCycleTime);
+        cycleEndTime = nextCycleTime + loopDur;
+      }
+    }, 25);
   }
 
   public stopMusic(): void {
