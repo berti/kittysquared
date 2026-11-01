@@ -1,9 +1,21 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import preact from '@preact/preset-vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   base: './',
+  test: {
+    testTimeout: 120000,
+    hookTimeout: 120000,
+    teardownTimeout: 120000,
+    // Increase RPC timeout for computationally heavy 10x10 puzzle generators
+    poolOptions: {
+      threads: {
+        isolate: false,
+      },
+    },
+  },
   plugins: [
     preact(),
     VitePWA({
