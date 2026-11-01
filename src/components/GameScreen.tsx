@@ -13,6 +13,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 
 export interface GameScreenProps {
   puzzle: PuzzleDef;
+  totalLevels?: number;
   progress: ModeProgress;
   settings: AppSettings;
   session: LevelSessionState;
@@ -25,6 +26,7 @@ export interface GameScreenProps {
 
 export function GameScreen({
   puzzle,
+  totalLevels,
   progress,
   settings,
   session,
@@ -37,6 +39,7 @@ export function GameScreen({
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
 
   const placedCatsCount = session.board.flat().filter((c) => c === 'cat').length;
+  const isLastLevel = totalLevels !== undefined && puzzle.id >= totalLevels;
 
   const handleCellTap = (r: number, c: number, options?: { isDoubleTap?: boolean }) => {
     const prevCell = session.board[r][c];
@@ -272,33 +275,69 @@ export function GameScreen({
             <div style={{ width: '72px', height: '72px', margin: '0 auto 10px' }}>
               <CatSvg variant={settings.catVariant} state="victory" />
             </div>
-            <h2 style={{ margin: '0 0 6px', fontSize: '24px', fontWeight: 900, color: '#3D3135' }}>
-              ¡Nivel {puzzle.id} superado!
-            </h2>
-            <p style={{ margin: '0 0 16px', fontSize: '15.5px', color: '#7A686E' }}>
-              Puntos gatos: +{session.partialScore}
-              <br />
-              Bono por fallos: +{session.levelBonus}
-              <br />
-              <strong>Nuevo total: {progress.totalScore + session.partialScore + session.levelBonus} pts</strong>
-            </p>
-            <button
-              onClick={onAdvanceLevel}
-              style={{
-                width: '100%',
-                background: '#FF9770',
-                color: '#FFF',
-                border: 'none',
-                borderRadius: '14px',
-                padding: '14px',
-                fontWeight: 800,
-                fontSize: '16.5px',
-                boxShadow: '0 4px 0 #D9724C',
-                cursor: 'pointer',
-              }}
-            >
-              Siguiente Nivel ▶
-            </button>
+            {isLastLevel ? (
+              <>
+                <h2 style={{ margin: '0 0 6px', fontSize: '24px', fontWeight: 900, color: '#3D3135' }}>
+                  ¡Juego completado!
+                </h2>
+                <p style={{ margin: '0 0 16px', fontSize: '15.5px', color: '#7A686E' }}>
+                  ¡Has superado los {totalLevels} niveles!
+                  <br />
+                  Puntos gatos: +{session.partialScore}
+                  <br />
+                  Bono por fallos: +{session.levelBonus}
+                  <br />
+                  <strong>Puntuación final: {progress.totalScore + session.partialScore + session.levelBonus} pts</strong>
+                </p>
+                <button
+                  onClick={onAdvanceLevel}
+                  style={{
+                    width: '100%',
+                    background: '#FF9770',
+                    color: '#FFF',
+                    border: 'none',
+                    borderRadius: '14px',
+                    padding: '14px',
+                    fontWeight: 800,
+                    fontSize: '16.5px',
+                    boxShadow: '0 4px 0 #D9724C',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Volver al Menú Principal
+                </button>
+              </>
+            ) : (
+              <>
+                <h2 style={{ margin: '0 0 6px', fontSize: '24px', fontWeight: 900, color: '#3D3135' }}>
+                  ¡Nivel {puzzle.id} superado!
+                </h2>
+                <p style={{ margin: '0 0 16px', fontSize: '15.5px', color: '#7A686E' }}>
+                  Puntos gatos: +{session.partialScore}
+                  <br />
+                  Bono por fallos: +{session.levelBonus}
+                  <br />
+                  <strong>Nuevo total: {progress.totalScore + session.partialScore + session.levelBonus} pts</strong>
+                </p>
+                <button
+                  onClick={onAdvanceLevel}
+                  style={{
+                    width: '100%',
+                    background: '#FF9770',
+                    color: '#FFF',
+                    border: 'none',
+                    borderRadius: '14px',
+                    padding: '14px',
+                    fontWeight: 800,
+                    fontSize: '16.5px',
+                    boxShadow: '0 4px 0 #D9724C',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Siguiente Nivel ▶
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

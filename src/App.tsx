@@ -143,13 +143,27 @@ export function App({
 
   const handleAdvanceLevel = () => {
     navigateWithTransition('forward', () => {
-      const nextLvlId = Math.min(puzzles.length, session.puzzle.id + 1);
-      const puzzle = puzzles.find((p) => p.id === nextLvlId) || puzzles[puzzles.length - 1];
-
       let newTotalScore = appState.progress.totalScore;
       if (session.status === 'won') {
         newTotalScore += session.partialScore + session.levelBonus;
       }
+
+      if (session.puzzle.id >= puzzles.length) {
+        // Final level completed: mark finished by setting currentLevelId past end, clear snapshot, and return to home
+        updateAppState({
+          ...appState,
+          progress: {
+            currentLevelId: session.puzzle.id + 1,
+            totalScore: newTotalScore,
+            activeSnapshot: null,
+          },
+        });
+        setActiveScreen('home');
+        return;
+      }
+
+      const nextLvlId = session.puzzle.id + 1;
+      const puzzle = puzzles.find((p) => p.id === nextLvlId) || puzzles[puzzles.length - 1];
 
       updateAppState({
         ...appState,
@@ -206,6 +220,7 @@ export function App({
       {activeScreen === 'game' && (
         <GameScreen
           puzzle={session.puzzle || currentPuzzle}
+          totalLevels={puzzles.length}
           progress={appState.progress}
           settings={appState.settings}
           session={session}

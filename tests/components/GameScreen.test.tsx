@@ -78,4 +78,54 @@ describe('GameScreen component', () => {
     expect(statusBar.textContent).toContain('⭐ 0');
     expect(statusBar.style.fontSize).toBe('16.5px');
   });
+
+  it('renders regular victory modal when not on the final level', () => {
+    const session = createLevelSession(samplePuzzle);
+    session.status = 'won';
+    const defaultState = getDefaultAppState();
+
+    const { getByText, queryByText } = render(
+      <GameScreen
+        puzzle={samplePuzzle}
+        totalLevels={100}
+        progress={defaultState.progress}
+        settings={defaultState.settings}
+        session={session}
+        onUpdateSession={vi.fn()}
+        onAdvanceLevel={vi.fn()}
+        onRetryLevel={vi.fn()}
+        onBackToMenu={vi.fn()}
+        onOpenSettings={vi.fn()}
+      />
+    );
+
+    expect(getByText('¡Nivel 42 superado!')).toBeDefined();
+    expect(getByText(/Siguiente Nivel ▶/i)).toBeDefined();
+    expect(queryByText('¡Juego completado!')).toBeNull();
+  });
+
+  it('renders endgame victory modal and "Volver al Menú Principal" when beating the final level', () => {
+    const session = createLevelSession(samplePuzzle);
+    session.status = 'won';
+    const defaultState = getDefaultAppState();
+
+    const { getByText, queryByText } = render(
+      <GameScreen
+        puzzle={samplePuzzle}
+        totalLevels={42}
+        progress={defaultState.progress}
+        settings={defaultState.settings}
+        session={session}
+        onUpdateSession={vi.fn()}
+        onAdvanceLevel={vi.fn()}
+        onRetryLevel={vi.fn()}
+        onBackToMenu={vi.fn()}
+        onOpenSettings={vi.fn()}
+      />
+    );
+
+    expect(getByText('¡Juego completado!')).toBeDefined();
+    expect(getByText(/Volver al Menú Principal/i)).toBeDefined();
+    expect(queryByText(/Siguiente Nivel ▶/i)).toBeNull();
+  });
 });

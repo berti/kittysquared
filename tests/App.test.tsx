@@ -210,5 +210,50 @@ describe('App integration', () => {
       });
       expect(queryByTestId('screen-transition-shield')).toBeNull();
     });
+
+    it('completing the final level advances currentLevelId to 301 and returns to the home screen', () => {
+      localStorage.setItem(
+        'kittysquared_state_v1',
+        JSON.stringify({
+          progress: { currentLevelId: 300, totalScore: 5000, activeSnapshot: null },
+          settings: {
+            doubleTapTimeoutMs: 500,
+            catVariant: 'black',
+            regionAssist: 'off',
+            musicMuted: true,
+            sfxMuted: true,
+            tutorialSeen: true,
+          },
+        })
+      );
+
+      const { getByTestId, getByText, queryByText } = render(<App transitionDurationMs={0} />);
+      fireEvent.click(getByTestId('start-game-btn'));
+
+      expect(getByText('Nivel 300')).toBeTruthy();
+
+      // Solution for puzzle 300: [0, 2, 5, 7, 3, 1, 4, 9, 6, 8]
+      const solution = [0, 2, 5, 7, 3, 1, 4, 9, 6, 8];
+      for (let r = 0; r < solution.length; r++) {
+        const c = solution[r];
+        const cell = getByTestId(`cell-${r}-${c}`);
+        fireEvent.click(cell);
+        fireEvent.click(cell);
+      }
+
+      // Victory modal for final level
+      expect(getByText('¡Juego completado!')).toBeTruthy();
+      expect(queryByText(/Siguiente Nivel ▶/i)).toBeNull();
+
+      // Click "Volver al Menú Principal"
+      const returnBtn = getByText('Volver al Menú Principal');
+      fireEvent.click(returnBtn);
+
+      // Verify we returned to HomeScreen and currentLevelId is 301
+      expect(getByTestId('start-game-btn')).toBeTruthy();
+      const saved = JSON.parse(localStorage.getItem('kittysquared_state_v1') || '{}');
+      expect(saved.progress.currentLevelId).toBe(301);
+      expect(saved.progress.totalScore).toBeGreaterThan(5000);
+    });
   });
 });
