@@ -78,18 +78,20 @@ export function App({
     createLevelSession(puzzles[0])
   );
 
-  // Sync mute, volume, and track settings with soundEngine
+  // Sync mute settings with soundEngine
   useEffect(() => {
     soundEngine.setMuted(appState.settings.musicMuted, appState.settings.sfxMuted);
+  }, [appState.settings.musicMuted, appState.settings.sfxMuted]);
+
+  // Sync volume settings with soundEngine
+  useEffect(() => {
     soundEngine.setVolume(appState.settings.musicVolume ?? 0.75, appState.settings.sfxVolume ?? 0.75);
+  }, [appState.settings.musicVolume, appState.settings.sfxVolume]);
+
+  // Sync track preference with soundEngine
+  useEffect(() => {
     soundEngine.setTrackPreference(appState.settings.musicTrack ?? 'auto');
-  }, [
-    appState.settings.musicMuted,
-    appState.settings.sfxMuted,
-    appState.settings.musicVolume,
-    appState.settings.sfxVolume,
-    appState.settings.musicTrack,
-  ]);
+  }, [appState.settings.musicTrack]);
 
   // Persist state on change
   const updateAppState = (next: PersistedAppState) => {

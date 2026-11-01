@@ -473,6 +473,7 @@ export class SoundEngine {
   }
 
   public setTrackPreference(pref: MusicTrackOption): void {
+    if (this.musicTrackPreference === pref) return;
     this.musicTrackPreference = pref;
     if (pref !== 'auto') {
       this.currentTrackId = pref;
@@ -482,6 +483,10 @@ export class SoundEngine {
       this.stopMusic();
       this.startMusic();
     }
+  }
+
+  public getActiveNodeCount(): number {
+    return this.activeMusicNodes.length;
   }
 
   public getCurrentTrackId(): MusicTrackOption {
@@ -804,7 +809,7 @@ export class SoundEngine {
     if (!ctx || !this.sfxGainNode) return;
 
     try {
-      if (ctx.state === 'suspended') ctx.resume();
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
@@ -830,7 +835,7 @@ export class SoundEngine {
     if (!ctx || !this.sfxGainNode) return;
 
     try {
-      if (ctx.state === 'suspended') ctx.resume();
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
@@ -856,7 +861,7 @@ export class SoundEngine {
     if (!ctx || !this.sfxGainNode) return;
 
     try {
-      if (ctx.state === 'suspended') ctx.resume();
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
@@ -896,7 +901,7 @@ export class SoundEngine {
     if (!ctx || !this.sfxGainNode) return;
 
     try {
-      if (ctx.state === 'suspended') ctx.resume();
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
 
       const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
       const start = ctx.currentTime;
@@ -998,6 +1003,7 @@ export class SoundEngine {
       const now = ctx.currentTime;
       // When approaching the end of current track, schedule next track with 2.5s musical breath
       if (now + 0.5 > cycleEndTime) {
+        this.activeMusicNodes = []; // Prune expired nodes from prior cycles to avoid memory leaks
         const breathPause = 2.5;
         nextCycleTime = cycleEndTime + breathPause;
         activeTrack = getNextTrackDef();

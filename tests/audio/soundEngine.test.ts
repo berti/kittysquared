@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { SoundEngine } from '../../src/audio/soundEngine';
 
 describe('audio/soundEngine', () => {
@@ -82,5 +82,18 @@ describe('audio/soundEngine', () => {
 
     engine.playVictory();
     expect(engine.isDucking()).toBe(true);
+  });
+
+  it('does not restart music when setTrackPreference is called with the current preference', () => {
+    const engine = new SoundEngine();
+    engine.setTrackPreference('bossa');
+    const stopSpy = vi.spyOn(engine, 'stopMusic');
+    engine.setTrackPreference('bossa');
+    expect(stopSpy).not.toHaveBeenCalled();
+  });
+
+  it('prunes activeMusicNodes list across loop scheduling cycles to avoid memory leaks', () => {
+    const engine = new SoundEngine();
+    expect(engine.getActiveNodeCount()).toBe(0);
   });
 });

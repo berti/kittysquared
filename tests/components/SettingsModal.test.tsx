@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsModal } from '../../src/components/SettingsModal';
+import { soundEngine } from '../../src/audio/soundEngine';
 import { AppSettings } from '../../src/state/storage';
 
 const defaultSettings: AppSettings = {
@@ -340,5 +341,38 @@ describe('SettingsModal component', () => {
     // Confirm in dialog
     fireEvent.click(getByTestId('confirm-dialog-confirm-btn'));
     expect(onResetProgress).toHaveBeenCalledTimes(1);
+  });
+
+  it('Sound tab: clicking SFX volume step > 0 plays a preview sound', () => {
+    const playCrossSpy = vi.spyOn(soundEngine, 'playCross');
+    const { getByTestId } = render(
+      <SettingsModal
+        settings={defaultSettings}
+        onUpdateSettings={vi.fn()}
+        onResetProgress={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+    fireEvent.click(getByTestId('tab-btn-sound'));
+    fireEvent.click(getByTestId('sfx-vol-step-0.5'));
+    expect(playCrossSpy).toHaveBeenCalled();
+    playCrossSpy.mockRestore();
+  });
+
+  it('Sound tab: unmuting when volume was 0 restores volume to 0.75', () => {
+    const onUpdateSettings = vi.fn();
+    const { getByTestId } = render(
+      <SettingsModal
+        settings={{ ...defaultSettings, musicMuted: true, musicVolume: 0 }}
+        onUpdateSettings={onUpdateSettings}
+        onResetProgress={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+    fireEvent.click(getByTestId('tab-btn-sound'));
+    fireEvent.click(getByTestId('toggle-music-btn'));
+    expect(onUpdateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ musicMuted: false, musicVolume: 0.75 })
+    );
   });
 });

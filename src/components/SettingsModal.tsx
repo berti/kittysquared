@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { soundEngine } from '../audio/soundEngine';
 import { AppSettings, MusicTrackOption, SteppedVolume, VALID_STEPPED_VOLUMES } from '../state/storage';
 import { CatVariant, RegionAssistMode } from '../types/puzzle';
 import { REGION_GLYPHS } from './Board';
@@ -48,11 +49,15 @@ export function SettingsModal({
   };
 
   const toggleMusic = () => {
-    onUpdateSettings({ ...settings, musicMuted: !settings.musicMuted });
+    const nextMuted = !settings.musicMuted;
+    const nextVol = !nextMuted && settings.musicVolume === 0 ? 0.75 : settings.musicVolume;
+    onUpdateSettings({ ...settings, musicMuted: nextMuted, musicVolume: nextVol });
   };
 
   const toggleSfx = () => {
-    onUpdateSettings({ ...settings, sfxMuted: !settings.sfxMuted });
+    const nextMuted = !settings.sfxMuted;
+    const nextVol = !nextMuted && settings.sfxVolume === 0 ? 0.75 : settings.sfxVolume;
+    onUpdateSettings({ ...settings, sfxMuted: nextMuted, sfxVolume: nextVol });
   };
 
   const currentTimeout = settings.doubleTapTimeoutMs || 500;
@@ -587,6 +592,7 @@ export function SettingsModal({
                             onUpdateSettings({ ...settings, sfxVolume: 0, sfxMuted: true });
                           } else {
                             onUpdateSettings({ ...settings, sfxVolume: step, sfxMuted: false });
+                            soundEngine.playCross();
                           }
                         }}
                         style={{
