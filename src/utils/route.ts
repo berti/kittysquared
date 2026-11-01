@@ -8,7 +8,8 @@ export interface DebugRouteParams {
 
 export function parseDebugRoute(pathname: string): DebugRouteParams | null {
   if (!pathname) return null;
-  const match = pathname.match(/^\/debug\/(classic|chill)\/(-?\d+)$/);
+  // Match /debug/... either at root or following a subpath (e.g. /kittysquared/debug/...)
+  const match = pathname.match(/(?:^|\/)debug\/(classic|chill)\/(-?\d+)$/);
   if (!match) return null;
 
   const mode = match[1] as GameMode;
@@ -24,14 +25,26 @@ export function parseDebugRoute(pathname: string): DebugRouteParams | null {
   };
 }
 
+function getBasePrefix(): string {
+  if (typeof window === 'undefined' || !window.location) return '';
+  const pathname = window.location.pathname;
+  const debugIndex = pathname.indexOf('/debug/');
+  if (debugIndex > 0) {
+    return pathname.slice(0, debugIndex);
+  }
+  return '';
+}
+
 export function updateDebugRoute(mode: GameMode, levelId: number): void {
   if (typeof window !== 'undefined' && window.history?.replaceState) {
-    window.history.replaceState(null, '', `/debug/${mode}/${levelId}`);
+    const base = getBasePrefix();
+    window.history.replaceState(null, '', `${base}/debug/${mode}/${levelId}`);
   }
 }
 
 export function clearDebugRoute(): void {
   if (typeof window !== 'undefined' && window.history?.pushState) {
-    window.history.pushState(null, '', '/');
+    const base = getBasePrefix();
+    window.history.pushState(null, '', base ? `${base}/` : '/');
   }
 }

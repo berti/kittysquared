@@ -34,6 +34,13 @@ describe('route utilities', () => {
         mode: 'chill',
         levelId: 12,
       });
+
+      // Subpath deployment (e.g. GitHub Pages /kittysquared/)
+      expect(parseDebugRoute('/kittysquared/debug/classic/84')).toEqual({
+        isDebug: true,
+        mode: 'classic',
+        levelId: 84,
+      });
     });
 
     it('clamps level between 1 and 300', () => {
@@ -65,11 +72,37 @@ describe('route utilities', () => {
       replaceStateSpy.mockRestore();
     });
 
-    it('clears debug route to root', () => {
+    it('updates URL preserving subpath if deployed in a subdirectory', () => {
+      const origPathname = window.location.pathname;
+      try {
+        window.history.pushState(null, '', '/kittysquared/debug/chill/10');
+        const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+        updateDebugRoute('chill', 15);
+        expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/kittysquared/debug/chill/15');
+        replaceStateSpy.mockRestore();
+      } finally {
+        window.history.pushState(null, '', origPathname);
+      }
+    });
+
+    it('clears debug route to root or subpath', () => {
       const pushStateSpy = vi.spyOn(window.history, 'pushState');
       clearDebugRoute();
       expect(pushStateSpy).toHaveBeenCalledWith(null, '', '/');
       pushStateSpy.mockRestore();
+    });
+
+    it('clears debug route preserving subpath', () => {
+      const origPathname = window.location.pathname;
+      try {
+        window.history.pushState(null, '', '/kittysquared/debug/classic/20');
+        const pushStateSpy = vi.spyOn(window.history, 'pushState');
+        clearDebugRoute();
+        expect(pushStateSpy).toHaveBeenCalledWith(null, '', '/kittysquared/');
+        pushStateSpy.mockRestore();
+      } finally {
+        window.history.pushState(null, '', origPathname);
+      }
     });
   });
 });

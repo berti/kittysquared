@@ -34,17 +34,17 @@
 - Consumes: SSH access to `git@github.com:berti/kittysquared.git`
 - Produces: Configured `origin` remote on branch `main`
 
-- [ ] **Step 1: Configure git remote origin**
+- [x] **Step 1: Configure git remote origin**
 Run:
 ```bash
 git remote add origin git@github.com:berti/kittysquared.git || git remote set-url origin git@github.com:berti/kittysquared.git
 ```
 
-- [ ] **Step 2: Verify git remote**
+- [x] **Step 2: Verify git remote**
 Run: `git remote -v`
 Expected output: Shows `origin git@github.com:berti/kittysquared.git (fetch)` and `(push)`.
 
-- [ ] **Step 3: Commit any uncommitted workspace changes**
+- [x] **Step 3: Commit any uncommitted workspace changes**
 Stage and commit any pending modifications so the working tree is clean before introducing PWA assets.
 ```bash
 git add -A
@@ -68,7 +68,7 @@ git commit -m "chore: save working tree before distribution setup"
 - Consumes: Vector art representation from `src/components/CatSvg.tsx`
 - Produces: Static icon files in `public/` matching PWA manifest and HTML link tags
 
-- [ ] **Step 1: Write icon generator script `scripts/generate-icons.ts`**
+- [x] **Step 1: Write icon generator script `scripts/generate-icons.ts`**
 Script renders the KittySquared cat head on a square `#FBF9F5` canvas with cozy borders, producing SVG and generating PNG sizes:
 - `favicon.svg` (crisp scalable vector)
 - `icon-192.png` (192×192)
@@ -76,15 +76,15 @@ Script renders the KittySquared cat head on a square `#FBF9F5` canvas with cozy 
 - `icon-512-maskable.png` (512×512 with 20% safe-zone margin)
 - `apple-touch-icon.png` (180×180 for iOS)
 
-- [ ] **Step 2: Run icon generation script**
+- [x] **Step 2: Run icon generation script**
 Run: `npx tsx scripts/generate-icons.ts`
 Expected: Creates `public/` directory with all icon files.
 
-- [ ] **Step 3: Verify icon files exist and are non-empty**
+- [x] **Step 3: Verify icon files exist and are non-empty**
 Run: `ls -la public/`
 Expected: Non-zero file sizes for `favicon.svg`, `icon-192.png`, `icon-512.png`, `icon-512-maskable.png`, and `apple-touch-icon.png`.
 
-- [ ] **Step 4: Commit icon assets**
+- [x] **Step 4: Commit icon assets**
 ```bash
 git add public/ scripts/generate-icons.ts
 git commit -m "feat(pwa): add app icons and icon generation script"
@@ -103,16 +103,16 @@ git commit -m "feat(pwa): add app icons and icon generation script"
 - Consumes: `vite-plugin-pwa`
 - Produces: Service Worker precache manifest, auto-update registration, Web App Manifest injected in HTML, relative base path
 
-- [ ] **Step 1: Install `vite-plugin-pwa`**
+- [x] **Step 1: Install `vite-plugin-pwa`**
 Run: `npm install -D vite-plugin-pwa`
 
-- [ ] **Step 2: Update `vite.config.ts` with `base: './'` and `VitePWA`**
+- [x] **Step 2: Update `vite.config.ts` with `base: './'` and `VitePWA`**
 Configure `VitePWA`:
 - `registerType: 'autoUpdate'`
 - `manifest`: name, short_name, description, theme_color `#FBF9F5`, background_color `#FBF9F5`, display `standalone`, orientation `portrait`, icons.
 - `workbox`: `globPatterns: ['**/*.{js,css,html,ico,png,svg,json}']`
 
-- [ ] **Step 3: Update `index.html` with mobile meta tags and icon links**
+- [x] **Step 3: Update `index.html` with mobile meta tags and icon links**
 Add:
 - `<link rel="icon" type="image/svg+xml" href="favicon.svg" />`
 - `<link rel="apple-touch-icon" href="apple-touch-icon.png" />`
@@ -121,11 +121,11 @@ Add:
 - `<meta name="apple-mobile-web-app-status-bar-style" content="default" />`
 - `<meta name="apple-mobile-web-app-title" content="KittySquared" />`
 
-- [ ] **Step 4: Test production build with PWA plugin**
+- [x] **Step 4: Test production build with PWA plugin**
 Run: `npm run build`
 Expected: Generates `dist/` with `sw.js`, `manifest.webmanifest`, `workbox-*.js`, and hashed bundles.
 
-- [ ] **Step 5: Commit PWA and Vite configuration**
+- [x] **Step 5: Commit PWA and Vite configuration**
 ```bash
 git add package.json package-lock.json vite.config.ts index.html
 git commit -m "feat(pwa): configure vite-plugin-pwa and mobile install meta tags"
@@ -142,7 +142,7 @@ git commit -m "feat(pwa): configure vite-plugin-pwa and mobile install meta tags
 - Consumes: GitHub Pages environment with `pages: write` and `id-token: write`
 - Produces: Automated test, build, and deploy pipeline on push to `main`
 
-- [ ] **Step 1: Create `.github/workflows/deploy.yml`**
+- [x] **Step 1: Create `.github/workflows/deploy.yml`**
 Write workflow configuring:
 - `on: push: branches: [main]` and `workflow_dispatch`
 - `permissions: { contents: read, pages: write, id-token: write }`
@@ -150,10 +150,10 @@ Write workflow configuring:
 - Build job: checkout, setup node 22, `npm ci`, `npm test`, `npm run build`, upload pages artifact (`dist/`).
 - Deploy job: deploy to GitHub Pages environment with `actions/deploy-pages@v4`.
 
-- [ ] **Step 2: Validate YAML syntax**
+- [x] **Step 2: Validate YAML syntax**
 Run: `node -e "console.log('YAML check')"` (and verify syntax via linter or node parser).
 
-- [ ] **Step 3: Commit workflow**
+- [x] **Step 3: Commit workflow**
 ```bash
 git add .github/workflows/deploy.yml
 git commit -m "ci: add GitHub Actions workflow for GitHub Pages deployment"
@@ -170,20 +170,20 @@ git commit -m "ci: add GitHub Actions workflow for GitHub Pages deployment"
 - Consumes: Remote `origin`, all tests passing, build output verified
 - Produces: Initial push to GitHub repo triggering first GitHub Actions deployment
 
-- [ ] **Step 1: Run all tests to ensure zero regressions**
+- [x] **Step 1: Run all tests to ensure zero regressions**
 Run: `npm test`
 Expected: All tests PASS.
 
-- [ ] **Step 2: Run production build and check `dist` contents**
+- [x] **Step 2: Run production build and check `dist` contents**
 Run: `npm run build`
 Expected:
 - `dist/index.html` contains `<link rel="manifest" href="manifest.webmanifest">`
 - `dist/sw.js` and `dist/manifest.webmanifest` exist
 - Asset paths use relative `./` prefixes
 
-- [ ] **Step 3: Verify preview server**
+- [x] **Step 3: Verify preview server**
 Run: `npm run preview` in background, verify HTTP 200 on index and manifest.
 
-- [ ] **Step 4: Push `main` to `origin`**
+- [x] **Step 4: Push `main` to `origin`**
 Run: `git push -u origin main`
 Expected: Branch `main` pushed to `git@github.com:berti/kittysquared.git`.

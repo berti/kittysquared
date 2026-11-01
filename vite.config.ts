@@ -20,11 +20,11 @@ export default defineConfig({
     preact(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'KittySquared — Logic Puzzle Game',
+        name: 'KittySquared — Juego de Puzzles de Lógica',
         short_name: 'KittySquared',
-        description: 'A cozy grid-based cat logic puzzle game',
+        description: 'Un acogedor juego de puzzles de lógica felina',
+        lang: 'es',
         theme_color: '#FBF9F5',
         background_color: '#FBF9F5',
         display: 'standalone',
