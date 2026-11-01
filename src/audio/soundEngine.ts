@@ -372,6 +372,12 @@ const TRACK_MAP: Record<'bossa' | 'waltz' | 'samba', SoundTrackDef> = {
   samba: SAMBA_TRACK,
 };
 
+const TRACK_REPEATS: Record<'bossa' | 'waltz' | 'samba', number> = {
+  bossa: 4, // 4 * 15.7s = ~63s
+  waltz: 6, // 6 * 10.4s = ~62s
+  samba: 4, // 4 * 14.5s = ~58s
+};
+
 export class SoundEngine {
   private ctx: AudioContext | null = null;
   private compressor: DynamicsCompressorNode | null = null;
@@ -393,6 +399,7 @@ export class SoundEngine {
   private guitarCache: Record<number, AudioBuffer> = {};
 
   private currentTrackIndex: number = 0;
+  private currentRepeatCount: number = 0;
   private currentTrackId: MusicTrackOption = 'bossa';
   private playbackStartTime: number = 0;
   private isMusicPlaying: boolean = false;
@@ -475,6 +482,7 @@ export class SoundEngine {
   public setTrackPreference(pref: MusicTrackOption): void {
     if (this.musicTrackPreference === pref) return;
     this.musicTrackPreference = pref;
+    this.currentRepeatCount = 0;
     if (pref !== 'auto') {
       this.currentTrackId = pref;
     }
@@ -618,7 +626,7 @@ export class SoundEngine {
       osc2.stop(time + dur + 0.08);
       oscSub.stop(time + dur + 0.08);
 
-      this.activeMusicNodes.push(osc1, osc2, oscSub, gain);
+      this.activeMusicNodes.push(osc1, osc2, oscSub, gain, subGain);
     } catch (_e) {}
   }
 
@@ -676,7 +684,7 @@ export class SoundEngine {
       lfo.stop(time + dur + 0.08);
       osc.stop(time + dur + 0.08);
 
-      this.activeMusicNodes.push(osc, lfo, noiseSrc, gain);
+      this.activeMusicNodes.push(osc, lfo, noiseSrc, gain, nGain);
     } catch (_e) {}
   }
 
@@ -966,6 +974,40 @@ export class SoundEngine {
     });
   }
 
+  public getNextTrack(): { track: SoundTrackDef; isNewTrack: boolean } {
+    const trackList: ('bossa' | 'waltz' | 'samba')[] = ['bossa', 'waltz', 'samba'];
+
+    if (this.musicTrackPreference !== 'auto') {
+      this.currentTrackId = this.musicTrackPreference;
+      const isNew = this.currentRepeatCount === 0;
+      this.currentRepeatCount++;
+      return { track: TRACK_MAP[this.musicTrackPreference], isNewTrack: isNew };
+    }
+
+    const currentTrackId = trackList[this.currentTrackIndex % trackList.length];
+    const targetRepeats = TRACK_REPEATS[currentTrackId] || 4;
+
+    if (this.currentRepeatCount === 0) {
+      // First cycle of initial track
+      this.currentRepeatCount = 1;
+      this.currentTrackId = currentTrackId;
+      return { track: TRACK_MAP[currentTrackId], isNewTrack: true };
+    }
+
+    if (this.currentRepeatCount < targetRepeats) {
+      // Repeat the same track seamlessly
+      this.currentRepeatCount++;
+      return { track: TRACK_MAP[currentTrackId], isNewTrack: false };
+    }
+
+    // Finished target repeats, advance to next track in playlist
+    this.currentTrackIndex++;
+    this.currentRepeatCount = 1;
+    const nextTrackId = trackList[this.currentTrackIndex % trackList.length];
+    this.currentTrackId = nextTrackId;
+    return { track: TRACK_MAP[nextTrackId], isNewTrack: true };
+  }
+
   public startMusic(): void {
     if (this.musicMuted || this.musicTimer !== null) return;
     const ctx = this.getContext();
@@ -977,20 +1019,8 @@ export class SoundEngine {
     } catch (_e) {}
 
     this.isMusicPlaying = true;
-    const trackList: ('bossa' | 'waltz' | 'samba')[] = ['bossa', 'waltz', 'samba'];
-
-    const getNextTrackDef = (): SoundTrackDef => {
-      if (this.musicTrackPreference !== 'auto') {
-        this.currentTrackId = this.musicTrackPreference;
-        return TRACK_MAP[this.musicTrackPreference];
-      }
-      const trackId = trackList[this.currentTrackIndex % trackList.length];
-      this.currentTrackId = trackId;
-      this.currentTrackIndex++;
-      return TRACK_MAP[trackId];
-    };
-
-    let activeTrack = getNextTrackDef();
+    const first = this.getNextTrack();
+    let activeTrack = first.track;
     let nextCycleTime = ctx.currentTime + 0.05;
     let beatDur = 60 / activeTrack.bpm;
     let loopDur = activeTrack.totalBeats * beatDur;
@@ -1001,14 +1031,17 @@ export class SoundEngine {
     this.musicTimer = window.setInterval(() => {
       if (!this.isMusicPlaying || this.musicMuted) return;
       const now = ctx.currentTime;
-      // When approaching the end of current track, schedule next track with 2.5s musical breath
+      // When approaching the end of current cycle, schedule next cycle
       if (now + 0.5 > cycleEndTime) {
         this.activeMusicNodes = []; // Prune expired nodes from prior cycles to avoid memory leaks
-        const breathPause = 2.5;
-        nextCycleTime = cycleEndTime + breathPause;
-        activeTrack = getNextTrackDef();
+        const nextInfo = this.getNextTrack();
+        activeTrack = nextInfo.track;
         beatDur = 60 / activeTrack.bpm;
         loopDur = activeTrack.totalBeats * beatDur;
+        // If switching between different songs, insert a 2.5s musical breath;
+        // if seamlessly repeating the same song, loop without any gap (0s)
+        const pause = nextInfo.isNewTrack ? 2.5 : 0;
+        nextCycleTime = Math.max(now + 0.05, cycleEndTime + pause);
         this.scheduleTrackEvents(ctx, activeTrack, nextCycleTime);
         cycleEndTime = nextCycleTime + loopDur;
       }
@@ -1020,9 +1053,12 @@ export class SoundEngine {
       clearInterval(this.musicTimer);
       this.musicTimer = null;
     }
+    this.currentRepeatCount = 0;
     this.activeMusicNodes.forEach((node) => {
       try {
         if (node.stop) node.stop();
+      } catch (_e) {}
+      try {
         node.disconnect();
       } catch (_e) {}
     });

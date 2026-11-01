@@ -96,4 +96,40 @@ describe('audio/soundEngine', () => {
     const engine = new SoundEngine();
     expect(engine.getActiveNodeCount()).toBe(0);
   });
+
+  it('repeats the same song for multiple cycles in auto mode before advancing to the next song', () => {
+    const engine = new SoundEngine();
+    engine.setTrackPreference('auto');
+
+    // Cycle 1: initial track
+    const first = engine.getNextTrack();
+    expect(first.track.id).toBe('bossa');
+
+    // Subsequent cycles for bossa (repeat count = 4 total) should stay bossa with isNewTrack = false
+    for (let i = 2; i <= 4; i++) {
+      const rep = engine.getNextTrack();
+      expect(rep.track.id).toBe('bossa');
+      expect(rep.isNewTrack).toBe(false);
+    }
+
+    // Next cycle should advance to waltz with isNewTrack = true
+    const nextSong = engine.getNextTrack();
+    expect(nextSong.track.id).toBe('waltz');
+    expect(nextSong.isNewTrack).toBe(true);
+  });
+
+  it('loops single track continuously without track transitions when preference is not auto', () => {
+    const engine = new SoundEngine();
+    engine.setTrackPreference('samba');
+
+    const first = engine.getNextTrack();
+    expect(first.track.id).toBe('samba');
+    expect(first.isNewTrack).toBe(true);
+
+    for (let i = 0; i < 10; i++) {
+      const rep = engine.getNextTrack();
+      expect(rep.track.id).toBe('samba');
+      expect(rep.isNewTrack).toBe(false);
+    }
+  });
 });
