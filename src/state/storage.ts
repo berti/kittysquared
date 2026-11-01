@@ -15,6 +15,9 @@ export interface ModeProgress {
   activeSnapshot: SavedBoardSnapshot | null;
 }
 
+export type SteppedVolume = 0 | 0.25 | 0.5 | 0.75 | 1.0;
+export type MusicTrackOption = 'auto' | 'bossa' | 'waltz' | 'samba';
+
 export interface AppSettings {
   doubleTapTimeoutMs: number;
   catVariant: CatVariant;
@@ -22,6 +25,9 @@ export interface AppSettings {
   musicMuted: boolean;
   sfxMuted: boolean;
   tutorialSeen: boolean;
+  musicVolume: SteppedVolume;
+  sfxVolume: SteppedVolume;
+  musicTrack: MusicTrackOption;
 }
 
 export interface PersistedAppState {
@@ -30,6 +36,9 @@ export interface PersistedAppState {
 }
 
 const STORAGE_KEY = 'kittysquared_state_v1';
+
+export const VALID_STEPPED_VOLUMES: SteppedVolume[] = [0, 0.25, 0.5, 0.75, 1.0];
+export const VALID_MUSIC_TRACKS: MusicTrackOption[] = ['auto', 'bossa', 'waltz', 'samba'];
 
 export const VALID_REGION_ASSIST_MODES: RegionAssistMode[] = [
   'off',
@@ -52,6 +61,9 @@ export function getDefaultAppState(): PersistedAppState {
       musicMuted: false,
       sfxMuted: false,
       tutorialSeen: false,
+      musicVolume: 0.75,
+      sfxVolume: 0.75,
+      musicTrack: 'auto',
     },
   };
 }
@@ -86,6 +98,15 @@ export function loadPersistedState(): PersistedAppState {
         regionAssist: VALID_REGION_ASSIST_MODES.includes(cleanRawSettings.regionAssist)
           ? cleanRawSettings.regionAssist
           : 'off',
+        musicVolume: VALID_STEPPED_VOLUMES.includes(cleanRawSettings.musicVolume)
+          ? cleanRawSettings.musicVolume
+          : 0.75,
+        sfxVolume: VALID_STEPPED_VOLUMES.includes(cleanRawSettings.sfxVolume)
+          ? cleanRawSettings.sfxVolume
+          : 0.75,
+        musicTrack: VALID_MUSIC_TRACKS.includes(cleanRawSettings.musicTrack)
+          ? cleanRawSettings.musicTrack
+          : 'auto',
       },
     };
   } catch (_e) {

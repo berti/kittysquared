@@ -25,6 +25,47 @@ describe('state/storage', () => {
     expect(loaded.settings.catVariant).toBe('white');
   });
 
+  it('provides default musicVolume (0.75), sfxVolume (0.75), and musicTrack ("auto") in default state', () => {
+    const state = getDefaultAppState();
+    expect(state.settings.musicVolume).toBe(0.75);
+    expect(state.settings.sfxVolume).toBe(0.75);
+    expect(state.settings.musicTrack).toBe('auto');
+  });
+
+  it('migrates legacy save format missing volume and track fields with robust defaults', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        progress: { currentLevelId: 3, totalScore: 100, activeSnapshot: null },
+        settings: {
+          doubleTapTimeoutMs: 500,
+          catVariant: 'black',
+          regionAssist: 'off',
+          musicMuted: false,
+          sfxMuted: false,
+          tutorialSeen: true,
+        },
+      })
+    );
+    const loaded = loadPersistedState();
+    expect(loaded.settings.musicVolume).toBe(0.75);
+    expect(loaded.settings.sfxVolume).toBe(0.75);
+    expect(loaded.settings.musicTrack).toBe('auto');
+  });
+
+  it('persists and reloads custom volume and track preferences', () => {
+    const state = getDefaultAppState();
+    state.settings.musicVolume = 0.5;
+    state.settings.sfxVolume = 1.0;
+    state.settings.musicTrack = 'bossa';
+    savePersistedState(state);
+
+    const loaded = loadPersistedState();
+    expect(loaded.settings.musicVolume).toBe(0.5);
+    expect(loaded.settings.sfxVolume).toBe(1.0);
+    expect(loaded.settings.musicTrack).toBe('bossa');
+  });
+
   it('resets progress back to level 1 and 0 points while preserving settings', () => {
     const state = getDefaultAppState();
     state.progress.currentLevelId = 5;
