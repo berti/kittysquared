@@ -1,3 +1,10 @@
 node_modules/
 dist/
 .superpowers/
+
+# Local previews and scratch utilities
+music-preview.html
+colorblind-solutions.html
+scripts/statusline.py
+scripts/statusline.sh
+
