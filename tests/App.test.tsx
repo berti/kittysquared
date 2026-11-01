@@ -255,5 +255,71 @@ describe('App integration', () => {
       expect(saved.progress.currentLevelId).toBe(301);
       expect(saved.progress.totalScore).toBeGreaterThan(5000);
     });
+
+    it('in post-game state, clicking Play opens PostGameModal and allows replaying level 300', () => {
+      localStorage.setItem(
+        'kittysquared_state_v1',
+        JSON.stringify({
+          progress: { currentLevelId: 301, totalScore: 16000, activeSnapshot: null },
+          settings: {
+            doubleTapTimeoutMs: 500,
+            catVariant: 'black',
+            regionAssist: 'off',
+            musicMuted: true,
+            sfxMuted: true,
+            tutorialSeen: true,
+          },
+        })
+      );
+
+      const { getByTestId, getByText } = render(<App transitionDurationMs={0} />);
+      const playBtn = getByTestId('start-game-btn');
+      expect(playBtn.textContent).toContain('¡Juego completado!');
+      expect(playBtn.textContent).toContain('300 / 300');
+
+      // Click play to open post-game modal
+      fireEvent.click(playBtn);
+      expect(getByTestId('post-game-modal-backdrop')).toBeTruthy();
+
+      // Click replay last level
+      fireEvent.click(getByTestId('replay-last-level-btn'));
+      expect(getByText('Nivel 300')).toBeTruthy();
+    });
+
+    it('in post-game state, resetting progress wipes state back to level 1 and 0 pts after confirmation', () => {
+      localStorage.setItem(
+        'kittysquared_state_v1',
+        JSON.stringify({
+          progress: { currentLevelId: 301, totalScore: 16000, activeSnapshot: null },
+          settings: {
+            doubleTapTimeoutMs: 500,
+            catVariant: 'black',
+            regionAssist: 'off',
+            musicMuted: true,
+            sfxMuted: true,
+            tutorialSeen: true,
+          },
+        })
+      );
+
+      const { getByTestId, queryByTestId } = render(<App transitionDurationMs={0} />);
+      fireEvent.click(getByTestId('start-game-btn'));
+
+      // Open reset confirmation dialog
+      fireEvent.click(getByTestId('postgame-reset-progress-btn'));
+      expect(getByTestId('confirm-dialog-backdrop')).toBeTruthy();
+
+      // Confirm reset
+      fireEvent.click(getByTestId('confirm-dialog-confirm-btn'));
+
+      // Should be back on home screen at level 1 with 0 points
+      const playBtn = getByTestId('start-game-btn');
+      expect(playBtn.textContent).toContain('Nivel 1 / 300 • 0 pts');
+      expect(queryByTestId('post-game-modal-backdrop')).toBeNull();
+
+      const saved = JSON.parse(localStorage.getItem('kittysquared_state_v1') || '{}');
+      expect(saved.progress.currentLevelId).toBe(1);
+      expect(saved.progress.totalScore).toBe(0);
+    });
   });
 });

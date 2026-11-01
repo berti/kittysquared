@@ -83,4 +83,41 @@ describe('HomeScreen component', () => {
     const playBtn = screen.getByTestId('start-game-btn');
     expect(playBtn.tagName.toLowerCase()).toBe('button');
   });
+
+  it('renders completed state on Play button and opens PostGameModal when currentLevelId > totalLevels', () => {
+    const completedProgress = {
+      currentLevelId: 301,
+      totalScore: 16500,
+      activeSnapshot: null,
+    };
+    const onPlay = vi.fn();
+    const onReplay = vi.fn();
+    const onReset = vi.fn();
+
+    render(
+      <HomeScreen
+        progress={completedProgress}
+        totalLevels={300}
+        catVariant="black"
+        onPlay={onPlay}
+        onReplayLastLevel={onReplay}
+        onResetProgress={onReset}
+        onOpenTutorial={vi.fn()}
+        onOpenSettings={vi.fn()}
+      />
+    );
+
+    const playBtn = screen.getByTestId('start-game-btn');
+    expect(playBtn.textContent).toContain('¡Juego completado!');
+    expect(playBtn.textContent).toContain('300 / 300 • 16500 pts');
+
+    // Clicking Play button opens PostGameModal
+    fireEvent.click(playBtn);
+    expect(onPlay).not.toHaveBeenCalled();
+    expect(screen.getByTestId('post-game-modal-backdrop')).toBeDefined();
+
+    // Replay button triggers onReplayLastLevel
+    fireEvent.click(screen.getByTestId('replay-last-level-btn'));
+    expect(onReplay).toHaveBeenCalledTimes(1);
+  });
 });

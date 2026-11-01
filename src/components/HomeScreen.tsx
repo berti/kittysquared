@@ -1,22 +1,43 @@
+import { useState } from 'preact/hooks';
 import { CatVariant } from '../types/puzzle';
 import { ModeProgress } from '../state/storage';
 import { CatSvg } from './CatSvg';
+import { PostGameModal } from './PostGameModal';
 
 export interface HomeScreenProps {
   progress: ModeProgress;
+  totalLevels?: number;
   catVariant: CatVariant;
   onPlay: () => void;
+  onReplayLastLevel?: () => void;
+  onResetProgress?: () => void;
   onOpenTutorial: () => void;
   onOpenSettings: () => void;
 }
 
 export function HomeScreen({
   progress,
+  totalLevels,
   catVariant,
   onPlay,
+  onReplayLastLevel,
+  onResetProgress,
   onOpenTutorial,
   onOpenSettings,
 }: HomeScreenProps) {
+  const [showPostGameModal, setShowPostGameModal] = useState(false);
+
+  const levelsCount = totalLevels ?? 300;
+  const isGameCompleted = progress.currentLevelId > levelsCount;
+
+  const handlePlayClick = () => {
+    if (isGameCompleted) {
+      setShowPostGameModal(true);
+    } else {
+      onPlay();
+    }
+  };
+
   return (
     <div
       style={{
@@ -41,7 +62,7 @@ export function HomeScreen({
         <button
           type="button"
           data-testid="start-game-btn"
-          onClick={onPlay}
+          onClick={handlePlayClick}
           style={{
             width: '100%',
             background: '#FF9770',
@@ -63,7 +84,9 @@ export function HomeScreen({
             Jugar
           </div>
           <div style={{ fontSize: '14.5px', fontWeight: 700, color: '#FFFBF2', opacity: 0.95 }}>
-            Nivel {progress.currentLevelId} / 300 • {progress.totalScore} pts
+            {isGameCompleted
+              ? `¡Juego completado! • ${levelsCount} / ${levelsCount} • ${progress.totalScore} pts`
+              : `Nivel ${progress.currentLevelId} / ${levelsCount} • ${progress.totalScore} pts`}
           </div>
         </button>
 
@@ -108,6 +131,22 @@ export function HomeScreen({
       </div>
 
       <div style={{ height: '8px' }} />
+
+      <PostGameModal
+        isOpen={showPostGameModal}
+        totalLevels={levelsCount}
+        totalScore={progress.totalScore}
+        catVariant={catVariant}
+        onReplayLastLevel={() => {
+          setShowPostGameModal(false);
+          onReplayLastLevel?.();
+        }}
+        onResetProgress={() => {
+          setShowPostGameModal(false);
+          onResetProgress?.();
+        }}
+        onClose={() => setShowPostGameModal(false)}
+      />
     </div>
   );
 }

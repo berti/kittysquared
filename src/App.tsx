@@ -185,6 +185,15 @@ export function App({
     });
   };
 
+  const handleReplayLastLevel = () => {
+    navigateWithTransition('forward', () => {
+      const lastPuzzle = puzzles[puzzles.length - 1];
+      const freshSession = createLevelSession(lastPuzzle);
+      setSession(freshSession);
+      setActiveScreen('game');
+    });
+  };
+
   const handleResetProgress = () => {
     const next = resetProgress(appState);
     setAppState(next);
@@ -210,8 +219,11 @@ export function App({
       {activeScreen === 'home' && (
         <HomeScreen
           progress={appState.progress}
+          totalLevels={puzzles.length}
           catVariant={appState.settings.catVariant}
           onPlay={handlePlay}
+          onReplayLastLevel={handleReplayLastLevel}
+          onResetProgress={handleResetProgress}
           onOpenTutorial={() => setShowTutorial(true)}
           onOpenSettings={() => setShowSettings(true)}
         />
