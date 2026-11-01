@@ -1,4 +1,4 @@
-import { CatVariant, CellState, ControlScheme, GameMode, RegionAssistMode } from '../types/puzzle';
+import { CatVariant, CellState, GameMode, RegionAssistMode } from '../types/puzzle';
 
 export interface SavedBoardSnapshot {
   levelId: number;
@@ -16,7 +16,6 @@ export interface ModeProgress {
 }
 
 export interface AppSettings {
-  controlScheme: ControlScheme;
   doubleTapTimeoutMs: number;
   catVariant: CatVariant;
   regionAssist: RegionAssistMode;
@@ -53,7 +52,6 @@ export function getDefaultAppState(): PersistedAppState {
       activeSnapshot: null,
     },
     settings: {
-      controlScheme: 'toggle',
       doubleTapTimeoutMs: 500,
       catVariant: 'black',
       regionAssist: 'off',
@@ -73,7 +71,8 @@ export function loadPersistedState(): PersistedAppState {
     if (!parsed || typeof parsed !== 'object') return defaults;
 
     const rawSettings = parsed.settings || {};
-    const rawTimeout = rawSettings.doubleTapTimeoutMs;
+    const { controlScheme: _legacyControlScheme, ...cleanRawSettings } = rawSettings;
+    const rawTimeout = cleanRawSettings.doubleTapTimeoutMs;
     const doubleTapTimeoutMs =
       typeof rawTimeout === 'number' && !isNaN(rawTimeout)
         ? Math.max(250, Math.min(900, rawTimeout))
@@ -90,10 +89,10 @@ export function loadPersistedState(): PersistedAppState {
       },
       settings: {
         ...defaults.settings,
-        ...rawSettings,
+        ...cleanRawSettings,
         doubleTapTimeoutMs,
-        regionAssist: VALID_REGION_ASSIST_MODES.includes(rawSettings.regionAssist)
-          ? rawSettings.regionAssist
+        regionAssist: VALID_REGION_ASSIST_MODES.includes(cleanRawSettings.regionAssist)
+          ? cleanRawSettings.regionAssist
           : 'off',
       },
     };

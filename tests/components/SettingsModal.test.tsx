@@ -5,7 +5,6 @@ import { SettingsModal } from '../../src/components/SettingsModal';
 import { AppSettings } from '../../src/state/storage';
 
 const defaultSettings: AppSettings = {
-  controlScheme: 'double-tap',
   doubleTapTimeoutMs: 500,
   catVariant: 'black',
   regionAssist: 'off',
@@ -78,16 +77,20 @@ describe('SettingsModal component', () => {
     expect(getByTestId('pane-reset')).toBeDefined();
   });
 
-  it('Controls tab: reveals speed slider and tap tester when double-tap is active', () => {
+  it('Controls tab: directly renders speed slider and tap tester without scheme buttons', () => {
     const onUpdateSettings = vi.fn();
-    const { getByTestId } = render(
+    const { getByTestId, queryByTestId } = render(
       <SettingsModal
-        settings={{ ...defaultSettings, controlScheme: 'double-tap', doubleTapTimeoutMs: 500 }}
+        settings={{ ...defaultSettings, doubleTapTimeoutMs: 500 }}
         onUpdateSettings={onUpdateSettings}
         onResetMode={vi.fn()}
         onClose={vi.fn()}
       />
     );
+
+    // Control scheme toggle buttons do not exist
+    expect(queryByTestId('select-control-toggle')).toBeNull();
+    expect(queryByTestId('select-control-double-tap')).toBeNull();
 
     const slider = getByTestId('speed-slider') as HTMLInputElement;
     expect(slider).toBeDefined();
@@ -108,7 +111,7 @@ describe('SettingsModal component', () => {
     vi.useFakeTimers();
     const { getByTestId } = render(
       <SettingsModal
-        settings={{ ...defaultSettings, controlScheme: 'double-tap', doubleTapTimeoutMs: 500 }}
+        settings={{ ...defaultSettings, doubleTapTimeoutMs: 500 }}
         onUpdateSettings={vi.fn()}
         onResetMode={vi.fn()}
         onClose={vi.fn()}

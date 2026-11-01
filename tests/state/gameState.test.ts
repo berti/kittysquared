@@ -25,36 +25,36 @@ const samplePuzzle: PuzzleDef = {
 describe('state/gameState', () => {
   it('Chill Out mode highlights conflicts without failing and wins when solved', () => {
     let s = createLevelSession(samplePuzzle, 'chill');
-    s = applyCellTap(s, 0, 0, 'toggle', 'cat');
-    s = applyCellTap(s, 0, 1, 'toggle', 'cat'); // same row & neighbor
+    s = applyCellTap(s, 0, 0, { isDoubleTap: true });
+    s = applyCellTap(s, 0, 1, { isDoubleTap: true }); // same row & neighbor
     expect(s.conflictingKeys.has('0,0')).toBe(true);
     expect(s.conflictingKeys.has('0,1')).toBe(true);
     expect(s.status).toBe('playing');
 
     // Remove (0,0) and place remaining valid cats: (1,3), (2,0), (3,2)
-    s = applyCellTap(s, 0, 0, 'toggle', 'cat');
-    s = applyCellTap(s, 1, 3, 'toggle', 'cat');
-    s = applyCellTap(s, 2, 0, 'toggle', 'cat');
-    s = applyCellTap(s, 3, 2, 'toggle', 'cat');
+    s = applyCellTap(s, 0, 0, { isDoubleTap: true });
+    s = applyCellTap(s, 1, 3, { isDoubleTap: true });
+    s = applyCellTap(s, 2, 0, { isDoubleTap: true });
+    s = applyCellTap(s, 3, 2, { isDoubleTap: true });
     expect(s.status).toBe('won');
   });
 
   it('Classic mode awards 10 partial points per valid cat, penalizes mistakes, and loses on 3rd mistake', () => {
     let s = createLevelSession(samplePuzzle, 'classic');
     // Valid cat at (0,1)
-    s = applyCellTap(s, 0, 1, 'toggle', 'cat');
+    s = applyCellTap(s, 0, 1, { isDoubleTap: true });
     expect(s.board[0][1]).toBe('cat');
     expect(s.lockedCats[0][1]).toBe(true);
     expect(s.partialScore).toBe(10);
 
     // 3 wrong cat placements -> lost on 3rd mistake, partialScore reset to 0
-    s = applyCellTap(s, 0, 0, 'toggle', 'cat');
+    s = applyCellTap(s, 0, 0, { isDoubleTap: true });
     expect(s.mistakes).toBe(1);
     expect(s.board[0][0]).toBe('cross');
-    s = applyCellTap(s, 1, 0, 'toggle', 'cat');
+    s = applyCellTap(s, 1, 0, { isDoubleTap: true });
     expect(s.mistakes).toBe(2);
     expect(s.status).toBe('playing');
-    s = applyCellTap(s, 2, 2, 'toggle', 'cat');
+    s = applyCellTap(s, 2, 2, { isDoubleTap: true });
     expect(s.mistakes).toBe(3);
     expect(s.status).toBe('lost');
     expect(s.partialScore).toBe(0);
@@ -62,11 +62,11 @@ describe('state/gameState', () => {
 
   it('Classic mode calculates completion bonus (+50 for 0 mistakes, +30 for 1, +10 for 2)', () => {
     let s = createLevelSession(samplePuzzle, 'classic');
-    s = applyCellTap(s, 0, 0, 'toggle', 'cat'); // 1 mistake
-    s = applyCellTap(s, 0, 1, 'toggle', 'cat');
-    s = applyCellTap(s, 1, 3, 'toggle', 'cat');
-    s = applyCellTap(s, 2, 0, 'toggle', 'cat');
-    s = applyCellTap(s, 3, 2, 'toggle', 'cat');
+    s = applyCellTap(s, 0, 0, { isDoubleTap: true }); // 1 mistake
+    s = applyCellTap(s, 0, 1, { isDoubleTap: true });
+    s = applyCellTap(s, 1, 3, { isDoubleTap: true });
+    s = applyCellTap(s, 2, 0, { isDoubleTap: true });
+    s = applyCellTap(s, 3, 2, { isDoubleTap: true });
     expect(s.status).toBe('won');
     expect(s.partialScore).toBe(40);
     expect(s.levelBonus).toBe(30);
@@ -74,7 +74,7 @@ describe('state/gameState', () => {
 
   it('Review Focus #1: applyDragCross ignores cells that already contain a cat', () => {
     let s = createLevelSession(samplePuzzle, 'chill');
-    s = applyCellTap(s, 0, 1, 'toggle', 'cat');
+    s = applyCellTap(s, 0, 1, { isDoubleTap: true });
     s = applyDragCross(s, 0, 1, 'cross');
     expect(s.board[0][1]).toBe('cat');
     s = applyDragCross(s, 0, 2, 'cross');
@@ -83,9 +83,9 @@ describe('state/gameState', () => {
 
   it('Review Focus #2: Classic mode locks validated cats against tap, clearCrosses, and undoMove', () => {
     let s = createLevelSession(samplePuzzle, 'classic');
-    s = applyCellTap(s, 0, 1, 'toggle', 'cat'); // valid, locked
-    s = applyCellTap(s, 0, 2, 'toggle', 'cross');
-    s = applyCellTap(s, 0, 1, 'toggle', 'cat'); // attempt to remove locked cat
+    s = applyCellTap(s, 0, 1, { isDoubleTap: true }); // valid, locked
+    s = applyCellTap(s, 0, 2); // single tap = cross
+    s = applyCellTap(s, 0, 1, { isDoubleTap: true }); // attempt to remove locked cat
     expect(s.board[0][1]).toBe('cat');
     s = clearCrosses(s);
     expect(s.board[0][2]).toBe('empty');
@@ -96,20 +96,24 @@ describe('state/gameState', () => {
     expect(s.board[0][1]).toBe('cat');
   });
 
-  it('Review Focus #3: double-tap scheme places cross on single tap without triggering Classic cat validation, and places cat on double tap', () => {
+  it('toggles cross on single tap without triggering Classic cat validation, and places cat on double tap', () => {
     let s = createLevelSession(samplePuzzle, 'classic');
-    // (0,0) is a wrong cat position, but single tap in double-tap mode only places a cross
-    s = applyCellTap(s, 0, 0, 'double-tap', 'cat', { isDoubleTap: false });
+    // (0,0) is a wrong cat position, but single tap only places a cross
+    s = applyCellTap(s, 0, 0, { isDoubleTap: false });
     expect(s.board[0][0]).toBe('cross');
     expect(s.mistakes).toBe(0);
 
+    // Second single tap on (0,0) toggles cross back to empty
+    s = applyCellTap(s, 0, 0, { isDoubleTap: false });
+    expect(s.board[0][0]).toBe('empty');
+
     // Double tap on (0,0) attempts to place a cat -> triggers Classic mistake and adds cross
-    s = applyCellTap(s, 0, 0, 'double-tap', 'cat', { isDoubleTap: true });
+    s = applyCellTap(s, 0, 0, { isDoubleTap: true });
     expect(s.mistakes).toBe(1);
     expect(s.board[0][0]).toBe('cross');
 
     // Double tap on valid position (0,1) places locked cat
-    s = applyCellTap(s, 0, 1, 'double-tap', 'cat', { isDoubleTap: true });
+    s = applyCellTap(s, 0, 1, { isDoubleTap: true });
     expect(s.board[0][1]).toBe('cat');
     expect(s.lockedCats[0][1]).toBe(true);
     expect(s.partialScore).toBe(10);
@@ -117,16 +121,16 @@ describe('state/gameState', () => {
 
   it('Classic mode adds locked red cross on wrong cat guess, immune to taps, drag, clearCrosses, and undo', () => {
     let s = createLevelSession(samplePuzzle, 'classic');
-    // Place wrong cat at (0,0)
-    s = applyCellTap(s, 0, 0, 'toggle', 'cat');
+    // Place wrong cat at (0,0) with double tap
+    s = applyCellTap(s, 0, 0, { isDoubleTap: true });
     expect(s.mistakes).toBe(1);
     expect(s.board[0][0]).toBe('cross');
     expect(s.errorCrosses[0][0]).toBe(true);
 
-    // Tapping again does not alter the error cross
-    s = applyCellTap(s, 0, 0, 'toggle', 'cross');
+    // Tapping again (single or double) does not alter the error cross
+    s = applyCellTap(s, 0, 0);
     expect(s.board[0][0]).toBe('cross');
-    s = applyCellTap(s, 0, 0, 'toggle', 'cat');
+    s = applyCellTap(s, 0, 0, { isDoubleTap: true });
     expect(s.board[0][0]).toBe('cross');
 
     // Dragging cross over it does not alter it
@@ -134,7 +138,7 @@ describe('state/gameState', () => {
     expect(s.board[0][0]).toBe('cross');
 
     // clearCrosses clears normal crosses but keeps error cross
-    s = applyCellTap(s, 0, 2, 'toggle', 'cross');
+    s = applyCellTap(s, 0, 2);
     expect(s.board[0][2]).toBe('cross');
     s = clearCrosses(s);
     expect(s.board[0][2]).toBe('empty');
@@ -150,7 +154,7 @@ describe('state/gameState', () => {
   it('debug mode in Classic auto-places crosses on valid cat placement, but normal mode does not', () => {
     // Normal classic mode
     let normalSession = createLevelSession(samplePuzzle, 'classic');
-    normalSession = applyCellTap(normalSession, 0, 1, 'toggle', 'cat');
+    normalSession = applyCellTap(normalSession, 0, 1, { isDoubleTap: true });
     // Row 0 has empty cells still empty in normal mode
     expect(normalSession.board[0][0]).toBe('empty');
     expect(normalSession.board[0][2]).toBe('empty');
@@ -160,7 +164,7 @@ describe('state/gameState', () => {
     let debugSession = createLevelSession(samplePuzzle, 'classic', true);
     expect(debugSession.isDebug).toBe(true);
 
-    debugSession = applyCellTap(debugSession, 0, 1, 'toggle', 'cat');
+    debugSession = applyCellTap(debugSession, 0, 1, { isDoubleTap: true });
     expect(debugSession.board[0][1]).toBe('cat');
     // Row 0 cells (except cat at (0,1)) should now be cross
     expect(debugSession.board[0][0]).toBe('cross');
@@ -183,11 +187,11 @@ describe('state/gameState', () => {
   it('debug mode auto-cross preserves existing cats on the board', () => {
     let debugSession = createLevelSession(samplePuzzle, 'classic', true);
     // Place cat 1: (0, 1)
-    debugSession = applyCellTap(debugSession, 0, 1, 'toggle', 'cat');
+    debugSession = applyCellTap(debugSession, 0, 1, { isDoubleTap: true });
     expect(debugSession.board[0][1]).toBe('cat');
 
     // Place cat 2: (1, 3) (valid in solution: [1, 3, 0, 2])
-    debugSession = applyCellTap(debugSession, 1, 3, 'toggle', 'cat');
+    debugSession = applyCellTap(debugSession, 1, 3, { isDoubleTap: true });
     expect(debugSession.board[1][3]).toBe('cat');
     // Cat 1 at (0, 1) must remain cat
     expect(debugSession.board[0][1]).toBe('cat');

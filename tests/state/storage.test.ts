@@ -123,4 +123,22 @@ describe('state/storage', () => {
     );
     expect(loadPersistedState().settings.doubleTapTimeoutMs).toBe(250);
   });
+
+  it('Review Focus #1: loadPersistedState strips legacy controlScheme cleanly and does not include it in AppSettings', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        settings: {
+          controlScheme: 'toggle',
+          catVariant: 'white',
+        },
+      })
+    );
+    const loaded = loadPersistedState();
+    expect((loaded.settings as any).controlScheme).toBeUndefined();
+    expect(loaded.settings.catVariant).toBe('white');
+
+    const defaultState = getDefaultAppState();
+    expect((defaultState.settings as any).controlScheme).toBeUndefined();
+  });
 });

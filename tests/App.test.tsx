@@ -18,20 +18,21 @@ describe('App integration', () => {
     expect(getByTestId('start-classic-btn')).toBeTruthy();
   });
 
-  it('allows changing control scheme (toggle vs double-tap), cat variant (black vs white), and resetting progress in Settings', () => {
-    const { getByTestId, queryByTestId } = render(<App />);
+  it('allows configuring double-tap speed, cat variant (black vs white), and resetting progress in Settings', () => {
+    const { getByTestId, getByText, queryByTestId } = render(<App />);
     // Open settings from home
     fireEvent.click(getByTestId('open-settings-btn'));
-    fireEvent.click(getByTestId('select-control-double-tap'));
+    fireEvent.input(getByTestId('speed-slider'), { target: { value: '450' } });
 
     // Switch to graphics tab for cat variant
     fireEvent.click(getByTestId('tab-btn-graphics'));
     fireEvent.click(getByTestId('select-cat-white'));
     fireEvent.click(getByTestId('close-settings-btn'));
 
-    // Enter Classic mode: dual switch should be hidden in double-tap mode
+    // Enter Classic mode: dual switch should be removed, hint text visible
     fireEvent.click(getByTestId('start-classic-btn'));
     expect(queryByTestId('tool-toggle-switch')).toBeNull();
+    expect(getByText(/1 toque: ✕ Cruz • 2 toques: 🐱 Gato/i)).toBeTruthy();
   });
 
   it('plays through Level 1 in Classic mode, updates total score, and advances to Level 2', () => {
@@ -42,7 +43,6 @@ describe('App integration', () => {
         chill: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
         classic: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
         settings: {
-          controlScheme: 'toggle',
           catVariant: 'black',
           musicMuted: true,
           sfxMuted: true,
@@ -82,7 +82,6 @@ describe('App integration', () => {
         chill: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
         classic: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
         settings: {
-          controlScheme: 'toggle',
           doubleTapTimeoutMs: 500,
           catVariant: 'black',
           regionAssist: 'off',
@@ -108,7 +107,8 @@ describe('App integration', () => {
     expect(queryByText('(Chill Out)')).toBeNull();
     expect(queryByText('(Classic)')).toBeNull();
 
-    // Place a cat on cell-0-0
+    // Place a cat on cell-0-0 via double click
+    fireEvent.click(getByTestId('cell-0-0'));
     fireEvent.click(getByTestId('cell-0-0'));
     expect(getByTestId('cell-0-0').querySelector('[data-cat-part="head"]')).not.toBeNull();
 
@@ -128,7 +128,6 @@ describe('App integration', () => {
         chill: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
         classic: { currentLevelId: 1, totalScore: 99999, activeSnapshot: null },
         settings: {
-          controlScheme: 'toggle',
           doubleTapTimeoutMs: 500,
           catVariant: 'black',
           regionAssist: 'off',
@@ -226,7 +225,6 @@ describe('App integration', () => {
         chill: { currentLevelId: 5, totalScore: 100, activeSnapshot: null },
         classic: { currentLevelId: 10, totalScore: 500, activeSnapshot: null },
         settings: {
-          controlScheme: 'toggle',
           doubleTapTimeoutMs: 500,
           catVariant: 'black',
           regionAssist: 'off',

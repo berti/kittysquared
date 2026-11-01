@@ -1,4 +1,4 @@
-import { CellState, ControlScheme, GameMode, PuzzleDef } from '../types/puzzle';
+import { CellState, GameMode, PuzzleDef } from '../types/puzzle';
 import { findConflictingCats, getDirectEliminations, isBoardSolved } from '../engine/rules';
 
 export interface LevelSessionState {
@@ -56,8 +56,6 @@ export function applyCellTap(
   state: LevelSessionState,
   row: number,
   col: number,
-  scheme: ControlScheme,
-  activeTool: 'cross' | 'cat',
   options?: { isDoubleTap?: boolean }
 ): LevelSessionState {
   if (state.status !== 'playing') return state;
@@ -70,22 +68,14 @@ export function applyCellTap(
   const current = state.board[row][col];
   let nextState: CellState = current;
 
-  if (scheme === 'toggle') {
-    if (activeTool === 'cross') {
-      nextState = current === 'cross' ? 'empty' : 'cross';
-    } else {
-      nextState = current === 'cat' ? 'empty' : 'cat';
-    }
+  // Double-tap mode:
+  // If it's a confirmed double-tap (within timeout on the same cell):
+  // placing cat or toggling off cat
+  if (options?.isDoubleTap) {
+    nextState = current === 'cat' ? 'empty' : 'cat';
   } else {
-    // double-tap mode with timing:
-    // If it's a confirmed double-tap (within timeout on the same cell):
-    // placing cat or toggling off cat
-    if (options?.isDoubleTap) {
-      nextState = current === 'cat' ? 'empty' : 'cat';
-    } else {
-      // Single tap: toggle cross (empty -> cross, cross -> empty, cat -> cross)
-      nextState = current === 'cross' ? 'empty' : 'cross';
-    }
+    // Single tap: toggle cross (empty -> cross, cross -> empty, cat -> cross)
+    nextState = current === 'cross' ? 'empty' : 'cross';
   }
 
   // Handle Classic Mode validation when placing a cat

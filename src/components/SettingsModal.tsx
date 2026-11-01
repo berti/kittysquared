@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { AppSettings } from '../state/storage';
-import { CatVariant, ControlScheme, GameMode, RegionAssistMode } from '../types/puzzle';
+import { CatVariant, GameMode, RegionAssistMode } from '../types/puzzle';
 import { REGION_GLYPHS } from './Board';
 import { CatSvg } from './CatSvg';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -40,10 +40,6 @@ export function SettingsModal({
       }
     };
   }, []);
-
-  const setControl = (scheme: ControlScheme) => {
-    onUpdateSettings({ ...settings, controlScheme: scheme });
-  };
 
   const setVariant = (variant: CatVariant) => {
     onUpdateSettings({ ...settings, catVariant: variant });
@@ -207,138 +203,93 @@ export function SettingsModal({
               aria-labelledby="tab-btn-controls"
               style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}
             >
-              <div>
-                <div style={{ fontSize: '12px', fontWeight: 800, color: '#7A686E', marginBottom: '8px' }}>
-                  ESQUEMA DE CONTROL
+              <div
+                style={{
+                  background: '#F8F3E8',
+                  border: '2px solid #E2D6C1',
+                  borderRadius: '16px',
+                  padding: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#7A686E' }}>
+                    VELOCIDAD DE DOBLE TOQUE
+                  </span>
+                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#F3722C' }}>
+                    {currentTimeout} ms ({speedCategory})
+                  </span>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    data-testid="select-control-toggle"
-                    onClick={() => setControl('toggle')}
+
+                <input
+                  type="range"
+                  data-testid="speed-slider"
+                  min="250"
+                  max="900"
+                  step="25"
+                  value={currentTimeout}
+                  onInput={(e) => {
+                    const val = parseInt((e.target as HTMLInputElement).value, 10);
+                    setDoubleTapTimeout(val);
+                  }}
+                  style={{ width: '100%', accentColor: '#F3722C', cursor: 'pointer' }}
+                />
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 700, color: '#8C7A80' }}>
+                  <span>Rápido (250ms)</span>
+                  <span>Medio (500ms)</span>
+                  <span>Lento (900ms)</span>
+                </div>
+
+                {/* Interactive tap tester */}
+                <div style={{ textAlign: 'center', marginTop: '2px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#7A686E', marginBottom: '6px' }}>
+                    ÁREA DE PRUEBA
+                  </div>
+                  <div
+                    data-testid="double-tap-tester"
+                    onClick={handleTesterClick}
                     style={{
-                      flex: 1,
-                      padding: '10px 6px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      border: '2px solid #E2D6C1',
-                      background: settings.controlScheme === 'toggle' ? '#FF9770' : '#FFF',
-                      color: settings.controlScheme === 'toggle' ? '#FFF' : '#3D3135',
+                      background:
+                        testerFeedback.status === 'double'
+                          ? '#E8FBF8'
+                          : testerFeedback.status === 'single'
+                          ? '#FFF5F0'
+                          : '#FFFFFF',
+                      border:
+                        testerFeedback.status === 'double'
+                          ? '2px solid #2EC4B6'
+                          : testerFeedback.status === 'single'
+                          ? '2px solid #FF9770'
+                          : '2px dashed #E2D6C1',
+                      borderRadius: '14px',
+                      padding: '12px',
                       cursor: 'pointer',
+                      userSelect: 'none',
+                      transition: 'all 0.15s ease',
                     }}
                   >
-                    🔘 Botón doble
-                  </button>
-                  <button
-                    data-testid="select-control-double-tap"
-                    onClick={() => setControl('double-tap')}
-                    style={{
-                      flex: 1,
-                      padding: '10px 6px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      border: '2px solid #E2D6C1',
-                      background: settings.controlScheme === 'double-tap' ? '#FF9770' : '#FFF',
-                      color: settings.controlScheme === 'double-tap' ? '#FFF' : '#3D3135',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    👆 1 toque ✕ / 2 toques 🐱
-                  </button>
+                    <div style={{ fontSize: '24px', lineHeight: 1 }}>
+                      {testerFeedback.status === 'double'
+                        ? settings.catVariant === 'white'
+                          ? '🤍'
+                          : '🐱'
+                        : testerFeedback.status === 'single'
+                        ? '✕'
+                        : '👆'}
+                    </div>
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#3D3135', marginTop: '4px' }}>
+                      {testerFeedback.status === 'double'
+                        ? `¡Doble toque detectado! 🐾 (${testerFeedback.interval}ms)`
+                        : testerFeedback.status === 'single'
+                        ? '1 toque (✕ cruz) — ¡toca de nuevo rápido!'
+                        : 'Toca 2 veces aquí para probar la velocidad'}
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              {/* Speed slider and tester if double-tap scheme */}
-              {settings.controlScheme === 'double-tap' && (
-                <div
-                  style={{
-                    background: '#F8F3E8',
-                    border: '2px solid #E2D6C1',
-                    borderRadius: '16px',
-                    padding: '12px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#7A686E' }}>
-                      VELOCIDAD DE DOBLE TOQUE
-                    </span>
-                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#F3722C' }}>
-                      {currentTimeout} ms ({speedCategory})
-                    </span>
-                  </div>
-
-                  <input
-                    type="range"
-                    data-testid="speed-slider"
-                    min="250"
-                    max="900"
-                    step="25"
-                    value={currentTimeout}
-                    onInput={(e) => {
-                      const val = parseInt((e.target as HTMLInputElement).value, 10);
-                      setDoubleTapTimeout(val);
-                    }}
-                    style={{ width: '100%', accentColor: '#F3722C', cursor: 'pointer' }}
-                  />
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 700, color: '#8C7A80' }}>
-                    <span>Rápido (250ms)</span>
-                    <span>Medio (500ms)</span>
-                    <span>Lento (900ms)</span>
-                  </div>
-
-                  {/* Interactive tap tester */}
-                  <div style={{ textAlign: 'center', marginTop: '2px' }}>
-                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#7A686E', marginBottom: '6px' }}>
-                      ÁREA DE PRUEBA
-                    </div>
-                    <div
-                      data-testid="double-tap-tester"
-                      onClick={handleTesterClick}
-                      style={{
-                        background:
-                          testerFeedback.status === 'double'
-                            ? '#E8FBF8'
-                            : testerFeedback.status === 'single'
-                            ? '#FFF5F0'
-                            : '#FFFFFF',
-                        border:
-                          testerFeedback.status === 'double'
-                            ? '2px solid #2EC4B6'
-                            : testerFeedback.status === 'single'
-                            ? '2px solid #FF9770'
-                            : '2px dashed #E2D6C1',
-                        borderRadius: '14px',
-                        padding: '12px',
-                        cursor: 'pointer',
-                        userSelect: 'none',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <div style={{ fontSize: '24px', lineHeight: 1 }}>
-                        {testerFeedback.status === 'double'
-                          ? settings.catVariant === 'white'
-                            ? '🤍'
-                            : '🐱'
-                          : testerFeedback.status === 'single'
-                          ? '✕'
-                          : '👆'}
-                      </div>
-                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#3D3135', marginTop: '4px' }}>
-                        {testerFeedback.status === 'double'
-                          ? `¡Doble toque detectado! 🐾 (${testerFeedback.interval}ms)`
-                          : testerFeedback.status === 'single'
-                          ? '1 toque (✕ cruz) — ¡toca de nuevo rápido!'
-                          : 'Toca 2 veces aquí para probar la velocidad'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 

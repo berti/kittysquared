@@ -67,4 +67,26 @@ describe('GameScreen Debug Mode badge', () => {
 
     expect(queryByTestId('debug-mode-badge')).toBeNull();
   });
+
+  it('Review Focus #5: always displays gesture hint text and never renders tool-toggle-switch', () => {
+    const session = createLevelSession(samplePuzzle, 'chill');
+    const defaultState = getDefaultAppState();
+
+    const { queryByTestId, getByText } = render(
+      <GameScreen
+        puzzle={samplePuzzle}
+        progress={defaultState.chill}
+        settings={defaultState.settings}
+        session={session}
+        onUpdateSession={vi.fn()}
+        onAdvanceLevel={vi.fn()}
+        onRetryLevel={vi.fn()}
+        onBackToMenu={vi.fn()}
+        onOpenSettings={vi.fn()}
+      />
+    );
+
+    expect(queryByTestId('tool-toggle-switch')).toBeNull();
+    expect(getByText(/1 toque: ✕ Cruz • 2 toques: 🐱 Gato/i)).not.toBeNull();
+  });
 });

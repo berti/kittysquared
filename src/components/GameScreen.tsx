@@ -34,7 +34,6 @@ export function GameScreen({
   onBackToMenu,
   onOpenSettings,
 }: GameScreenProps) {
-  const [activeTool, setActiveTool] = useState<'cross' | 'cat'>('cat');
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
 
   const placedCatsCount = session.board.flat().filter((c) => c === 'cat').length;
@@ -43,7 +42,7 @@ export function GameScreen({
     const prevCell = session.board[r][c];
     const prevMistakes = session.mistakes;
 
-    const next = applyCellTap(session, r, c, settings.controlScheme, activeTool, options);
+    const next = applyCellTap(session, r, c, options);
     onUpdateSession(next);
 
     // Audio effects
@@ -234,59 +233,9 @@ export function GameScreen({
 
       {/* Controls Bar */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-        {settings.controlScheme === 'toggle' ? (
-          <div
-            data-testid="tool-toggle-switch"
-            style={{
-              display: 'flex',
-              background: '#EFE6D5',
-              padding: '4px',
-              borderRadius: '999px',
-              border: '2px solid #E2D6C1',
-              width: '210px',
-              margin: '0 auto',
-            }}
-          >
-            <div
-              onClick={() => setActiveTool('cross')}
-              style={{
-                flex: 1,
-                textAlign: 'center',
-                padding: '7px 10px',
-                borderRadius: '999px',
-                fontSize: '13px',
-                fontWeight: 800,
-                cursor: 'pointer',
-                background: activeTool === 'cross' ? '#FFFFFF' : 'transparent',
-                color: '#3D3135',
-                boxShadow: activeTool === 'cross' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
-              }}
-            >
-              ✕ Cruz
-            </div>
-            <div
-              onClick={() => setActiveTool('cat')}
-              style={{
-                flex: 1,
-                textAlign: 'center',
-                padding: '7px 10px',
-                borderRadius: '999px',
-                fontSize: '13px',
-                fontWeight: 800,
-                cursor: 'pointer',
-                background: activeTool === 'cat' ? '#FFFFFF' : 'transparent',
-                color: '#3D3135',
-                boxShadow: activeTool === 'cat' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
-              }}
-            >
-              🐱 Gato
-            </div>
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', fontSize: '12.5px', color: '#8C7A80', fontWeight: 600 }}>
-            1 toque: ✕ Cruz • 2 toques: 🐱 Gato
-          </div>
-        )}
+        <div style={{ textAlign: 'center', fontSize: '12.5px', color: '#8C7A80', fontWeight: 600 }}>
+          1 toque: ✕ Cruz • 2 toques: 🐱 Gato
+        </div>
       </div>
 
       {/* Confirmation Dialog for Restart Level */}
