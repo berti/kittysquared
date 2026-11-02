@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 import { CatVariant } from '../types/puzzle';
 import { ModeProgress } from '../state/storage';
 import { CatSvg } from './CatSvg';
+import { ConfirmDialog } from './ConfirmDialog';
 import { PostGameModal } from './PostGameModal';
 
 export interface HomeScreenProps {
@@ -26,6 +27,7 @@ export function HomeScreen({
   onOpenSettings,
 }: HomeScreenProps) {
   const [showPostGameModal, setShowPostGameModal] = useState(false);
+  const [showConfirmReset, setShowConfirmReset] = useState(false);
 
   const levelsCount = totalLevels ?? 300;
   const isGameCompleted = progress.currentLevelId > levelsCount;
@@ -130,7 +132,43 @@ export function HomeScreen({
         </button>
       </div>
 
-      <div style={{ height: '8px' }} />
+      <div style={{ width: '100%', marginTop: 'auto', paddingTop: '16px' }}>
+        <button
+          type="button"
+          data-testid="home-reset-progress-btn"
+          onClick={() => setShowConfirmReset(true)}
+          style={{
+            width: '100%',
+            background: 'transparent',
+            border: '1.5px solid #D8CBB6',
+            borderRadius: '14px',
+            padding: '12px',
+            fontSize: '13.5px',
+            fontWeight: 700,
+            color: '#9E8D93',
+            cursor: 'pointer',
+            boxSizing: 'border-box',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          Reiniciar progreso
+        </button>
+      </div>
+
+      <ConfirmDialog
+        isOpen={showConfirmReset}
+        title="¿Reiniciar progreso?"
+        description="Perderás el nivel alcanzado y todos los puntos acumulados volverán a 0."
+        icon="⚠️"
+        confirmText="Sí, reiniciar"
+        cancelText="Cancelar"
+        isDestructive={true}
+        onConfirm={() => {
+          onResetProgress?.();
+          setShowConfirmReset(false);
+        }}
+        onCancel={() => setShowConfirmReset(false)}
+      />
 
       <PostGameModal
         isOpen={showPostGameModal}

@@ -120,4 +120,37 @@ describe('HomeScreen component', () => {
     fireEvent.click(screen.getByTestId('replay-last-level-btn'));
     expect(onReplay).toHaveBeenCalledTimes(1);
   });
+
+  it('renders bottom reset progress button and opens ConfirmDialog', () => {
+    const onReset = vi.fn();
+    render(
+      <HomeScreen
+        progress={defaultProgress}
+        catVariant="black"
+        onPlay={vi.fn()}
+        onResetProgress={onReset}
+        onOpenTutorial={vi.fn()}
+        onOpenSettings={vi.fn()}
+      />
+    );
+
+    const resetBtn = screen.getByTestId('home-reset-progress-btn');
+    expect(resetBtn).toBeDefined();
+    expect(resetBtn.textContent).toContain('Reiniciar');
+
+    // Clicking it opens ConfirmDialog
+    fireEvent.click(resetBtn);
+    expect(screen.getByTestId('confirm-dialog-confirm-btn')).toBeDefined();
+    expect(onReset).not.toHaveBeenCalled();
+
+    // Clicking cancel closes dialog without calling onReset
+    fireEvent.click(screen.getByTestId('confirm-dialog-cancel-btn'));
+    expect(onReset).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('confirm-dialog-confirm-btn')).toBeNull();
+
+    // Clicking it again and confirming calls onReset
+    fireEvent.click(resetBtn);
+    fireEvent.click(screen.getByTestId('confirm-dialog-confirm-btn'));
+    expect(onReset).toHaveBeenCalledTimes(1);
+  });
 });
