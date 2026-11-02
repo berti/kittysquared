@@ -44,7 +44,8 @@ describe('GameScreen component', () => {
     );
 
     expect(queryByTestId('tool-toggle-switch')).toBeNull();
-    expect(getByText(/1 toque: ✕ Cruz • 2 toques: 🐱 Gato/i)).not.toBeNull();
+    expect(getByText(/1 toque: ✕ Cruz • 2 toques:/i)).not.toBeNull();
+    expect(getByText(/Gato/i)).not.toBeNull();
   });
 
   it('renders top bar buttons and enlarged status bar with cats, lives, and score', () => {

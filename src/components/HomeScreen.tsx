@@ -3,6 +3,7 @@ import { CatVariant } from '../types/puzzle';
 import { getTotalEarnedStars, ModeProgress } from '../state/storage';
 import { CatSvg } from './CatSvg';
 import { ConfirmDialog } from './ConfirmDialog';
+import { WarningIcon } from './Icons';
 import { PostGameModal } from './PostGameModal';
 
 export interface HomeScreenProps {
@@ -213,7 +214,7 @@ export function HomeScreen({
         isOpen={showConfirmReset}
         title="¿Reiniciar progreso?"
         description="Perderás el nivel alcanzado y todos los puntos acumulados volverán a 0."
-        icon="⚠️"
+        icon={<WarningIcon size={28} />}
         confirmText="Sí, reiniciar"
         cancelText="Cancelar"
         isDestructive={true}

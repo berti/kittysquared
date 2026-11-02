@@ -1,10 +1,12 @@
+import { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { WarningIcon } from './Icons';
 
 export interface ConfirmDialogProps {
   isOpen: boolean;
   title: string;
   description: string;
-  icon?: string;
+  icon?: ComponentChildren;
   confirmText?: string;
   cancelText?: string;
   isDestructive?: boolean;
@@ -17,7 +19,7 @@ export function ConfirmDialog({
   isOpen,
   title,
   description,
-  icon,
+  icon = <WarningIcon size={28} />,
   confirmText = 'Confirmar',
   cancelText = 'Cancelar',
   isDestructive = false,
@@ -111,7 +113,16 @@ export function ConfirmDialog({
       >
 
         {icon && (
-          <div style={{ fontSize: '32px', lineHeight: 1, userSelect: 'none' }}>
+          <div
+            style={{
+              fontSize: '32px',
+              lineHeight: 1,
+              userSelect: 'none',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
             {icon}
           </div>
         )}

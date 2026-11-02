@@ -170,8 +170,10 @@ describe('components/CatSvg & Board', () => {
     );
     const glyphs = glyContainer.querySelectorAll('.region-glyph-badge');
     expect(glyphs).toHaveLength(4);
-    expect(glyphs[0].textContent).toBe('🐾'); // Reg 0
-    expect(glyphs[1].textContent).toBe('🐟'); // Reg 1
+    expect(glyphs[0].getAttribute('data-glyph')).toBe('paw'); // Reg 0
+    expect(glyphs[0].querySelector('svg[data-region-glyph="paw"]')).not.toBeNull();
+    expect(glyphs[1].getAttribute('data-glyph')).toBe('fish'); // Reg 1
+    expect(glyphs[1].querySelector('svg[data-region-glyph="fish"]')).not.toBeNull();
     unmountGly();
 
     // Test numbers (Review Focus #3: 1-indexed)

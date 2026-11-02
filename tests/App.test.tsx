@@ -32,7 +32,7 @@ describe('App integration', () => {
     // Enter game: dual switch should be removed, hint text visible
     fireEvent.click(getByTestId('start-game-btn'));
     expect(queryByTestId('tool-toggle-switch')).toBeNull();
-    expect(getByText(/1 toque: ✕ Cruz • 2 toques: 🐱 Gato/i)).toBeTruthy();
+    expect(getByText(/1 toque: ✕ Cruz • 2 toques:/i)).toBeTruthy();
   });
 
   it('plays through Level 1, updates total score, and advances to Level 2', () => {

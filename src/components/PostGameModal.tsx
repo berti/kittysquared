@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { CatVariant } from '../types/puzzle';
 import { CatSvg } from './CatSvg';
 import { ConfirmDialog } from './ConfirmDialog';
+import { WarningIcon } from './Icons';
 
 export interface PostGameModalProps {
   isOpen: boolean;
@@ -153,7 +154,7 @@ export function PostGameModal({
                   Volver al nivel 1 y puntuación a 0
                 </div>
               </div>
-              <span style={{ fontSize: '18px' }}>⚠️</span>
+              <WarningIcon size={20} />
             </button>
 
             <button
@@ -184,7 +185,7 @@ export function PostGameModal({
         isOpen={showConfirmReset}
         title="¿Reiniciar progreso?"
         description="Perderás el nivel alcanzado y todos los puntos acumulados volverán a 0."
-        icon="⚠️"
+        icon={<WarningIcon size={28} />}
         confirmText="Sí, reiniciar"
         cancelText="Cancelar"
         isDestructive={true}

@@ -2,6 +2,7 @@ import { useRef, useState } from 'preact/hooks';
 import { CatVariant, RegionAssistMode } from '../types/puzzle';
 import { TUTORIAL_STEPS } from '../data/tutorialSteps';
 import { Board } from './Board';
+import { HeartSvg } from './Icons';
 import { soundEngine } from '../audio/soundEngine';
 import {
   applyCellTap,
@@ -96,10 +97,7 @@ export function TutorialModal({
     }
   };
 
-  const hearts = Array.from({ length: 3 }).map((_, i) =>
-    i < session.mistakes ? '🤍' : '❤️'
-  );
-
+  const remainingLives = Math.max(0, 3 - session.mistakes);
   const activeHighlights = !isStepCompleted ? currentStep.targetHighlightCells : undefined;
 
   return (
@@ -201,11 +199,17 @@ export function TutorialModal({
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              fontSize: '19px',
-              letterSpacing: '3px',
+              gap: '6px',
             }}
           >
-            {hearts.join(' ')}
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <HeartSvg
+                key={idx}
+                isLost={idx >= remainingLives}
+                size={20}
+                testId={`tutorial-heart-${idx}`}
+              />
+            ))}
           </div>
         )}
 

@@ -1,8 +1,10 @@
 import { useRef } from 'preact/hooks';
 import { CatVariant, CellState, RegionAssistMode } from '../types/puzzle';
 import { CatSvg } from './CatSvg';
+import { REGION_GLYPH_IDS, RegionGlyphIcon } from './Icons';
 
-export const REGION_GLYPHS = ['🐾', '🐟', '🧶', '🔔', '⭐', '🌙', '🐭', '👑', '💖', '🥛'];
+export const REGION_GLYPHS = [...REGION_GLYPH_IDS];
+export { RegionGlyphIcon };
 
 const CAT_CONFETTI_VECTORS = [
   { tx: '-34px', ty: '-30px', rot: '-230deg', color: '#FF8FA3', round: false },
@@ -195,7 +197,9 @@ export function Board({
                   <div className={`region-pattern pat-${regId}`} />
                 )}
                 {regionAssist === 'glyphs' && (
-                  <span className="region-glyph-badge">{REGION_GLYPHS[regId]}</span>
+                  <span className="region-glyph-badge" data-glyph={REGION_GLYPHS[regId]}>
+                    <RegionGlyphIcon regionId={regId} size={12} />
+                  </span>
                 )}
                 {regionAssist === 'numbers' && (
                   <span className="region-number-badge">{regId + 1}</span>

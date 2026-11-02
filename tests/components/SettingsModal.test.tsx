@@ -24,7 +24,7 @@ describe('SettingsModal component', () => {
     document.body.innerHTML = '';
   });
 
-  it('renders tab buttons: controls, graphics, sound, ayudas', () => {
+  it('renders tab buttons: controls, graphics, sound, ayudas with custom Soft-Clay SVG icons', () => {
     const { getByTestId, queryByTestId } = render(
       <SettingsModal
         settings={defaultSettings}
@@ -33,10 +33,11 @@ describe('SettingsModal component', () => {
       />
     );
 
-    expect(getByTestId('tab-btn-controls')).toBeDefined();
-    expect(getByTestId('tab-btn-graphics')).toBeDefined();
-    expect(getByTestId('tab-btn-sound')).toBeDefined();
-    expect(getByTestId('tab-btn-ayudas')).toBeDefined();
+    expect(getByTestId('icon-gear')).toBeDefined();
+    expect(getByTestId('tab-btn-controls').querySelector('[data-testid="icon-tab-controls"]')).not.toBeNull();
+    expect(getByTestId('tab-btn-graphics').querySelector('[data-testid="icon-tab-graphics"]')).not.toBeNull();
+    expect(getByTestId('tab-btn-sound').querySelector('[data-testid="icon-tab-sound"]')).not.toBeNull();
+    expect(getByTestId('tab-btn-ayudas').querySelector('[data-testid="icon-tab-ayudas"]')).not.toBeNull();
     expect(queryByTestId('tab-btn-reset')).toBeNull();
   });
 
@@ -129,15 +130,18 @@ describe('SettingsModal component', () => {
     );
 
     const tester = getByTestId('double-tap-tester');
+    expect(tester.querySelector('[data-testid="icon-tap-prompt"]')).not.toBeNull();
 
     // 1st click -> single tap feedback
     fireEvent.click(tester);
     expect(tester.textContent).toContain('1 toque');
 
-    // 2nd click after 100ms (within 500ms) -> double tap feedback
+    // 2nd click after 100ms (within 500ms) -> double tap feedback with CatSvg and no paw emoji
     vi.advanceTimersByTime(100);
     fireEvent.click(tester);
     expect(tester.textContent).toContain('¡Doble toque detectado!');
+    expect(tester.textContent).not.toContain('🐾');
+    expect(tester.querySelector('.cat-svg')).not.toBeNull();
 
     // After 2000ms -> resets back to idle
     act(() => {
@@ -171,7 +175,7 @@ describe('SettingsModal component', () => {
     expect(queryByText(/Muestra cómo lucen los gatos/i)).toBeNull();
   });
 
-  it('Graphics tab: mini-board preview renders distinct glyphs and textures matching region IDs', () => {
+  it('Graphics tab: mini-board preview renders distinct SVG glyphs and textures matching region IDs', () => {
     const { getByTestId, rerender } = render(
       <SettingsModal
         settings={{ ...defaultSettings, regionAssist: 'glyphs' }}
@@ -181,11 +185,12 @@ describe('SettingsModal component', () => {
     );
 
     fireEvent.click(getByTestId('tab-btn-graphics'));
+    expect(getByTestId('select-region-assist-glyphs').textContent).toBe('Iconos');
     const preview = getByTestId('mini-board-preview');
-    // Regions 0, 1, 2 correspond to 🐾, 🐟, 🧶
-    expect(preview.textContent).toContain('🐾');
-    expect(preview.textContent).toContain('🐟');
-    expect(preview.textContent).toContain('🧶');
+    // Regions 0, 1, 2 correspond to paw, fish, yarn SVG glyphs
+    expect(preview.querySelector('.region-glyph-badge[data-glyph="paw"]')).not.toBeNull();
+    expect(preview.querySelector('.region-glyph-badge[data-glyph="fish"]')).not.toBeNull();
+    expect(preview.querySelector('.region-glyph-badge[data-glyph="yarn"]')).not.toBeNull();
 
     // With textures
     rerender(
@@ -252,14 +257,14 @@ describe('SettingsModal component', () => {
     expect(getByTestId('sfx-vol-step-0.75')).toBeDefined();
     expect(getByTestId('sfx-vol-step-1')).toBeDefined();
 
-    // Track options (Auto + 6 songs)
-    expect(getByTestId('track-opt-auto').textContent).toContain('Auto (6 temas)');
-    expect(getByTestId('track-opt-marimba')).toBeDefined();
-    expect(getByTestId('track-opt-velvet')).toBeDefined();
-    expect(getByTestId('track-opt-sunbeam')).toBeDefined();
-    expect(getByTestId('track-opt-bossa')).toBeDefined();
-    expect(getByTestId('track-opt-waltz')).toBeDefined();
-    expect(getByTestId('track-opt-samba')).toBeDefined();
+    // Track options (Auto + 6 songs) with clean labels without decorative emojis
+    expect(getByTestId('track-opt-auto').textContent?.trim()).toBe('Auto (6 temas)');
+    expect(getByTestId('track-opt-marimba').textContent?.trim()).toBe('Marimba Michi');
+    expect(getByTestId('track-opt-velvet').textContent?.trim()).toBe('Velvet Paws');
+    expect(getByTestId('track-opt-sunbeam').textContent?.trim()).toBe('Sunbeam Stroll');
+    expect(getByTestId('track-opt-bossa').textContent?.trim()).toBe('Bossa Meow');
+    expect(getByTestId('track-opt-waltz').textContent?.trim()).toBe('Catnip Waltz');
+    expect(getByTestId('track-opt-samba').textContent?.trim()).toBe('Samba de Gatinho');
   });
 
   it('Sound tab: clicking 0% volume step automatically mutes; clicking >0% unmutes and sets volume', () => {

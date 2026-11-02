@@ -2,8 +2,16 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { soundEngine } from '../audio/soundEngine';
 import { AppSettings, MusicTrackOption, VALID_STEPPED_VOLUMES } from '../state/storage';
 import { AutoCrossMode, CatVariant, RegionAssistMode } from '../types/puzzle';
-import { REGION_GLYPHS } from './Board';
+import { REGION_GLYPHS, RegionGlyphIcon } from './Board';
 import { CatSvg } from './CatSvg';
+import {
+  AssistsTabIcon,
+  ControlsTabIcon,
+  GearIcon,
+  GraphicsTabIcon,
+  SoundTabIcon,
+  TapFingerIcon,
+} from './Icons';
 
 export type SettingsTab = 'controls' | 'graphics' | 'sound' | 'ayudas';
 
@@ -123,7 +131,20 @@ export function SettingsModal({
         >
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ margin: 0, fontSize: '21px', fontWeight: 900, color: '#3D3135' }}>⚙️ Ajustes</h2>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: '21px',
+                fontWeight: 900,
+                color: '#3D3135',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <GearIcon size={22} />
+              <span>Ajustes</span>
+            </h2>
             <button
               data-testid="close-settings-btn"
               onClick={onClose}
@@ -154,10 +175,10 @@ export function SettingsModal({
             }}
           >
             {[
-              { id: 'controls', icon: '🎮', label: 'Controles' },
-              { id: 'graphics', icon: '🎨', label: 'Gráficos' },
-              { id: 'sound', icon: '🔊', label: 'Sonido' },
-              { id: 'ayudas', icon: '💡', label: 'Ayudas' },
+              { id: 'controls', icon: <ControlsTabIcon size={18} />, label: 'Controles' },
+              { id: 'graphics', icon: <GraphicsTabIcon size={18} />, label: 'Gráficos' },
+              { id: 'sound', icon: <SoundTabIcon size={18} />, label: 'Sonido' },
+              { id: 'ayudas', icon: <AssistsTabIcon size={18} />, label: 'Ayudas' },
             ].map((tab) => {
               const active = activeTab === tab.id;
               return (
@@ -268,18 +289,29 @@ export function SettingsModal({
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    <div style={{ fontSize: '26px', lineHeight: 1 }}>
-                      {testerFeedback.status === 'double'
-                        ? settings.catVariant === 'white'
-                          ? '🤍'
-                          : '🐱'
-                        : testerFeedback.status === 'single'
-                        ? '✕'
-                        : '👆'}
+                    <div
+                      style={{
+                        fontSize: '26px',
+                        lineHeight: 1,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        minHeight: '34px',
+                      }}
+                    >
+                      {testerFeedback.status === 'double' ? (
+                        <div style={{ width: '34px', height: '34px' }}>
+                          <CatSvg variant={settings.catVariant} state="idle" />
+                        </div>
+                      ) : testerFeedback.status === 'single' ? (
+                        '✕'
+                      ) : (
+                        <TapFingerIcon size={28} />
+                      )}
                     </div>
                     <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#3D3135', marginTop: '4px' }}>
                       {testerFeedback.status === 'double'
-                        ? `¡Doble toque detectado! 🐾 (${testerFeedback.interval}ms)`
+                        ? `¡Doble toque detectado! (${testerFeedback.interval}ms)`
                         : testerFeedback.status === 'single'
                         ? '1 toque (✕ cruz) — ¡toca de nuevo rápido!'
                         : 'Toca 2 veces aquí para probar la velocidad'}
@@ -366,7 +398,7 @@ export function SettingsModal({
                   {[
                     { id: 'off', label: 'Desactivado' },
                     { id: 'textures', label: 'Rayas' },
-                    { id: 'glyphs', label: 'Gatitos 🐾' },
+                    { id: 'glyphs', label: 'Iconos' },
                     { id: 'numbers', label: 'Números 1-9' },
                   ].map((item) => {
                     const active = (settings.regionAssist || 'off') === item.id;
@@ -461,8 +493,12 @@ export function SettingsModal({
                           <div className={`region-pattern pat-${cell.reg}`} />
                         )}
                         {assist === 'glyphs' && (
-                          <span className="region-glyph-badge" style={{ position: 'absolute', top: '1px', left: '2px', fontSize: '8px' }}>
-                            {REGION_GLYPHS[cell.reg]}
+                          <span
+                            className="region-glyph-badge"
+                            data-glyph={REGION_GLYPHS[cell.reg]}
+                            style={{ position: 'absolute', top: '1px', left: '2px' }}
+                          >
+                            <RegionGlyphIcon regionId={cell.reg} size={10} />
                           </span>
                         )}
                         {assist === 'numbers' && (
@@ -499,7 +535,7 @@ export function SettingsModal({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '13px', fontWeight: 800, color: '#5C4B51' }}>
-                    🎵 Volumen de Música
+                    Volumen de Música
                   </span>
                   <button
                     type="button"
@@ -556,7 +592,7 @@ export function SettingsModal({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '13px', fontWeight: 800, color: '#5C4B51' }}>
-                    🔊 Volumen de Efectos
+                    Volumen de Efectos
                   </span>
                   <button
                     type="button"
@@ -613,7 +649,7 @@ export function SettingsModal({
               {/* Soundtrack Selector Section */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ fontSize: '13px', fontWeight: 800, color: '#5C4B51' }}>
-                  🎼 Banda Sonora
+                  Banda Sonora
                 </div>
                 {(() => {
                   const isAutoSelected = (settings.musicTrack || 'auto') === 'auto';
@@ -635,18 +671,18 @@ export function SettingsModal({
                         textAlign: 'center',
                       }}
                     >
-                      🔄 Auto (6 temas)
+                      Auto (6 temas)
                     </button>
                   );
                 })()}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
                   {([
-                    { id: 'marimba', label: '🪵 Marimba Michi' },
-                    { id: 'velvet', label: '🎹 Velvet Paws' },
-                    { id: 'sunbeam', label: '☀️ Sunbeam Stroll' },
-                    { id: 'bossa', label: '🐱 Bossa Meow' },
-                    { id: 'waltz', label: '🥐 Catnip Waltz' },
-                    { id: 'samba', label: '🎉 Samba de Gatinho' },
+                    { id: 'marimba', label: 'Marimba Michi' },
+                    { id: 'velvet', label: 'Velvet Paws' },
+                    { id: 'sunbeam', label: 'Sunbeam Stroll' },
+                    { id: 'bossa', label: 'Bossa Meow' },
+                    { id: 'waltz', label: 'Catnip Waltz' },
+                    { id: 'samba', label: 'Samba de Gatinho' },
                   ] satisfies { id: MusicTrackOption; label: string }[]).map((track) => {
                     const isSelected = (settings.musicTrack || 'auto') === track.id;
                     return (

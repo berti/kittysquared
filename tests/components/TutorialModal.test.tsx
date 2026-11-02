@@ -157,14 +157,18 @@ describe('components/TutorialModal', () => {
 
     // Step 4
     expect(getByText(/4\. Fallos y vidas/i)).toBeTruthy();
-    expect(getByText('❤️ ❤️ ❤️')).toBeTruthy();
+    expect(getByTestId('tutorial-heart-0').getAttribute('data-state')).toBe('full');
+    expect(getByTestId('tutorial-heart-1').getAttribute('data-state')).toBe('full');
+    expect(getByTestId('tutorial-heart-2').getAttribute('data-state')).toBe('full');
 
     const cell02 = getByTestId('cell-0-2');
     fireEvent.click(cell02);
     fireEvent.click(cell02);
 
     expect(cell02.querySelector('.cross-mark-error')).not.toBeNull();
-    expect(getByText('🤍 ❤️ ❤️')).toBeTruthy();
+    expect(getByTestId('tutorial-heart-0').getAttribute('data-state')).toBe('full');
+    expect(getByTestId('tutorial-heart-1').getAttribute('data-state')).toBe('full');
+    expect(getByTestId('tutorial-heart-2').getAttribute('data-state')).toBe('empty');
     expect((getByTestId('tutorial-next-btn') as HTMLButtonElement).disabled).toBe(false);
 
     // Clicking the locked red error cross does not toggle or remove it

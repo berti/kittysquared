@@ -12,6 +12,7 @@ import { PuzzleDef } from '../types/puzzle';
 import { Board } from './Board';
 import { CatSvg } from './CatSvg';
 import { ConfirmDialog } from './ConfirmDialog';
+import { GearIcon, HeartSvg, MiniCatIcon, RestartIcon } from './Icons';
 
 const STAR3_CONFETTI_VECTORS = [
   { tx: '-72px', ty: '-34px', rot: '-260deg', color: '#FF8FA3', round: false },
@@ -250,9 +251,12 @@ export function GameScreen({
                 fontSize: '16px',
                 color: '#5C4B51',
                 cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              ↺
+              <RestartIcon size={18} />
             </button>
             <button
               data-testid="open-settings-btn"
@@ -268,9 +272,12 @@ export function GameScreen({
                 fontSize: '16px',
                 color: '#5C4B51',
                 cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              ⚙️
+              <GearIcon size={18} />
             </button>
           </div>
         </div>
@@ -295,7 +302,7 @@ export function GameScreen({
           }}
         >
           <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <span style={{ fontSize: '20px', lineHeight: 1 }}>🐱</span> {placedCatsCount} / {puzzle.size}
+            <MiniCatIcon size={20} /> {placedCatsCount} / {puzzle.size}
           </span>
 
           {/* Custom SVG Hearts Row */}
@@ -315,46 +322,14 @@ export function GameScreen({
             {Array.from({ length: session.maxMistakes }).map((_, idx) => {
               const isFull = idx < remainingLives;
               const isJustLost = !isFull && idx === justLostHeartIndex;
-              const fill = isFull ? '#EF4444' : '#D8CBB8';
-              const stroke = isFull ? '#B91C1C' : '#BDAE98';
-
               return (
-                <svg
+                <HeartSvg
                   key={idx}
-                  data-testid={`status-heart-${idx}`}
-                  data-state={isFull ? 'full' : 'empty'}
-                  className={isJustLost ? 'heart-losing' : undefined}
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  style={{ display: 'block', overflow: 'visible' }}
-                >
-                  {isFull ? (
-                    <path
-                      d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-                      fill={fill}
-                      stroke={stroke}
-                      strokeWidth="1.6"
-                    />
-                  ) : (
-                    <>
-                      <path
-                        className="heart-half-left"
-                        d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09L10.5 9.5l2.2 3.5-1.5 3.5L12 21.35z"
-                        fill={fill}
-                        stroke={stroke}
-                        strokeWidth="1.4"
-                      />
-                      <path
-                        className="heart-half-right"
-                        d="M12 5.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35l-.8-4.85 1.5-3.5-2.2-3.5L12 5.09z"
-                        fill={fill}
-                        stroke={stroke}
-                        strokeWidth="1.4"
-                      />
-                    </>
-                  )}
-                </svg>
+                  isLost={!isFull}
+                  isJustLost={isJustLost}
+                  size={20}
+                  testId={`status-heart-${idx}`}
+                />
               );
             })}
           </span>
@@ -463,8 +438,19 @@ export function GameScreen({
 
       {/* Controls Bar */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-        <div style={{ textAlign: 'center', fontSize: '14.5px', color: '#7A686E', fontWeight: 700 }}>
-          1 toque: ✕ Cruz • 2 toques: 🐱 Gato
+        <div
+          style={{
+            textAlign: 'center',
+            fontSize: '14.5px',
+            color: '#7A686E',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '5px',
+          }}
+        >
+          1 toque: ✕ Cruz • 2 toques: <MiniCatIcon size={16} /> Gato
         </div>
       </div>
 
@@ -473,7 +459,7 @@ export function GameScreen({
         isOpen={showRestartConfirm}
         title="¿Reiniciar este nivel?"
         description="Se reiniciará el tablero actual, borrando todos los gatos y cruces colocados."
-        icon="↺"
+        icon={<RestartIcon size={28} />}
         confirmText="Reiniciar nivel"
         cancelText="Cancelar"
         onConfirm={() => {

@@ -34,9 +34,9 @@ describe('Board Region 9 (10th Region) theme & glyphs', () => {
     onDragCross: () => {},
   };
 
-  it('includes 🥛 in REGION_GLYPHS at index 9', () => {
+  it('includes milk in REGION_GLYPHS at index 9', () => {
     expect(REGION_GLYPHS).toHaveLength(10);
-    expect(REGION_GLYPHS[9]).toBe('🥛');
+    expect(REGION_GLYPHS[9]).toBe('milk');
   });
 
   it('renders cell in region 9 with reg-9 class and not reg-0', () => {
@@ -61,7 +61,7 @@ describe('Board Region 9 (10th Region) theme & glyphs', () => {
     expect(patternEl?.classList.contains('pat-0')).toBe(false);
   });
 
-  it('renders 🥛 glyph badge on region 9 in glyphs assist mode', () => {
+  it('renders milk SVG glyph badge on region 9 in glyphs assist mode', () => {
     const { getByTestId } = render(
       <Board {...defaultProps} regionAssist="glyphs" />
     );
@@ -69,7 +69,8 @@ describe('Board Region 9 (10th Region) theme & glyphs', () => {
     const cell99 = getByTestId('cell-9-9');
     const badge = cell99.querySelector('.region-glyph-badge');
     expect(badge).not.toBeNull();
-    expect(badge?.textContent).toBe('🥛');
+    expect(badge?.getAttribute('data-glyph')).toBe('milk');
+    expect(badge?.querySelector('svg[data-region-glyph="milk"]')).not.toBeNull();
   });
 
   it('renders 10 number badge on region 9 in numbers assist mode', () => {

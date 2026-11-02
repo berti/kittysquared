@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfirmDialog } from '../../src/components/ConfirmDialog';
+import { RestartIcon } from '../../src/components/Icons';
 
 describe('ConfirmDialog component', () => {
   beforeEach(() => {
@@ -22,13 +23,13 @@ describe('ConfirmDialog component', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders title, description, icon, and buttons when isOpen is true', () => {
-    const { getByRole, getByText } = render(
+  it('renders title, description, custom SVG icon, and buttons when isOpen is true', () => {
+    const { getByRole, getByText, getByTestId } = render(
       <ConfirmDialog
         isOpen={true}
         title="¿Reiniciar nivel?"
         description="Se borrarán las marcas actuales"
-        icon="↺"
+        icon={<RestartIcon size={28} />}
         confirmText="Reiniciar nivel"
         cancelText="Volver"
         onConfirm={vi.fn()}
@@ -39,9 +40,23 @@ describe('ConfirmDialog component', () => {
     expect(getByRole('dialog')).toBeDefined();
     expect(getByText('¿Reiniciar nivel?')).toBeDefined();
     expect(getByText('Se borrarán las marcas actuales')).toBeDefined();
-    expect(getByText('↺')).toBeDefined();
+    expect(getByTestId('icon-restart')).toBeDefined();
     expect(getByText('Reiniciar nivel')).toBeDefined();
     expect(getByText('Volver')).toBeDefined();
+  });
+
+  it('renders default WarningIcon when icon prop is omitted', () => {
+    const { getByTestId } = render(
+      <ConfirmDialog
+        isOpen={true}
+        title="Confirm action"
+        description="Are you sure?"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    );
+
+    expect(getByTestId('icon-warning')).toBeDefined();
   });
 
   it('calls onConfirm when confirm button is clicked', () => {
