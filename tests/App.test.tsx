@@ -168,10 +168,10 @@ describe('App integration', () => {
       })
     );
 
-    const { getByTestId, getByText } = render(<App />);
+    const { getByTestId } = render(<App />);
     fireEvent.click(getByTestId('start-game-btn'));
 
-    const heartsEl = getByText('❤️ ❤️ ❤️');
+    const heartsEl = getByTestId('status-hearts-group');
     expect(heartsEl.style.position).toBe('absolute');
     expect(heartsEl.style.left).toBe('50%');
     expect(heartsEl.style.transform).toBe('translateX(-50%)');
@@ -279,6 +279,9 @@ describe('App integration', () => {
         fireEvent.click(cell);
         fireEvent.click(cell);
       }
+
+      // Skip 1.4s on-board victory celebration to open Victory Modal immediately
+      fireEvent.click(getByTestId('victory-celebration-overlay'));
 
       // Victory modal for final level
       expect(getByText('¡Juego completado!')).toBeTruthy();
@@ -415,6 +418,9 @@ describe('App integration', () => {
         fireEvent.click(cell);
       }
 
+      // Skip 1.4s on-board victory celebration to open Victory Modal immediately
+      fireEvent.click(getByTestId('victory-celebration-overlay'));
+
       // Advance from Level 1 -> steps to Level 2
       fireEvent.click(getByText(/Siguiente Nivel ▶/i));
       expect(getByText('Nivel 2')).toBeTruthy();
@@ -428,6 +434,47 @@ describe('App integration', () => {
       // And Level 2's saved cross at (0,0) should be restored on the board!
       const cell00OnLvl2 = getByTestId('cell-0-0');
       expect(cell00OnLvl2.querySelector('svg.cross-mark')).not.toBeNull();
+    });
+
+    it('commits level win outcome (stars, score, and nextCurrentLevelId) when clicking Niveles in the Victory Modal', () => {
+      localStorage.setItem(
+        'kittysquared_state_v1',
+        JSON.stringify({
+          progress: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
+          settings: {
+            doubleTapTimeoutMs: 500,
+            catVariant: 'black',
+            regionAssist: 'off',
+            musicMuted: true,
+            sfxMuted: true,
+            tutorialSeen: true,
+          },
+        })
+      );
+
+      const { getByTestId } = render(<App transitionDurationMs={0} />);
+      fireEvent.click(getByTestId('start-game-btn'));
+
+      // Solve Level 1 with 0 mistakes (solution for puzzle 1: [0, 2, 4, 1, 3])
+      const lvl1Solution = [0, 2, 4, 1, 3];
+      for (let r = 0; r < lvl1Solution.length; r++) {
+        const cell = getByTestId(`cell-${r}-${lvl1Solution[r]}`);
+        fireEvent.click(cell);
+        fireEvent.click(cell);
+      }
+
+      // Skip 1.4s on-board celebration -> open Victory Modal
+      fireEvent.click(getByTestId('victory-celebration-overlay'));
+
+      // Click Niveles button inside Victory Modal
+      fireEvent.click(getByTestId('victory-levels-btn'));
+
+      // Should navigate to LevelSelectScreen with 3 earned stars and Level 2 unlocked
+      expect(getByTestId('level-select-total-stars').textContent).toContain('3 / 900');
+      const saved = JSON.parse(localStorage.getItem('kittysquared_state_v1') || '{}');
+      expect(saved.progress.currentLevelId).toBe(2);
+      expect(saved.progress.totalScore).toBe(100);
+      expect(saved.progress.levelStars['1']).toBe(3);
     });
   });
 });

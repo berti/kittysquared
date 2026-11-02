@@ -96,4 +96,41 @@ describe('Board autoCross wave animation', () => {
     const cell00 = getByTestId('cell-0-0').querySelector('.cross-mark');
     expect(cell00?.classList.contains('cross-wave')).toBe(false);
   });
+
+  it('renders staggered victory glow and per-cat confetti burst on cat cells when isVictory is true', () => {
+    const board: CellState[][] = Array.from({ length: 4 }, () => Array(4).fill('cross'));
+    const locked = Array.from({ length: 4 }, () => Array(4).fill(false));
+    board[0][1] = 'cat';
+    board[2][3] = 'cat';
+
+    const { getByTestId, queryByTestId } = render(
+      <Board
+        size={4}
+        regions={regions}
+        board={board}
+        lockedCats={locked}
+        conflictingKeys={new Set()}
+        lastPlacedCat={{ row: 2, col: 3 }}
+        lastErrorCell={null}
+        autoCrossCells={[]}
+        isVictory={true}
+        catVariant="black"
+        onCellTap={vi.fn()}
+        onDragCross={vi.fn()}
+      />
+    );
+
+    const catCell0 = getByTestId('cell-0-1');
+    const catCell2 = getByTestId('cell-2-3');
+    expect(catCell0.classList.contains('board-cell-victory-glow')).toBe(true);
+    expect(catCell2.classList.contains('board-cell-victory-glow')).toBe(true);
+
+    const confetti0 = getByTestId('cat-confetti-0-1');
+    const confetti2 = getByTestId('cat-confetti-2-3');
+    expect(confetti0.querySelectorAll('.cat-confetti-piece').length).toBe(6);
+    expect(confetti2.querySelectorAll('.cat-confetti-piece').length).toBe(6);
+
+    // Non-cat cells do not render cat confetti
+    expect(queryByTestId('cat-confetti-0-0')).toBeNull();
+  });
 });

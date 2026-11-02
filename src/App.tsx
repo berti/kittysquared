@@ -193,54 +193,65 @@ export function App({
     });
   };
 
+  const commitCurrentLevelWinIfNeeded = (baseState: PersistedAppState): PersistedAppState => {
+    if (session.status !== 'won') {
+      return baseState;
+    }
+    const currentLvlId = session.puzzle.id;
+    const outcome = computeLevelWinOutcome(session, baseState.progress);
+    const nextLevelStars = {
+      ...(baseState.progress.levelStars || {}),
+      [currentLvlId]: outcome.bestStars,
+    };
+    const nextActiveSnapshot = outcome.isReplay ? baseState.progress.activeSnapshot : null;
+
+    return {
+      ...baseState,
+      progress: {
+        currentLevelId: outcome.nextCurrentLevelId,
+        totalScore: baseState.progress.totalScore + outcome.scoreGain,
+        activeSnapshot: nextActiveSnapshot,
+        levelStars: nextLevelStars,
+      },
+    };
+  };
+
   const handleAdvanceLevel = () => {
     navigateWithTransition('forward', () => {
       const currentLvlId = session.puzzle.id;
-      let newTotalScore = appState.progress.totalScore;
-      let nextCurrentLevelId = appState.progress.currentLevelId;
-      let nextLevelStars = { ...(appState.progress.levelStars || {}) };
-      let nextActiveSnapshot = appState.progress.activeSnapshot;
-
-      if (session.status === 'won') {
-        const outcome = computeLevelWinOutcome(session, appState.progress);
-        newTotalScore += outcome.scoreGain;
-        nextCurrentLevelId = outcome.nextCurrentLevelId;
-        nextLevelStars = {
-          ...nextLevelStars,
-          [currentLvlId]: outcome.bestStars,
-        };
-        if (!outcome.isReplay) {
-          nextActiveSnapshot = null;
-        }
-      }
+      const nextState = commitCurrentLevelWinIfNeeded(appState);
+      updateAppState(nextState);
 
       if (currentLvlId >= puzzles.length) {
-        updateAppState({
-          ...appState,
-          progress: {
-            currentLevelId: nextCurrentLevelId,
-            totalScore: newTotalScore,
-            activeSnapshot: nextActiveSnapshot,
-            levelStars: nextLevelStars,
-          },
-        });
         setActiveScreen('home');
         return;
       }
 
       const nextLvlId = currentLvlId + 1;
+      setSession(startSessionForLevel(nextLvlId, nextState.progress.activeSnapshot));
+    });
+  };
 
-      updateAppState({
-        ...appState,
-        progress: {
-          currentLevelId: nextCurrentLevelId,
-          totalScore: newTotalScore,
-          activeSnapshot: nextActiveSnapshot,
-          levelStars: nextLevelStars,
-        },
-      });
+  const handleOpenLevelsFromGame = () => {
+    navigateWithTransition('backward', () => {
+      const nextState = commitCurrentLevelWinIfNeeded(appState);
+      if (nextState !== appState) {
+        updateAppState(nextState);
+        // Reset session status so leaving and returning doesn't double-commit
+        setSession(createLevelSession(session.puzzle));
+      }
+      setActiveScreen('levels');
+    });
+  };
 
-      setSession(startSessionForLevel(nextLvlId, nextActiveSnapshot));
+  const handleBackToMenuFromGame = () => {
+    navigateWithTransition('backward', () => {
+      const nextState = commitCurrentLevelWinIfNeeded(appState);
+      if (nextState !== appState) {
+        updateAppState(nextState);
+        setSession(createLevelSession(session.puzzle));
+      }
+      setActiveScreen('home');
     });
   };
 
@@ -319,11 +330,8 @@ export function App({
           onUpdateSession={handleUpdateSession}
           onAdvanceLevel={handleAdvanceLevel}
           onRetryLevel={handleRetryLevel}
-          onBackToMenu={() =>
-            navigateWithTransition('backward', () => {
-              setActiveScreen('home');
-            })
-          }
+          onBackToMenu={handleBackToMenuFromGame}
+          onOpenLevels={handleOpenLevelsFromGame}
           onOpenSettings={() => setShowSettings(true)}
         />
       )}

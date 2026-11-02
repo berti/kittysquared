@@ -56,3 +56,16 @@ describe('theme.css screen wipe and modal animation styles', () => {
   });
 });
 
+describe('theme.css Milestone 2 game juice and victory celebration styles', () => {
+  it('defines per-cat confetti, 3rd-star behind-star confetti with z-index: 1 and forwards fill, heart-losing, and score-float-pop classes', () => {
+    const css = fs.readFileSync(path.resolve(__dirname, '../../src/styles/theme.css'), 'utf-8');
+    expect(css).toContain('.board-cell-victory-glow');
+    expect(css).toContain('.cat-confetti-piece');
+    expect(css).toContain('.star3-confetti-piece');
+    expect(css).toMatch(/\.star3-confetti-piece\s*\{[^}]*z-index:\s*1/);
+    expect(css).toMatch(/\.star3-confetti-piece\s*\{[^}]*opacity:\s*0/);
+    expect(css).toContain('.heart-losing');
+    expect(css).toContain('.score-float-pop');
+  });
+});
+

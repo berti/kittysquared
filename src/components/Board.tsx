@@ -4,6 +4,15 @@ import { CatSvg } from './CatSvg';
 
 export const REGION_GLYPHS = ['🐾', '🐟', '🧶', '🔔', '⭐', '🌙', '🐭', '👑', '💖', '🥛'];
 
+const CAT_CONFETTI_VECTORS = [
+  { tx: '-34px', ty: '-30px', rot: '-230deg', color: '#FF8FA3', round: false },
+  { tx: '36px', ty: '-28px', rot: '240deg', color: '#FFB703', round: true },
+  { tx: '-30px', ty: '32px', rot: '-190deg', color: '#2EC4B6', round: false },
+  { tx: '34px', ty: '30px', rot: '250deg', color: '#C77DFF', round: false },
+  { tx: '2px', ty: '-40px', rot: '185deg', color: '#80ED99', round: true },
+  { tx: '-38px', ty: '-2px', rot: '-220deg', color: '#F3722C', round: false },
+];
+
 export interface BoardProps {
   size: number;
   regions: number[][];
@@ -157,17 +166,28 @@ export function Board({
               onpointerenter: onPEnter,
             };
 
+            const isVictoryCat = isVictory && state === 'cat';
+            const cellStyle: Record<string, string> = {};
+            if (isHighlighted) {
+              cellStyle.boxShadow = '0 0 0 3px #6366F1';
+            }
+            if (isVictoryCat) {
+              cellStyle['--cat-wave-delay'] = `${r * 180}ms`;
+            }
+
             return (
               <div
                 key={`${r}-${c}`}
                 data-testid={`cell-${r}-${c}`}
                 className={`board-cell reg-${regId} ${isConflict ? 'has-conflict' : ''} ${
                   isError ? 'has-error' : ''
-                } ${isLocked ? 'is-locked' : ''} ${isErrorCross ? 'has-error-cross' : ''}`}
+                } ${isLocked ? 'is-locked' : ''} ${isErrorCross ? 'has-error-cross' : ''} ${
+                  isVictoryCat ? 'board-cell-victory-glow' : ''
+                }`}
                 onClick={() => handleClick(r, c)}
                 onPointerDown={onPDown}
                 onPointerEnter={onPEnter}
-                style={isHighlighted ? { boxShadow: '0 0 0 3px #6366F1' } : undefined}
+                style={Object.keys(cellStyle).length > 0 ? cellStyle : undefined}
                 {...nativePointerProps}
               >
                 {regionAssist === 'textures' && (
@@ -196,9 +216,32 @@ export function Board({
                   </svg>
                 )}
                 {state === 'cat' && (
-                  <div className="board-cat-wrapper">
-                    <CatSvg variant={catVariant} state={catAnim} />
-                  </div>
+                  <>
+                    {isVictoryCat && (
+                      <div
+                        data-testid={`cat-confetti-${r}-${c}`}
+                        className="cat-confetti-burst"
+                      >
+                        {CAT_CONFETTI_VECTORS.map((vec, i) => (
+                          <span
+                            key={i}
+                            className="cat-confetti-piece"
+                            style={{
+                              background: vec.color,
+                              borderRadius: vec.round ? '50%' : '2px',
+                              '--tx': vec.tx,
+                              '--ty': vec.ty,
+                              '--rot': vec.rot,
+                              '--delay': `${r * 180 + 20}ms`,
+                            } as Record<string, string>}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    <div className="board-cat-wrapper">
+                      <CatSvg variant={catVariant} state={catAnim} />
+                    </div>
+                  </>
                 )}
               </div>
             );
