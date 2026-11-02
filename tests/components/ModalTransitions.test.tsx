@@ -82,6 +82,9 @@ describe('ModalTransitions', () => {
           musicMuted: false,
           sfxMuted: false,
           tutorialSeen: true,
+          musicVolume: 0.75,
+          sfxVolume: 0.75,
+          musicTrack: 'auto',
         }}
         onUpdateSettings={vi.fn()}
         onResetProgress={vi.fn()}
@@ -123,6 +126,9 @@ describe('ModalTransitions', () => {
           musicMuted: true,
           sfxMuted: true,
           tutorialSeen: true,
+          musicVolume: 0.75,
+          sfxVolume: 0.75,
+          musicTrack: 'auto',
         }}
         session={wonSession}
         onUpdateSession={vi.fn()}
@@ -152,6 +158,9 @@ describe('ModalTransitions', () => {
           musicMuted: true,
           sfxMuted: true,
           tutorialSeen: true,
+          musicVolume: 0.75,
+          sfxVolume: 0.75,
+          musicTrack: 'auto',
         }}
         session={lostSession}
         onUpdateSession={vi.fn()}

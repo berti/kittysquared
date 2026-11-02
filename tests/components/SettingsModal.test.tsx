@@ -260,8 +260,11 @@ describe('SettingsModal component', () => {
     expect(getByTestId('sfx-vol-step-0.75')).toBeDefined();
     expect(getByTestId('sfx-vol-step-1')).toBeDefined();
 
-    // Track options
-    expect(getByTestId('track-opt-auto')).toBeDefined();
+    // Track options (Auto + 6 songs)
+    expect(getByTestId('track-opt-auto').textContent).toContain('Auto (6 temas)');
+    expect(getByTestId('track-opt-marimba')).toBeDefined();
+    expect(getByTestId('track-opt-velvet')).toBeDefined();
+    expect(getByTestId('track-opt-sunbeam')).toBeDefined();
     expect(getByTestId('track-opt-bossa')).toBeDefined();
     expect(getByTestId('track-opt-waltz')).toBeDefined();
     expect(getByTestId('track-opt-samba')).toBeDefined();
@@ -312,6 +315,10 @@ describe('SettingsModal component', () => {
     );
 
     fireEvent.click(getByTestId('tab-btn-sound'));
+    fireEvent.click(getByTestId('track-opt-marimba'));
+    expect(onUpdateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ musicTrack: 'marimba' })
+    );
     fireEvent.click(getByTestId('track-opt-bossa'));
     expect(onUpdateSettings).toHaveBeenCalledWith(
       expect.objectContaining({ musicTrack: 'bossa' })

@@ -16,7 +16,14 @@ export interface ModeProgress {
 }
 
 export type SteppedVolume = 0 | 0.25 | 0.5 | 0.75 | 1.0;
-export type MusicTrackOption = 'auto' | 'bossa' | 'waltz' | 'samba';
+export type MusicTrackOption =
+  | 'auto'
+  | 'marimba'
+  | 'velvet'
+  | 'sunbeam'
+  | 'bossa'
+  | 'waltz'
+  | 'samba';
 
 export interface AppSettings {
   doubleTapTimeoutMs: number;
@@ -38,7 +45,15 @@ export interface PersistedAppState {
 const STORAGE_KEY = 'kittysquared_state_v1';
 
 export const VALID_STEPPED_VOLUMES: SteppedVolume[] = [0, 0.25, 0.5, 0.75, 1.0];
-export const VALID_MUSIC_TRACKS: MusicTrackOption[] = ['auto', 'bossa', 'waltz', 'samba'];
+export const VALID_MUSIC_TRACKS: MusicTrackOption[] = [
+  'auto',
+  'marimba',
+  'velvet',
+  'sunbeam',
+  'bossa',
+  'waltz',
+  'samba',
+];
 
 export const VALID_REGION_ASSIST_MODES: RegionAssistMode[] = [
   'off',

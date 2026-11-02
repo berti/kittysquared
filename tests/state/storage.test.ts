@@ -66,6 +66,21 @@ describe('state/storage', () => {
     expect(loaded.settings.musicTrack).toBe('bossa');
   });
 
+  it('persists all 6 warm soundtrack IDs and falls back to "auto" for unknown track IDs', () => {
+    for (const track of ['marimba', 'velvet', 'sunbeam', 'bossa', 'waltz', 'samba'] as const) {
+      const state = getDefaultAppState();
+      state.settings.musicTrack = track;
+      savePersistedState(state);
+      expect(loadPersistedState().settings.musicTrack).toBe(track);
+    }
+
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({ settings: { musicTrack: 'removed_track_id' } })
+    );
+    expect(loadPersistedState().settings.musicTrack).toBe('auto');
+  });
+
   it('resets progress back to level 1 and 0 points while preserving settings', () => {
     const state = getDefaultAppState();
     state.progress.currentLevelId = 5;

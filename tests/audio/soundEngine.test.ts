@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from 'vitest';
-import { SoundEngine } from '../../src/audio/soundEngine';
+import { PLAYLIST_ORDER, SoundEngine } from '../../src/audio/soundEngine';
 
 describe('audio/soundEngine', () => {
   it('operates safely without throwing when Web Audio API is absent or muted', () => {
@@ -11,6 +11,15 @@ describe('audio/soundEngine', () => {
       engine.playCatPlaced();
       engine.playConflict();
       engine.playVictory();
+      engine.playMarimba(330, 0, 0.4);
+      engine.playRhodes(330, 0, 0.6);
+      engine.playKalimba(392, 0, 0.5);
+      engine.playFlute(880, 0, 0.6); // tests high frequency folding
+      engine.playAccordion(330, 0, 0.5);
+      engine.playGuitar(330, 0, 0.5);
+      engine.playBass(110, 0, 0.5);
+      engine.playShaker(0);
+      engine.playWoodblock(500, 0);
       engine.startMusic();
       engine.stopMusic();
     }).not.toThrow();
@@ -24,38 +33,37 @@ describe('audio/soundEngine', () => {
     }).not.toThrow();
   });
 
-  it('exposes methods to set volume and track preferences safely', () => {
+  it('exposes methods to set volume and track preferences safely across all 6 tracks', () => {
     const engine = new SoundEngine();
     expect(() => {
       engine.setVolume(0.5, 0.75);
-      engine.setTrackPreference('bossa');
+      for (const id of PLAYLIST_ORDER) {
+        engine.setTrackPreference(id);
+        expect(engine.getCurrentTrackId()).toBe(id);
+      }
       engine.setTrackPreference('auto');
+      expect(PLAYLIST_ORDER).toContain(engine.getCurrentTrackId());
     }).not.toThrow();
   });
 
-  it('rotates through tracks in auto mode and loops selected track when locked', () => {
+  it('builds full 56-bar arrangements (224 beats for 4/4, 168 beats for 3/4) for all 6 tracks without strident high notes', () => {
     const engine = new SoundEngine();
-    engine.setTrackPreference('bossa');
-    expect(engine.getCurrentTrackId()).toBe('bossa');
+    const fourFourTracks = ['marimba', 'velvet', 'sunbeam', 'bossa', 'samba'] as const;
+    for (const id of fourFourTracks) {
+      const def = engine.getTrackDef(id);
+      expect(def.totalBeats).toBe(224);
+      expect(def.events.length).toBeGreaterThan(250);
+      const shrillNotes = def.events.filter((ev) => ev.midi && ev.midi > 76);
+      expect(shrillNotes.length).toBe(0);
+    }
 
-    engine.setTrackPreference('waltz');
-    expect(engine.getCurrentTrackId()).toBe('waltz');
-
-    engine.setTrackPreference('samba');
-    expect(engine.getCurrentTrackId()).toBe('samba');
-
-    engine.setTrackPreference('auto');
-    expect(['bossa', 'waltz', 'samba']).toContain(engine.getCurrentTrackId());
-  });
-
-  it('re-balances Catnip Waltz lead melody in octave 4-5 without exceeding 800Hz / E5', () => {
-    const engine = new SoundEngine();
-    const waltzEvents = engine.getTrackEvents('waltz');
-    expect(waltzEvents.length).toBeGreaterThan(0);
-    const highMelodyNotes = waltzEvents.filter(
-      (ev) => ev.inst === 'accordion' && ev.midi && ev.midi > 76
+    const waltzDef = engine.getTrackDef('waltz');
+    expect(waltzDef.totalBeats).toBe(168);
+    expect(waltzDef.events.length).toBeGreaterThan(200);
+    const highAccordion = waltzDef.events.filter(
+      (ev) => ev.inst === 'accordion' && ev.midi && ev.midi > 72
     );
-    expect(highMelodyNotes.length).toBe(0);
+    expect(highAccordion.length).toBe(0);
   });
 
   it('synchronizes volume levels with mute state correctly', () => {
@@ -64,12 +72,10 @@ describe('audio/soundEngine', () => {
     expect(engine.getEffectiveMusicVolume()).toBe(0.5);
     expect(engine.getEffectiveSfxVolume()).toBe(0.75);
 
-    // Muting music drops effective volume to 0 while preserving stored level
     engine.setMuted(true, false);
     expect(engine.getEffectiveMusicVolume()).toBe(0);
     expect(engine.getEffectiveSfxVolume()).toBe(0.75);
 
-    // Unmuting music restores effective volume back to 0.5
     engine.setMuted(false, false);
     expect(engine.getEffectiveMusicVolume()).toBe(0.5);
   });
@@ -97,38 +103,29 @@ describe('audio/soundEngine', () => {
     expect(engine.getActiveNodeCount()).toBe(0);
   });
 
-  it('repeats the same song for multiple cycles in auto mode before advancing to the next song', () => {
+  it('advances across all 6 full-length songs in auto mode (1 full 56-bar cycle per song)', () => {
     const engine = new SoundEngine();
     engine.setTrackPreference('auto');
 
-    // Cycle 1: initial track
-    const first = engine.getNextTrack();
-    expect(first.track.id).toBe('bossa');
-
-    // Subsequent cycles for bossa (repeat count = 4 total) should stay bossa with isNewTrack = false
-    for (let i = 2; i <= 4; i++) {
-      const rep = engine.getNextTrack();
-      expect(rep.track.id).toBe('bossa');
-      expect(rep.isNewTrack).toBe(false);
+    const expectedOrder = ['marimba', 'velvet', 'sunbeam', 'bossa', 'waltz', 'samba'] as const;
+    for (const expectedId of expectedOrder) {
+      const next = engine.getNextTrack();
+      expect(next.track.id).toBe(expectedId);
+      expect(next.isNewTrack).toBe(true);
     }
-
-    // Next cycle should advance to waltz with isNewTrack = true
-    const nextSong = engine.getNextTrack();
-    expect(nextSong.track.id).toBe('waltz');
-    expect(nextSong.isNewTrack).toBe(true);
   });
 
   it('loops single track continuously without track transitions when preference is not auto', () => {
     const engine = new SoundEngine();
-    engine.setTrackPreference('samba');
+    engine.setTrackPreference('velvet');
 
     const first = engine.getNextTrack();
-    expect(first.track.id).toBe('samba');
+    expect(first.track.id).toBe('velvet');
     expect(first.isNewTrack).toBe(true);
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 5; i++) {
       const rep = engine.getNextTrack();
-      expect(rep.track.id).toBe('samba');
+      expect(rep.track.id).toBe('velvet');
       expect(rep.isNewTrack).toBe(false);
     }
   });

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { soundEngine } from '../audio/soundEngine';
-import { AppSettings, MusicTrackOption, SteppedVolume, VALID_STEPPED_VOLUMES } from '../state/storage';
+import { AppSettings, MusicTrackOption, VALID_STEPPED_VOLUMES } from '../state/storage';
 import { CatVariant, RegionAssistMode } from '../types/puzzle';
 import { REGION_GLYPHS } from './Board';
 import { CatSvg } from './CatSvg';
@@ -619,13 +619,39 @@ export function SettingsModal({
                 <div style={{ fontSize: '13px', fontWeight: 800, color: '#5C4B51' }}>
                   🎼 Banda Sonora
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  {[
-                    { id: 'auto' as const, label: '🔄 Auto (3 temas)' },
-                    { id: 'bossa' as const, label: '🐱 Bossa Meow' },
-                    { id: 'waltz' as const, label: '🥐 Catnip Waltz' },
-                    { id: 'samba' as const, label: '🎉 Samba de Gatinho' },
-                  ].map((track) => {
+                {(() => {
+                  const isAutoSelected = (settings.musicTrack || 'auto') === 'auto';
+                  return (
+                    <button
+                      type="button"
+                      data-testid="track-opt-auto"
+                      onClick={() => onUpdateSettings({ ...settings, musicTrack: 'auto' })}
+                      style={{
+                        width: '100%',
+                        padding: '8px 8px',
+                        borderRadius: '12px',
+                        fontSize: '12.5px',
+                        fontWeight: 800,
+                        border: isAutoSelected ? '2px solid #E76F51' : '2px solid #E2D6C1',
+                        background: isAutoSelected ? '#FCE8E2' : '#FFF',
+                        color: isAutoSelected ? '#E76F51' : '#5C4B51',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                      }}
+                    >
+                      🔄 Auto (6 temas)
+                    </button>
+                  );
+                })()}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                  {([
+                    { id: 'marimba', label: '🪵 Marimba Michi' },
+                    { id: 'velvet', label: '🎹 Velvet Paws' },
+                    { id: 'sunbeam', label: '☀️ Sunbeam Stroll' },
+                    { id: 'bossa', label: '🐱 Bossa Meow' },
+                    { id: 'waltz', label: '🥐 Catnip Waltz' },
+                    { id: 'samba', label: '🎉 Samba de Gatinho' },
+                  ] satisfies { id: MusicTrackOption; label: string }[]).map((track) => {
                     const isSelected = (settings.musicTrack || 'auto') === track.id;
                     return (
                       <button
@@ -634,9 +660,9 @@ export function SettingsModal({
                         data-testid={`track-opt-${track.id}`}
                         onClick={() => onUpdateSettings({ ...settings, musicTrack: track.id })}
                         style={{
-                          padding: '10px 8px',
+                          padding: '8px 8px',
                           borderRadius: '12px',
-                          fontSize: '12.5px',
+                          fontSize: '12px',
                           fontWeight: 800,
                           border: isSelected ? '2px solid #E76F51' : '2px solid #E2D6C1',
                           background: isSelected ? '#FCE8E2' : '#FFF',
