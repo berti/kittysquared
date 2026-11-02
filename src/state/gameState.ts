@@ -1,5 +1,60 @@
 import { AutoCrossMode, CellState, PuzzleDef } from '../types/puzzle';
 import { isBoardSolved } from '../engine/rules';
+import { ModeProgress, StarRating } from './storage';
+
+export function getStarsForMistakes(mistakes: number): StarRating {
+  if (mistakes <= 0) return 3;
+  if (mistakes === 1) return 2;
+  return 1;
+}
+
+export function getBonusForStars(stars: StarRating): number {
+  if (stars === 3) return 50;
+  if (stars === 2) return 30;
+  return 10;
+}
+
+export interface LevelWinOutcome {
+  isReplay: boolean;
+  earnedStars: StarRating;
+  bestStars: StarRating;
+  scoreGain: number;
+  nextCurrentLevelId: number;
+}
+
+export function computeLevelWinOutcome(
+  session: LevelSessionState,
+  progress: ModeProgress
+): LevelWinOutcome {
+  const levelId = session.puzzle.id;
+  const prevStars = progress.levelStars?.[levelId];
+  const isReplay = levelId < progress.currentLevelId || prevStars !== undefined;
+  const earnedStars = getStarsForMistakes(session.mistakes);
+
+  if (isReplay) {
+    const baselineStars: StarRating = prevStars ?? 1;
+    const bestStars = (Math.max(baselineStars, earnedStars) as StarRating);
+    const scoreGain = Math.max(
+      0,
+      getBonusForStars(earnedStars) - getBonusForStars(baselineStars)
+    );
+    return {
+      isReplay: true,
+      earnedStars,
+      bestStars,
+      scoreGain,
+      nextCurrentLevelId: progress.currentLevelId,
+    };
+  }
+
+  return {
+    isReplay: false,
+    earnedStars,
+    bestStars: earnedStars,
+    scoreGain: session.partialScore + session.levelBonus,
+    nextCurrentLevelId: levelId + 1,
+  };
+}
 
 export interface LevelSessionState {
   puzzle: PuzzleDef;

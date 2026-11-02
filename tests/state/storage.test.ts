@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   getDefaultAppState,
+  getTotalEarnedStars,
   loadPersistedState,
   resetProgress,
   savePersistedState,
@@ -254,5 +255,36 @@ describe('state/storage', () => {
     );
     const loaded = loadPersistedState();
     expect(loaded.settings.autoCross).toBe('off');
+  });
+
+  it('Review Focus #1: sanitizes corrupted levelStars and backfills 1 star for completed levels 1..currentLevelId-1', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        progress: {
+          currentLevelId: 4,
+          totalScore: 250,
+          activeSnapshot: null,
+          levelStars: { '1': 99, '2': 3, '-5': 2, abc: 'three' },
+        },
+      })
+    );
+
+    const loaded = loadPersistedState();
+    expect(loaded.progress.levelStars).toEqual({
+      1: 1, // backfilled since 99 was invalid
+      2: 3, // preserved valid rating
+      3: 1, // backfilled since missing and < currentLevelId (4)
+    });
+    expect(getTotalEarnedStars(loaded.progress)).toBe(5);
+  });
+
+  it('clears levelStars to empty object on resetProgress', () => {
+    const state = getDefaultAppState();
+    state.progress.currentLevelId = 3;
+    state.progress.levelStars = { 1: 3, 2: 2 };
+    const after = resetProgress(state);
+    expect(after.progress.levelStars).toEqual({});
+    expect(getTotalEarnedStars(after.progress)).toBe(0);
   });
 });

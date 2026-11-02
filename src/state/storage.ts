@@ -9,10 +9,13 @@ export interface SavedBoardSnapshot {
   partialScore: number;
 }
 
+export type StarRating = 1 | 2 | 3;
+
 export interface ModeProgress {
   currentLevelId: number;
   totalScore: number;
   activeSnapshot: SavedBoardSnapshot | null;
+  levelStars?: Record<number, StarRating>;
 }
 
 export type SteppedVolume = 0 | 0.25 | 0.5 | 0.75 | 1.0;
@@ -75,6 +78,7 @@ export function getDefaultAppState(): PersistedAppState {
       currentLevelId: 1,
       totalScore: 0,
       activeSnapshot: null,
+      levelStars: {},
     },
     settings: {
       doubleTapTimeoutMs: 500,
@@ -89,6 +93,40 @@ export function getDefaultAppState(): PersistedAppState {
       musicTrack: 'auto',
     },
   };
+}
+
+export function getTotalEarnedStars(progress: ModeProgress): number {
+  const starsMap = progress.levelStars || {};
+  return Object.values(starsMap).reduce((sum, s) => sum + s, 0);
+}
+
+function sanitizeAndBackfillLevelStars(
+  rawLevelStars: unknown,
+  currentLevelId: number
+): Record<number, StarRating> {
+  const sanitized: Record<number, StarRating> = {};
+  if (rawLevelStars && typeof rawLevelStars === 'object') {
+    for (const [key, val] of Object.entries(rawLevelStars as Record<string, unknown>)) {
+      const lvl = Number(key);
+      if (
+        Number.isInteger(lvl) &&
+        lvl >= 1 &&
+        lvl <= 300 &&
+        (val === 1 || val === 2 || val === 3)
+      ) {
+        sanitized[lvl] = val;
+      }
+    }
+  }
+
+  const maxBackfill = Math.min(300, Math.max(0, currentLevelId - 1));
+  for (let lvl = 1; lvl <= maxBackfill; lvl++) {
+    if (sanitized[lvl] === undefined) {
+      sanitized[lvl] = 1;
+    }
+  }
+
+  return sanitized;
 }
 
 export function loadPersistedState(): PersistedAppState {
@@ -108,11 +146,20 @@ export function loadPersistedState(): PersistedAppState {
         : 500;
 
     const rawProgress = parsed.progress || parsed.classic || parsed.chill || {};
+    const mergedProgress = {
+      ...defaults.progress,
+      ...rawProgress,
+    };
+    const currentLevelId =
+      typeof mergedProgress.currentLevelId === 'number' && mergedProgress.currentLevelId >= 1
+        ? mergedProgress.currentLevelId
+        : 1;
 
     return {
       progress: {
-        ...defaults.progress,
-        ...rawProgress,
+        ...mergedProgress,
+        currentLevelId,
+        levelStars: sanitizeAndBackfillLevelStars(rawProgress.levelStars, currentLevelId),
       },
       settings: {
         ...defaults.settings,
@@ -155,6 +202,7 @@ export function resetProgress(state: PersistedAppState): PersistedAppState {
       currentLevelId: 1,
       totalScore: 0,
       activeSnapshot: null,
+      levelStars: {},
     },
   };
   savePersistedState(next);

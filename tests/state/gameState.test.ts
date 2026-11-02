@@ -3,7 +3,10 @@ import {
   applyCellTap,
   applyDragCross,
   clearCrosses,
+  computeLevelWinOutcome,
   createLevelSession,
+  getBonusForStars,
+  getStarsForMistakes,
   undoMove,
 } from '../../src/state/gameState';
 import { PuzzleDef } from '../../src/types/puzzle';
@@ -259,6 +262,88 @@ describe('state/gameState', () => {
       expect(s.levelBonus).toBe(50);
       expect(s.board.flat().filter((c) => c === 'cat')).toHaveLength(4);
       expect(s.board.flat().filter((c) => c === 'cross')).toHaveLength(12);
+    });
+  });
+
+  describe('star ratings and replay scoring', () => {
+    it('maps mistakes to stars (0->3, 1->2, 2->1) and stars to bonus (3->50, 2->30, 1->10)', () => {
+      expect(getStarsForMistakes(0)).toBe(3);
+      expect(getStarsForMistakes(1)).toBe(2);
+      expect(getStarsForMistakes(2)).toBe(1);
+      expect(getBonusForStars(3)).toBe(50);
+      expect(getBonusForStars(2)).toBe(30);
+      expect(getBonusForStars(1)).toBe(10);
+    });
+
+    it('computeLevelWinOutcome awards full cat + bonus points and advances currentLevelId on first-time frontier clear', () => {
+      let s = createLevelSession(samplePuzzle);
+      s = applyCellTap(s, 0, 0, { isDoubleTap: true }); // 1 mistake -> 2 stars (+30)
+      s = applyCellTap(s, 0, 1, { isDoubleTap: true });
+      s = applyCellTap(s, 1, 3, { isDoubleTap: true });
+      s = applyCellTap(s, 2, 0, { isDoubleTap: true });
+      s = applyCellTap(s, 3, 2, { isDoubleTap: true });
+
+      const outcome = computeLevelWinOutcome(s, {
+        currentLevelId: 1,
+        totalScore: 100,
+        activeSnapshot: null,
+        levelStars: {},
+      });
+
+      expect(outcome).toEqual({
+        isReplay: false,
+        earnedStars: 2,
+        bestStars: 2,
+        scoreGain: 70, // 40 partial + 30 bonus
+        nextCurrentLevelId: 2,
+      });
+    });
+
+    it('Review Focus #2: computeLevelWinOutcome on replay only awards positive bonus delta and never downgrades bestStars', () => {
+      let s = createLevelSession(samplePuzzle);
+      // 0 mistakes -> 3 stars (+50)
+      s = applyCellTap(s, 0, 1, { isDoubleTap: true });
+      s = applyCellTap(s, 1, 3, { isDoubleTap: true });
+      s = applyCellTap(s, 2, 0, { isDoubleTap: true });
+      s = applyCellTap(s, 3, 2, { isDoubleTap: true });
+
+      // Improving from 1 star (+10) to 3 stars (+50) awards +40 and keeps currentLevelId at 5
+      const improved = computeLevelWinOutcome(s, {
+        currentLevelId: 5,
+        totalScore: 400,
+        activeSnapshot: null,
+        levelStars: { 1: 1 },
+      });
+      expect(improved).toEqual({
+        isReplay: true,
+        earnedStars: 3,
+        bestStars: 3,
+        scoreGain: 40,
+        nextCurrentLevelId: 5,
+      });
+
+      // Replaying with 2 mistakes (1 star) when already holding 3 stars -> 0 gain, keeps 3 stars
+      let worseSession = createLevelSession(samplePuzzle);
+      worseSession = applyCellTap(worseSession, 0, 0, { isDoubleTap: true });
+      worseSession = applyCellTap(worseSession, 1, 0, { isDoubleTap: true });
+      worseSession = applyCellTap(worseSession, 0, 1, { isDoubleTap: true });
+      worseSession = applyCellTap(worseSession, 1, 3, { isDoubleTap: true });
+      worseSession = applyCellTap(worseSession, 2, 0, { isDoubleTap: true });
+      worseSession = applyCellTap(worseSession, 3, 2, { isDoubleTap: true });
+
+      const worse = computeLevelWinOutcome(worseSession, {
+        currentLevelId: 5,
+        totalScore: 440,
+        activeSnapshot: null,
+        levelStars: { 1: 3 },
+      });
+      expect(worse).toEqual({
+        isReplay: true,
+        earnedStars: 1,
+        bestStars: 3,
+        scoreGain: 0,
+        nextCurrentLevelId: 5,
+      });
     });
   });
 });
