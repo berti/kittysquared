@@ -45,7 +45,6 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={defaultSettings}
         onUpdateSettings={vi.fn()}
-        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -59,7 +58,6 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={defaultSettings}
         onUpdateSettings={vi.fn()}
-        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -88,7 +86,6 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={{ ...defaultSettings, doubleTapTimeoutMs: 500 }}
         onUpdateSettings={onUpdateSettings}
-        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -127,7 +124,6 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={{ ...defaultSettings, doubleTapTimeoutMs: 500 }}
         onUpdateSettings={vi.fn()}
-        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -156,7 +152,6 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={defaultSettings}
         onUpdateSettings={vi.fn()}
-        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -181,7 +176,6 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={{ ...defaultSettings, regionAssist: 'glyphs' }}
         onUpdateSettings={vi.fn()}
-        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -198,7 +192,6 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={{ ...defaultSettings, regionAssist: 'textures' }}
         onUpdateSettings={vi.fn()}
-        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -213,7 +206,6 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={defaultSettings}
         onUpdateSettings={onUpdateSettings}
-        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -240,7 +232,6 @@ describe('SettingsModal component', () => {
           musicTrack: 'auto',
         }}
         onUpdateSettings={vi.fn()}
-        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -281,7 +272,6 @@ describe('SettingsModal component', () => {
           musicMuted: false,
         }}
         onUpdateSettings={onUpdateSettings}
-        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -310,7 +300,6 @@ describe('SettingsModal component', () => {
           musicTrack: 'auto',
         }}
         onUpdateSettings={onUpdateSettings}
-        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -369,7 +358,6 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={defaultSettings}
         onUpdateSettings={vi.fn()}
-        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -385,7 +373,6 @@ describe('SettingsModal component', () => {
       <SettingsModal
         settings={{ ...defaultSettings, musicMuted: true, musicVolume: 0 }}
         onUpdateSettings={onUpdateSettings}
-        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );

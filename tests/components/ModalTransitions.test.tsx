@@ -79,6 +79,7 @@ describe('ModalTransitions', () => {
           doubleTapTimeoutMs: 500,
           catVariant: 'black',
           regionAssist: 'off',
+          autoCross: 'off',
           musicMuted: false,
           sfxMuted: false,
           tutorialSeen: true,
@@ -87,7 +88,6 @@ describe('ModalTransitions', () => {
           musicTrack: 'auto',
         }}
         onUpdateSettings={vi.fn()}
-        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -123,6 +123,7 @@ describe('ModalTransitions', () => {
           doubleTapTimeoutMs: 500,
           catVariant: 'black',
           regionAssist: 'off',
+          autoCross: 'off',
           musicMuted: true,
           sfxMuted: true,
           tutorialSeen: true,
@@ -155,6 +156,7 @@ describe('ModalTransitions', () => {
           doubleTapTimeoutMs: 500,
           catVariant: 'black',
           regionAssist: 'off',
+          autoCross: 'off',
           musicMuted: true,
           sfxMuted: true,
           tutorialSeen: true,

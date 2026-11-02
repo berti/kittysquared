@@ -13,6 +13,7 @@ export interface BoardProps {
   conflictingKeys: Set<string>;
   lastPlacedCat: { row: number; col: number } | null;
   lastErrorCell: { row: number; col: number } | null;
+  autoCrossCells?: { row: number; col: number }[];
   isVictory: boolean;
   catVariant: CatVariant;
   regionAssist?: RegionAssistMode;
@@ -33,6 +34,7 @@ export function Board({
   conflictingKeys,
   lastPlacedCat,
   lastErrorCell,
+  autoCrossCells,
   isVictory,
   catVariant,
   regionAssist = 'off',
@@ -129,6 +131,13 @@ export function Board({
             const isErrorCross = errorCrosses?.[r]?.[c] ?? false;
             const isLocked = (lockedCats[r]?.[c] ?? false) || isErrorCross;
             const isHighlighted = highlightCells?.some((h) => h.row === r && h.col === c) ?? false;
+            const isAutoCross = autoCrossCells?.some((ac) => ac.row === r && ac.col === c) ?? false;
+
+            let autoCrossDelayMs: number | undefined = undefined;
+            if (isAutoCross && lastPlacedCat) {
+              const dist = Math.max(Math.abs(r - lastPlacedCat.row), Math.abs(c - lastPlacedCat.col));
+              autoCrossDelayMs = dist * 35;
+            }
 
             let catAnim: 'idle' | 'placed' | 'conflict' | 'victory' = 'idle';
             if (isVictory) catAnim = 'victory';
@@ -168,7 +177,14 @@ export function Board({
                 {state === 'cross' && (
                   <svg
                     viewBox="0 0 24 24"
-                    className={`cross-mark ${isErrorCross ? 'cross-mark-error' : ''}`}
+                    className={`cross-mark ${isErrorCross ? 'cross-mark-error' : ''} ${
+                      isAutoCross ? 'cross-wave' : ''
+                    }`}
+                    style={
+                      autoCrossDelayMs !== undefined
+                        ? { animationDelay: `${autoCrossDelayMs}ms` }
+                        : undefined
+                    }
                   >
                     <line x1="5" y1="5" x2="19" y2="19" />
                     <line x1="19" y1="5" x2="5" y2="19" />

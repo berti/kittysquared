@@ -214,6 +214,7 @@ export function GameScreen({
         conflictingKeys={session.conflictingKeys}
         lastPlacedCat={session.lastPlacedCat}
         lastErrorCell={session.lastErrorCell}
+        autoCrossCells={session.lastAutoCrossCells}
         isVictory={session.status === 'won'}
         catVariant={settings.catVariant}
         regionAssist={settings.regionAssist}
