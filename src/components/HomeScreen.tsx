@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { CatVariant } from '../types/puzzle';
-import { ModeProgress } from '../state/storage';
+import { getTotalEarnedStars, ModeProgress } from '../state/storage';
 import { CatSvg } from './CatSvg';
 import { ConfirmDialog } from './ConfirmDialog';
 import { PostGameModal } from './PostGameModal';
@@ -10,6 +10,7 @@ export interface HomeScreenProps {
   totalLevels?: number;
   catVariant: CatVariant;
   onPlay: () => void;
+  onOpenLevels?: () => void;
   onReplayLastLevel?: () => void;
   onResetProgress?: () => void;
   onOpenTutorial: () => void;
@@ -21,6 +22,7 @@ export function HomeScreen({
   totalLevels,
   catVariant,
   onPlay,
+  onOpenLevels,
   onReplayLastLevel,
   onResetProgress,
   onOpenTutorial,
@@ -31,6 +33,8 @@ export function HomeScreen({
 
   const levelsCount = totalLevels ?? 300;
   const isGameCompleted = progress.currentLevelId > levelsCount;
+  const totalEarnedStars = getTotalEarnedStars(progress);
+  const maxStars = levelsCount * 3;
 
   const handlePlayClick = () => {
     if (isGameCompleted) {
@@ -93,43 +97,93 @@ export function HomeScreen({
         </button>
 
         <button
-          data-testid="open-tutorial-btn"
-          onClick={onOpenTutorial}
+          type="button"
+          data-testid="open-levels-btn"
+          onClick={() => onOpenLevels?.()}
           style={{
             width: '100%',
             background: '#F3E9D2',
             border: '2px solid #E2D6C1',
             boxShadow: '0 3px 0 #E2D6C1',
             borderRadius: '14px',
-            padding: '14px',
+            padding: '14px 18px',
             fontSize: '15.5px',
             fontWeight: 800,
-            color: '#5C4B51',
+            color: '#3D3135',
             cursor: 'pointer',
             boxSizing: 'border-box',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontFamily: 'inherit',
           }}
         >
-          Tutorial
+          <span>Niveles</span>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+              color: '#5C4B51',
+              fontSize: '14.5px',
+              fontWeight: 800,
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" style={{ display: 'block' }}>
+              <path
+                fill="#FFB703"
+                stroke="#D97706"
+                strokeWidth="2"
+                strokeLinejoin="round"
+                d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9L12 2.5z"
+              />
+            </svg>
+            <span>
+              {totalEarnedStars} / {maxStars}
+            </span>
+          </span>
         </button>
-        <button
-          data-testid="open-settings-btn"
-          onClick={onOpenSettings}
-          style={{
-            width: '100%',
-            background: '#F3E9D2',
-            border: '2px solid #E2D6C1',
-            boxShadow: '0 3px 0 #E2D6C1',
-            borderRadius: '14px',
-            padding: '14px',
-            fontSize: '15.5px',
-            fontWeight: 800,
-            color: '#5C4B51',
-            cursor: 'pointer',
-            boxSizing: 'border-box',
-          }}
-        >
-          Ajustes
-        </button>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <button
+            data-testid="open-tutorial-btn"
+            onClick={onOpenTutorial}
+            style={{
+              width: '100%',
+              background: '#F3E9D2',
+              border: '2px solid #E2D6C1',
+              boxShadow: '0 3px 0 #E2D6C1',
+              borderRadius: '14px',
+              padding: '14px',
+              fontSize: '15.5px',
+              fontWeight: 800,
+              color: '#5C4B51',
+              cursor: 'pointer',
+              boxSizing: 'border-box',
+            }}
+          >
+            Tutorial
+          </button>
+          <button
+            data-testid="open-settings-btn"
+            onClick={onOpenSettings}
+            style={{
+              width: '100%',
+              background: '#F3E9D2',
+              border: '2px solid #E2D6C1',
+              boxShadow: '0 3px 0 #E2D6C1',
+              borderRadius: '14px',
+              padding: '14px',
+              fontSize: '15.5px',
+              fontWeight: 800,
+              color: '#5C4B51',
+              cursor: 'pointer',
+              boxSizing: 'border-box',
+            }}
+          >
+            Ajustes
+          </button>
+        </div>
       </div>
 
       <div style={{ width: '100%', marginTop: 'auto', paddingTop: '16px' }}>

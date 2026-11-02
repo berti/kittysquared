@@ -2,11 +2,16 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { soundEngine } from './audio/soundEngine';
 import { GameScreen } from './components/GameScreen';
 import { HomeScreen } from './components/HomeScreen';
+import { LevelSelectScreen } from './components/LevelSelectScreen';
 import { ScreenTransitionOverlay } from './components/ScreenTransitionOverlay';
 import { SettingsModal } from './components/SettingsModal';
 import { TutorialModal } from './components/TutorialModal';
 import puzzlesData from './data/puzzles.json';
-import { createLevelSession, LevelSessionState } from './state/gameState';
+import {
+  computeLevelWinOutcome,
+  createLevelSession,
+  LevelSessionState,
+} from './state/gameState';
 import {
   AppSettings,
   loadPersistedState,
@@ -26,7 +31,7 @@ export function App({
   transitionDurationMs = typeof process !== 'undefined' && process.env.NODE_ENV === 'test' ? 0 : 300,
 }: AppProps = {}) {
   const [appState, setAppState] = useState<PersistedAppState>(() => loadPersistedState());
-  const [activeScreen, setActiveScreen] = useState<'home' | 'game'>('home');
+  const [activeScreen, setActiveScreen] = useState<'home' | 'levels' | 'game'>('home');
   const [showSettings, setShowSettings] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [transitionState, setTransitionState] = useState<{
@@ -104,21 +109,28 @@ export function App({
     savePersistedState(next);
   };
 
+  const startSessionForLevel = (
+    levelId: number,
+    snapshotToCheck = appState.progress.activeSnapshot
+  ): LevelSessionState => {
+    const puzzle = puzzles.find((p) => p.id === levelId) || puzzles[0];
+    const newSession = createLevelSession(puzzle);
+
+    if (snapshotToCheck && snapshotToCheck.levelId === levelId) {
+      newSession.board = snapshotToCheck.board;
+      newSession.lockedCats = snapshotToCheck.lockedCats;
+      if (snapshotToCheck.errorCrosses) newSession.errorCrosses = snapshotToCheck.errorCrosses;
+      newSession.mistakes = snapshotToCheck.mistakes;
+      newSession.partialScore = snapshotToCheck.partialScore;
+    }
+
+    return newSession;
+  };
+
   const handlePlay = () => {
     navigateWithTransition('forward', () => {
       const currentLvlId = appState.progress.currentLevelId;
-      const puzzle = puzzles.find((p) => p.id === currentLvlId) || puzzles[0];
-      const newSession = createLevelSession(puzzle);
-
-      // Restore saved board snapshot if exists
-      const snap = appState.progress.activeSnapshot;
-      if (snap && snap.levelId === currentLvlId) {
-        newSession.board = snap.board;
-        newSession.lockedCats = snap.lockedCats;
-        if (snap.errorCrosses) newSession.errorCrosses = snap.errorCrosses;
-        newSession.mistakes = snap.mistakes;
-        newSession.partialScore = snap.partialScore;
-      }
+      const newSession = startSessionForLevel(currentLvlId);
 
       setSession(newSession);
       setActiveScreen('game');
@@ -132,9 +144,28 @@ export function App({
     });
   };
 
+  const handleOpenLevels = () => {
+    navigateWithTransition('forward', () => {
+      setActiveScreen('levels');
+    });
+  };
+
+  const handleSelectLevel = (levelId: number) => {
+    navigateWithTransition('forward', () => {
+      const newSession = startSessionForLevel(levelId);
+      setSession(newSession);
+      setActiveScreen('game');
+    });
+  };
+
   const handleUpdateSession = (nextSession: LevelSessionState) => {
     setSession(nextSession);
-    // Auto-save snapshot
+    // Only auto-save snapshot if playing the frontier level
+    const isFrontierSession = nextSession.puzzle.id === appState.progress.currentLevelId;
+    if (!isFrontierSession) {
+      return;
+    }
+
     const snap =
       nextSession.status === 'playing'
         ? {
@@ -158,38 +189,52 @@ export function App({
 
   const handleAdvanceLevel = () => {
     navigateWithTransition('forward', () => {
+      const currentLvlId = session.puzzle.id;
       let newTotalScore = appState.progress.totalScore;
+      let nextCurrentLevelId = appState.progress.currentLevelId;
+      let nextLevelStars = { ...(appState.progress.levelStars || {}) };
+      let nextActiveSnapshot = appState.progress.activeSnapshot;
+
       if (session.status === 'won') {
-        newTotalScore += session.partialScore + session.levelBonus;
+        const outcome = computeLevelWinOutcome(session, appState.progress);
+        newTotalScore += outcome.scoreGain;
+        nextCurrentLevelId = outcome.nextCurrentLevelId;
+        nextLevelStars = {
+          ...nextLevelStars,
+          [currentLvlId]: outcome.bestStars,
+        };
+        if (!outcome.isReplay) {
+          nextActiveSnapshot = null;
+        }
       }
 
-      if (session.puzzle.id >= puzzles.length) {
-        // Final level completed: mark finished by setting currentLevelId past end, clear snapshot, and return to home
+      if (currentLvlId >= puzzles.length) {
         updateAppState({
           ...appState,
           progress: {
-            currentLevelId: session.puzzle.id + 1,
+            currentLevelId: nextCurrentLevelId,
             totalScore: newTotalScore,
-            activeSnapshot: null,
+            activeSnapshot: nextActiveSnapshot,
+            levelStars: nextLevelStars,
           },
         });
         setActiveScreen('home');
         return;
       }
 
-      const nextLvlId = session.puzzle.id + 1;
-      const puzzle = puzzles.find((p) => p.id === nextLvlId) || puzzles[puzzles.length - 1];
+      const nextLvlId = currentLvlId + 1;
 
       updateAppState({
         ...appState,
         progress: {
-          currentLevelId: nextLvlId,
+          currentLevelId: nextCurrentLevelId,
           totalScore: newTotalScore,
-          activeSnapshot: null,
+          activeSnapshot: nextActiveSnapshot,
+          levelStars: nextLevelStars,
         },
       });
 
-      setSession(createLevelSession(puzzle));
+      setSession(startSessionForLevel(nextLvlId, nextActiveSnapshot));
     });
   };
 
@@ -237,10 +282,24 @@ export function App({
           totalLevels={puzzles.length}
           catVariant={appState.settings.catVariant}
           onPlay={handlePlay}
+          onOpenLevels={handleOpenLevels}
           onReplayLastLevel={handleReplayLastLevel}
           onResetProgress={handleResetProgress}
           onOpenTutorial={() => setShowTutorial(true)}
           onOpenSettings={() => setShowSettings(true)}
+        />
+      )}
+
+      {activeScreen === 'levels' && (
+        <LevelSelectScreen
+          progress={appState.progress}
+          totalLevels={puzzles.length}
+          onSelectLevel={handleSelectLevel}
+          onBack={() =>
+            navigateWithTransition('backward', () => {
+              setActiveScreen('home');
+            })
+          }
         />
       )}
 

@@ -75,8 +75,61 @@ describe('GameScreen component', () => {
     const statusBar = getByTestId('game-status-bar');
     expect(statusBar.textContent).toContain('0 / 4');
     expect(statusBar.textContent).toContain('❤️ ❤️ ❤️');
-    expect(statusBar.textContent).toContain('⭐ 0');
+    expect(getByTestId('score-paw-coin-icon')).toBeDefined();
+    expect(statusBar.textContent).not.toContain('⭐');
     expect(statusBar.style.fontSize).toBe('16.5px');
+  });
+
+  it('hides partial cat score badge during a replay and shows only bonus improvement on win', () => {
+    const session = createLevelSession(samplePuzzle);
+    session.partialScore = 20;
+    const defaultState = getDefaultAppState();
+    // Level 42 already completed with 2 stars (+30 bonus)
+    defaultState.progress.currentLevelId = 50;
+    defaultState.progress.totalScore = 500;
+    defaultState.progress.levelStars = { 42: 2 };
+
+    const { getByTestId, rerender, getByText } = render(
+      <GameScreen
+        puzzle={samplePuzzle}
+        totalLevels={100}
+        progress={defaultState.progress}
+        settings={defaultState.settings}
+        session={session}
+        onUpdateSession={vi.fn()}
+        onAdvanceLevel={vi.fn()}
+        onRetryLevel={vi.fn()}
+        onBackToMenu={vi.fn()}
+        onOpenSettings={vi.fn()}
+      />
+    );
+
+    // While playing a replay, no (+20) badge is shown in status bar
+    expect(getByTestId('game-status-bar').textContent).not.toContain('(+');
+
+    // When won with 0 mistakes (3 stars -> +50 bonus vs previous +30 -> +20 improvement)
+    session.status = 'won';
+    session.partialScore = 40;
+    session.levelBonus = 50;
+    session.mistakes = 0;
+
+    rerender(
+      <GameScreen
+        puzzle={samplePuzzle}
+        totalLevels={100}
+        progress={defaultState.progress}
+        settings={defaultState.settings}
+        session={{ ...session }}
+        onUpdateSession={vi.fn()}
+        onAdvanceLevel={vi.fn()}
+        onRetryLevel={vi.fn()}
+        onBackToMenu={vi.fn()}
+        onOpenSettings={vi.fn()}
+      />
+    );
+
+    expect(getByTestId('game-status-bar').textContent).toContain('(+20)');
+    expect(getByText(/Nuevo total: 520 pts/i)).toBeTruthy();
   });
 
   it('renders regular victory modal when not on the final level', () => {

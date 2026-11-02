@@ -153,4 +153,30 @@ describe('HomeScreen component', () => {
     fireEvent.click(screen.getByTestId('confirm-dialog-confirm-btn'));
     expect(onReset).toHaveBeenCalledTimes(1);
   });
+
+  it('renders Niveles button with earned stars and triggers onOpenLevels', () => {
+    const onOpenLevels = vi.fn();
+    render(
+      <HomeScreen
+        progress={{
+          currentLevelId: 4,
+          totalScore: 125,
+          activeSnapshot: null,
+          levelStars: { 1: 3, 2: 2, 3: 3 },
+        }}
+        totalLevels={300}
+        catVariant="black"
+        onPlay={vi.fn()}
+        onOpenLevels={onOpenLevels}
+        onOpenTutorial={vi.fn()}
+        onOpenSettings={vi.fn()}
+      />
+    );
+
+    const levelsBtn = screen.getByTestId('open-levels-btn');
+    expect(levelsBtn.textContent).toContain('Niveles');
+    expect(levelsBtn.textContent).toContain('8 / 900');
+    fireEvent.click(levelsBtn);
+    expect(onOpenLevels).toHaveBeenCalledTimes(1);
+  });
 });

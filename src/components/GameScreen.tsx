@@ -3,6 +3,7 @@ import { soundEngine } from '../audio/soundEngine';
 import {
   applyCellTap,
   applyDragCross,
+  computeLevelWinOutcome,
   LevelSessionState,
 } from '../state/gameState';
 import { AppSettings, ModeProgress } from '../state/storage';
@@ -40,6 +41,20 @@ export function GameScreen({
 
   const placedCatsCount = session.board.flat().filter((c) => c === 'cat').length;
   const isLastLevel = totalLevels !== undefined && puzzle.id >= totalLevels;
+  const isReplay =
+    puzzle.id < progress.currentLevelId || progress.levelStars?.[puzzle.id] !== undefined;
+  const winOutcome =
+    session.status === 'won' ? computeLevelWinOutcome(session, progress) : null;
+  const statusScoreDelta = isReplay
+    ? winOutcome
+      ? winOutcome.scoreGain
+      : 0
+    : session.partialScore > 0
+    ? session.partialScore + (session.status === 'won' ? session.levelBonus : 0)
+    : 0;
+  const victoryScoreGain = winOutcome
+    ? winOutcome.scoreGain
+    : session.partialScore + session.levelBonus;
 
   const handleCellTap = (r: number, c: number, options?: { isDoubleTap?: boolean }) => {
     const prevCell = session.board[r][c];
@@ -193,12 +208,55 @@ export function GameScreen({
           >
             {hearts.join(' ')}
           </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ fontSize: '19px', lineHeight: 1 }}>⭐</span> {progress.totalScore}{' '}
-            {session.partialScore > 0 && (
-              <span style={{ color: '#E07A5F' }}>
-                (+{session.partialScore + session.levelBonus})
-              </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <svg
+              data-testid="score-paw-coin-icon"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              style={{ display: 'block', flexShrink: 0 }}
+            >
+              <circle cx="12" cy="12" r="10" fill="#FFB703" stroke="#B45309" strokeWidth="2" />
+              <path
+                d="M8.5 14.8 C8.5 12.6, 15.5 12.6, 15.5 14.8 C15.5 16.5, 13.8 17.2, 12 17.2 C10.2 17.2, 8.5 16.5, 8.5 14.8 Z"
+                fill="#B45309"
+              />
+              <ellipse
+                cx="7.8"
+                cy="10.8"
+                rx="1.4"
+                ry="1.8"
+                transform="rotate(-20 7.8 10.8)"
+                fill="#B45309"
+              />
+              <ellipse
+                cx="10.6"
+                cy="9.2"
+                rx="1.4"
+                ry="1.9"
+                transform="rotate(-6 10.6 9.2)"
+                fill="#B45309"
+              />
+              <ellipse
+                cx="13.4"
+                cy="9.2"
+                rx="1.4"
+                ry="1.9"
+                transform="rotate(6 13.4 9.2)"
+                fill="#B45309"
+              />
+              <ellipse
+                cx="16.2"
+                cy="10.8"
+                rx="1.4"
+                ry="1.8"
+                transform="rotate(20 16.2 10.8)"
+                fill="#B45309"
+              />
+            </svg>
+            {progress.totalScore}{' '}
+            {statusScoreDelta > 0 && (
+              <span style={{ color: '#E07A5F' }}>(+{statusScoreDelta})</span>
             )}
           </span>
         </div>
@@ -291,7 +349,7 @@ export function GameScreen({
                   <br />
                   Bono por fallos: +{session.levelBonus}
                   <br />
-                  <strong>Puntuación final: {progress.totalScore + session.partialScore + session.levelBonus} pts</strong>
+                  <strong>Puntuación final: {progress.totalScore + victoryScoreGain} pts</strong>
                 </p>
                 <button
                   onClick={onAdvanceLevel}
@@ -321,7 +379,7 @@ export function GameScreen({
                   <br />
                   Bono por fallos: +{session.levelBonus}
                   <br />
-                  <strong>Nuevo total: {progress.totalScore + session.partialScore + session.levelBonus} pts</strong>
+                  <strong>Nuevo total: {progress.totalScore + victoryScoreGain} pts</strong>
                 </p>
                 <button
                   onClick={onAdvanceLevel}

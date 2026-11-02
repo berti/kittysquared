@@ -360,5 +360,74 @@ describe('App integration', () => {
       expect(saved.progress.currentLevelId).toBe(1);
       expect(saved.progress.totalScore).toBe(0);
     });
+
+    it('Review Focus #4 & #5: navigates to LevelSelectScreen, replays an earlier level without overwriting frontier activeSnapshot, awards only bonus improvement, and restores frontier snapshot when stepping into currentLevelId', () => {
+      // Frontier is Level 2 with an active snapshot (cross at 0,0); Level 1 completed with 1 star (mistakes: 2)
+      const level2SnapBoard = Array.from({ length: 5 }, () => Array(5).fill('empty'));
+      level2SnapBoard[0][0] = 'cross';
+      localStorage.setItem(
+        'kittysquared_state_v1',
+        JSON.stringify({
+          progress: {
+            currentLevelId: 2,
+            totalScore: 60, // 50 cat pts + 10 bonus from 1-star clear
+            levelStars: { 1: 1 },
+            activeSnapshot: {
+              levelId: 2,
+              board: level2SnapBoard,
+              lockedCats: Array.from({ length: 5 }, () => Array(5).fill(false)),
+              mistakes: 0,
+              partialScore: 0,
+            },
+          },
+          settings: {
+            doubleTapTimeoutMs: 500,
+            catVariant: 'black',
+            regionAssist: 'off',
+            musicMuted: true,
+            sfxMuted: true,
+            tutorialSeen: true,
+          },
+        })
+      );
+
+      const { getByTestId, getByText } = render(<App transitionDurationMs={0} />);
+
+      // Open Level Selector from Home
+      fireEvent.click(getByTestId('open-levels-btn'));
+      expect(getByTestId('level-select-total-stars').textContent).toContain('1 / 900');
+
+      // Select Level 1 for replay
+      fireEvent.click(getByTestId('level-tile-1'));
+      expect(getByText('Nivel 1')).toBeTruthy();
+
+      // Place a cross on Level 1 at (0,1) -> must NOT overwrite Level 2's activeSnapshot in localStorage
+      fireEvent.click(getByTestId('cell-0-1'));
+      const midReplaySaved = JSON.parse(localStorage.getItem('kittysquared_state_v1') || '{}');
+      expect(midReplaySaved.progress.activeSnapshot?.levelId).toBe(2);
+      expect(midReplaySaved.progress.activeSnapshot?.board[0][0]).toBe('cross');
+
+      // Solve Level 1 with 0 mistakes (solution for puzzle 1: [0, 2, 4, 1, 3])
+      const lvl1Solution = [0, 2, 4, 1, 3];
+      for (let r = 0; r < lvl1Solution.length; r++) {
+        const cell = getByTestId(`cell-${r}-${lvl1Solution[r]}`);
+        fireEvent.click(cell);
+        fireEvent.click(cell);
+      }
+
+      // Advance from Level 1 -> steps to Level 2
+      fireEvent.click(getByText(/Siguiente Nivel ▶/i));
+      expect(getByText('Nivel 2')).toBeTruthy();
+
+      // Score should increase by +40 (3-star 50 bonus minus 1-star 10 bonus = 40 -> total 100), stars[1] = 3, currentLevelId stays 2
+      const afterWinSaved = JSON.parse(localStorage.getItem('kittysquared_state_v1') || '{}');
+      expect(afterWinSaved.progress.totalScore).toBe(100);
+      expect(afterWinSaved.progress.levelStars['1']).toBe(3);
+      expect(afterWinSaved.progress.currentLevelId).toBe(2);
+
+      // And Level 2's saved cross at (0,0) should be restored on the board!
+      const cell00OnLvl2 = getByTestId('cell-0-0');
+      expect(cell00OnLvl2.querySelector('svg.cross-mark')).not.toBeNull();
+    });
   });
 });
