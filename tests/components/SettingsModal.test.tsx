@@ -9,6 +9,7 @@ const defaultSettings: AppSettings = {
   doubleTapTimeoutMs: 500,
   catVariant: 'black',
   regionAssist: 'off',
+  autoCross: 'off',
   musicMuted: false,
   sfxMuted: false,
   tutorialSeen: true,
@@ -23,12 +24,11 @@ describe('SettingsModal component', () => {
     document.body.innerHTML = '';
   });
 
-  it('renders tab buttons: controls, graphics, sound, reset', () => {
-    const { getByTestId } = render(
+  it('renders tab buttons: controls, graphics, sound, ayudas', () => {
+    const { getByTestId, queryByTestId } = render(
       <SettingsModal
         settings={defaultSettings}
         onUpdateSettings={vi.fn()}
-        onResetProgress={vi.fn()}
         onClose={vi.fn()}
       />
     );
@@ -36,7 +36,8 @@ describe('SettingsModal component', () => {
     expect(getByTestId('tab-btn-controls')).toBeDefined();
     expect(getByTestId('tab-btn-graphics')).toBeDefined();
     expect(getByTestId('tab-btn-sound')).toBeDefined();
-    expect(getByTestId('tab-btn-reset')).toBeDefined();
+    expect(getByTestId('tab-btn-ayudas')).toBeDefined();
+    expect(queryByTestId('tab-btn-reset')).toBeNull();
   });
 
   it('applies fixed stable height to modal dialog card to prevent tab bar jumping across tabs', () => {
@@ -76,9 +77,9 @@ describe('SettingsModal component', () => {
     fireEvent.click(getByTestId('tab-btn-sound'));
     expect(getByTestId('pane-sound')).toBeDefined();
 
-    // Click reset tab
-    fireEvent.click(getByTestId('tab-btn-reset'));
-    expect(getByTestId('pane-reset')).toBeDefined();
+    // Click ayudas tab
+    fireEvent.click(getByTestId('tab-btn-ayudas'));
+    expect(getByTestId('pane-ayudas')).toBeDefined();
   });
 
   it('Controls tab: directly renders speed slider and tap tester without scheme buttons', () => {
@@ -325,29 +326,41 @@ describe('SettingsModal component', () => {
     );
   });
 
-  it('Reset tab: shows single reset button, and opens ConfirmDialog on click', () => {
-    const onResetProgress = vi.fn();
+  it('Ayudas tab: renders auto-cross options and allows changing assist setting', () => {
+    const onUpdateSettings = vi.fn();
 
     const { getByTestId } = render(
       <SettingsModal
         settings={defaultSettings}
-        onUpdateSettings={vi.fn()}
-        onResetProgress={onResetProgress}
+        onUpdateSettings={onUpdateSettings}
         onClose={vi.fn()}
       />
     );
 
-    fireEvent.click(getByTestId('tab-btn-reset'));
-    expect(getByTestId('reset-progress-btn')).toBeDefined();
+    fireEvent.click(getByTestId('tab-btn-ayudas'));
+    expect(getByTestId('pane-ayudas')).toBeDefined();
 
-    // Click reset progress -> opens ConfirmDialog (does not call onResetProgress yet)
-    fireEvent.click(getByTestId('reset-progress-btn'));
-    expect(getByTestId('confirm-dialog-confirm-btn')).toBeDefined();
-    expect(onResetProgress).not.toHaveBeenCalled();
+    expect(getByTestId('select-autocross-off')).toBeDefined();
+    expect(getByTestId('select-autocross-row-col-surround')).toBeDefined();
+    expect(getByTestId('select-autocross-all')).toBeDefined();
 
-    // Confirm in dialog
-    fireEvent.click(getByTestId('confirm-dialog-confirm-btn'));
-    expect(onResetProgress).toHaveBeenCalledTimes(1);
+    // Selecting row_col_surround
+    fireEvent.click(getByTestId('select-autocross-row-col-surround'));
+    expect(onUpdateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ autoCross: 'row_col_surround' })
+    );
+
+    // Selecting all
+    fireEvent.click(getByTestId('select-autocross-all'));
+    expect(onUpdateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ autoCross: 'all' })
+    );
+
+    // Selecting off
+    fireEvent.click(getByTestId('select-autocross-off'));
+    expect(onUpdateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ autoCross: 'off' })
+    );
   });
 
   it('Sound tab: clicking SFX volume step > 0 plays a preview sound', () => {

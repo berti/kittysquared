@@ -262,7 +262,6 @@ export function App({
         <SettingsModal
           settings={appState.settings}
           onUpdateSettings={handleUpdateSettings}
-          onResetProgress={handleResetProgress}
           onClose={() => setShowSettings(false)}
         />
       )}

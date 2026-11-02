@@ -1,28 +1,24 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { soundEngine } from '../audio/soundEngine';
 import { AppSettings, MusicTrackOption, VALID_STEPPED_VOLUMES } from '../state/storage';
-import { CatVariant, RegionAssistMode } from '../types/puzzle';
+import { AutoCrossMode, CatVariant, RegionAssistMode } from '../types/puzzle';
 import { REGION_GLYPHS } from './Board';
 import { CatSvg } from './CatSvg';
-import { ConfirmDialog } from './ConfirmDialog';
 
-export type SettingsTab = 'controls' | 'graphics' | 'sound' | 'reset';
+export type SettingsTab = 'controls' | 'graphics' | 'sound' | 'ayudas';
 
 export interface SettingsModalProps {
   settings: AppSettings;
   onUpdateSettings: (settings: AppSettings) => void;
-  onResetProgress: () => void;
   onClose: () => void;
 }
 
 export function SettingsModal({
   settings,
   onUpdateSettings,
-  onResetProgress,
   onClose,
 }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>('controls');
-  const [showConfirmReset, setShowConfirmReset] = useState(false);
 
   // Tap tester state
   const [lastTesterTapTime, setLastTesterTapTime] = useState(0);
@@ -161,7 +157,7 @@ export function SettingsModal({
               { id: 'controls', icon: '🎮', label: 'Controles' },
               { id: 'graphics', icon: '🎨', label: 'Gráficos' },
               { id: 'sound', icon: '🔊', label: 'Sonido' },
-              { id: 'reset', icon: '🔄', label: 'Reiniciar' },
+              { id: 'ayudas', icon: '💡', label: 'Ayudas' },
             ].map((tab) => {
               const active = activeTab === tab.id;
               return (
@@ -680,64 +676,74 @@ export function SettingsModal({
             </div>
           )}
 
-          {/* TAB 4: RESET */}
-          {activeTab === 'reset' && (
+          {/* TAB 4: AYUDAS */}
+          {activeTab === 'ayudas' && (
             <div
-              data-testid="pane-reset"
+              data-testid="pane-ayudas"
               role="tabpanel"
-              aria-labelledby="tab-btn-reset"
-              style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}
+              aria-labelledby="tab-btn-ayudas"
+              style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}
             >
-              <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51' }}>
-                REINICIAR PROGRESO DE PARTIDA
-              </div>
-
-              <button
-                type="button"
-                data-testid="reset-progress-btn"
-                onClick={() => setShowConfirmReset(true)}
-                style={{
-                  background: '#FFF',
-                  border: '2px solid #FCA5A5',
-                  borderRadius: '14px',
-                  padding: '14px',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: '15px', fontWeight: 800, color: '#DC2626' }}>
-                    Reiniciar progreso
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#EF4444', marginTop: '3px' }}>
-                    Volver al nivel 1 y puntuación a 0
-                  </div>
+              <div>
+                <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51', marginBottom: '8px' }}>
+                  COLOCAR CRUCES AUTOMÁTICAMENTE
                 </div>
-                <span style={{ fontSize: '18px' }}>⚠️</span>
-              </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {[
+                    { id: 'off', label: 'No', desc: 'Colocar todas las cruces de forma manual' },
+                    {
+                      id: 'row_col_surround',
+                      label: 'Fila, columna y alrededor',
+                      desc: 'Cruces en la fila, columna y casillas adyacentes al colocar un gato',
+                    },
+                    {
+                      id: 'all',
+                      label: 'Fila, columna, alrededor y color',
+                      desc: 'Cruces en fila, columna, adyacentes y toda la región de color',
+                    },
+                  ].map((opt) => {
+                    const active = (settings.autoCross || 'off') === opt.id;
+                    const testId = opt.id === 'off' ? 'select-autocross-off' : opt.id === 'row_col_surround' ? 'select-autocross-row-col-surround' : 'select-autocross-all';
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        aria-pressed={active}
+                        data-testid={testId}
+                        onClick={() =>
+                          onUpdateSettings({ ...settings, autoCross: opt.id as AutoCrossMode })
+                        }
+                        style={{
+                          width: '100%',
+                          padding: '12px 14px',
+                          borderRadius: '14px',
+                          border: '2px solid',
+                          borderColor: active ? '#6366F1' : '#E2D6C1',
+                          boxShadow: active ? '0 0 0 1px #6366F1' : 'none',
+                          background: active ? '#FFF' : '#EFE6D5',
+                          color: '#3D3135',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '2px',
+                          boxSizing: 'border-box',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <span style={{ fontSize: '14.5px', fontWeight: 800 }}>{opt.label}</span>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#7A686E' }}>
+                          {opt.desc}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           )}
         </div>
       </div>
-
-      {/* Confirmation Dialog for Progress Reset */}
-      <ConfirmDialog
-        isOpen={showConfirmReset}
-        title="¿Reiniciar progreso?"
-        description="Perderás el nivel alcanzado y todos los puntos acumulados volverán a 0."
-        icon="⚠️"
-        confirmText="Sí, reiniciar"
-        cancelText="Cancelar"
-        isDestructive={true}
-        onConfirm={() => {
-          onResetProgress();
-          setShowConfirmReset(false);
-        }}
-        onCancel={() => setShowConfirmReset(false)}
-      />
     </>
   );
 }
