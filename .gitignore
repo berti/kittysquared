@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .superpowers/
+.worktrees/
 
 # Local previews and scratch utilities
 music-preview.html
