@@ -27,12 +27,14 @@ describe('HomeScreen component', () => {
     // Subtitle must be removed
     expect(screen.queryByText(/300 puzzles de lógica felina/i)).toBeNull();
 
-    // Single unified play button with right-aligned level/points and NO emoji
+    // Single unified play button with right-aligned level + paw coin score and NO emoji or "pts" text
     const playBtn = screen.getByTestId('start-game-btn');
     expect(playBtn).toBeDefined();
     expect(playBtn.textContent).toContain('Jugar');
     expect(playBtn.textContent).not.toContain('🎮');
-    expect(playBtn.textContent).toContain('Nivel 4 / 300 • 125 pts');
+    expect(playBtn.textContent).toContain('Nivel 4 / 300 • 125');
+    expect(playBtn.textContent).not.toContain('pts');
+    expect(screen.getByTestId('home-paw-coin-icon')).toBeDefined();
 
     // Tutorial and Settings buttons without emojis
     const tutorialBtn = screen.getByTestId('open-tutorial-btn');
@@ -109,7 +111,8 @@ describe('HomeScreen component', () => {
 
     const playBtn = screen.getByTestId('start-game-btn');
     expect(playBtn.textContent).toContain('¡Juego completado!');
-    expect(playBtn.textContent).toContain('300 / 300 • 16500 pts');
+    expect(playBtn.textContent).toContain('300 / 300 • 16500');
+    expect(playBtn.textContent).not.toContain('pts');
 
     // Clicking Play button opens PostGameModal
     fireEvent.click(playBtn);

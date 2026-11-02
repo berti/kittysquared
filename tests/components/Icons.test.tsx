@@ -10,6 +10,7 @@ import {
   GraphicsTabIcon,
   HeartSvg,
   MiniCatIcon,
+  PawCoinIcon,
   REGION_GLYPH_IDS,
   RegionGlyphIcon,
   RestartIcon,
@@ -30,6 +31,7 @@ describe('Soft-Clay SVG Icon Library (Icons.tsx)', () => {
         <GearIcon size={24} />
         <RestartIcon size={22} />
         <MiniCatIcon size={20} />
+        <PawCoinIcon size={18} testId="icon-paw-coin" />
         <WarningIcon size={26} />
         <ControlsTabIcon size={20} />
         <GraphicsTabIcon size={20} />
@@ -42,6 +44,7 @@ describe('Soft-Clay SVG Icon Library (Icons.tsx)', () => {
     expect(getByTestId('icon-gear').getAttribute('width')).toBe('24');
     expect(getByTestId('icon-restart').getAttribute('width')).toBe('22');
     expect(getByTestId('icon-mini-cat').getAttribute('width')).toBe('20');
+    expect(getByTestId('icon-paw-coin').getAttribute('width')).toBe('18');
     expect(getByTestId('icon-warning').getAttribute('width')).toBe('26');
     expect(getByTestId('icon-tab-controls')).toBeDefined();
     expect(getByTestId('icon-tab-graphics')).toBeDefined();

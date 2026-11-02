@@ -12,7 +12,7 @@ import { PuzzleDef } from '../types/puzzle';
 import { Board } from './Board';
 import { CatSvg } from './CatSvg';
 import { ConfirmDialog } from './ConfirmDialog';
-import { GearIcon, HeartSvg, MiniCatIcon, RestartIcon } from './Icons';
+import { GearIcon, HeartSvg, MiniCatIcon, PawCoinIcon, RestartIcon } from './Icons';
 
 const STAR3_CONFETTI_VECTORS = [
   { tx: '-72px', ty: '-34px', rot: '-260deg', color: '#FF8FA3', round: false },
@@ -339,51 +339,7 @@ export function GameScreen({
             className={scorePopKey > 0 ? 'score-pill-pulse' : undefined}
             style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
           >
-            <svg
-              data-testid="score-paw-coin-icon"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              style={{ display: 'block', flexShrink: 0 }}
-            >
-              <circle cx="12" cy="12" r="10" fill="#FFB703" stroke="#B45309" strokeWidth="2" />
-              <path
-                d="M8.5 14.8 C8.5 12.6, 15.5 12.6, 15.5 14.8 C15.5 16.5, 13.8 17.2, 12 17.2 C10.2 17.2, 8.5 16.5, 8.5 14.8 Z"
-                fill="#B45309"
-              />
-              <ellipse
-                cx="7.8"
-                cy="10.8"
-                rx="1.4"
-                ry="1.8"
-                transform="rotate(-20 7.8 10.8)"
-                fill="#B45309"
-              />
-              <ellipse
-                cx="10.6"
-                cy="9.2"
-                rx="1.4"
-                ry="1.9"
-                transform="rotate(-6 10.6 9.2)"
-                fill="#B45309"
-              />
-              <ellipse
-                cx="13.4"
-                cy="9.2"
-                rx="1.4"
-                ry="1.9"
-                transform="rotate(6 13.4 9.2)"
-                fill="#B45309"
-              />
-              <ellipse
-                cx="16.2"
-                cy="10.8"
-                rx="1.4"
-                ry="1.8"
-                transform="rotate(20 16.2 10.8)"
-                fill="#B45309"
-              />
-            </svg>
+            <PawCoinIcon size={20} testId="score-paw-coin-icon" />
             {progress.totalScore}{' '}
             {statusScoreDelta > 0 && (
               <span style={{ color: '#E07A5F' }}>(+{statusScoreDelta})</span>
@@ -626,19 +582,7 @@ export function GameScreen({
                       gap: '5px',
                     }}
                   >
-                    <svg
-                      data-testid="victory-paw-coin-icon"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      style={{ display: 'block', flexShrink: 0 }}
-                    >
-                      <circle cx="12" cy="12" r="10" fill="#FFB703" stroke="#B45309" strokeWidth="2" />
-                      <path
-                        d="M8.5 14.8 C8.5 12.6, 15.5 12.6, 15.5 14.8 C15.5 16.5, 13.8 17.2, 12 17.2 C10.2 17.2, 8.5 16.5, 8.5 14.8 Z"
-                        fill="#B45309"
-                      />
-                    </svg>
+                    <PawCoinIcon size={16} testId="victory-paw-coin-icon" />
                     <strong>Puntuación final: {progress.totalScore + victoryScoreGain} pts</strong>
                   </div>
                 </div>
@@ -729,19 +673,7 @@ export function GameScreen({
                       gap: '5px',
                     }}
                   >
-                    <svg
-                      data-testid="victory-paw-coin-icon"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      style={{ display: 'block', flexShrink: 0 }}
-                    >
-                      <circle cx="12" cy="12" r="10" fill="#FFB703" stroke="#B45309" strokeWidth="2" />
-                      <path
-                        d="M8.5 14.8 C8.5 12.6, 15.5 12.6, 15.5 14.8 C15.5 16.5, 13.8 17.2, 12 17.2 C10.2 17.2, 8.5 16.5, 8.5 14.8 Z"
-                        fill="#B45309"
-                      />
-                    </svg>
+                    <PawCoinIcon size={16} testId="victory-paw-coin-icon" />
                     <strong>Nuevo total: {progress.totalScore + victoryScoreGain} pts</strong>
                   </div>
                 </div>

@@ -356,7 +356,8 @@ describe('App integration', () => {
 
       // Should be back on home screen at level 1 with 0 points
       const playBtn = getByTestId('start-game-btn');
-      expect(playBtn.textContent).toContain('Nivel 1 / 300 • 0 pts');
+      expect(playBtn.textContent).toContain('Nivel 1 / 300 • 0');
+      expect(playBtn.textContent).not.toContain('pts');
       expect(queryByTestId('post-game-modal-backdrop')).toBeNull();
 
       const saved = JSON.parse(localStorage.getItem('kittysquared_state_v1') || '{}');

@@ -3,7 +3,7 @@ import { CatVariant } from '../types/puzzle';
 import { getTotalEarnedStars, ModeProgress } from '../state/storage';
 import { CatSvg } from './CatSvg';
 import { ConfirmDialog } from './ConfirmDialog';
-import { WarningIcon } from './Icons';
+import { PawCoinIcon, WarningIcon } from './Icons';
 import { PostGameModal } from './PostGameModal';
 
 export interface HomeScreenProps {
@@ -90,10 +90,24 @@ export function HomeScreen({
           <div style={{ fontWeight: 900, fontSize: '20px', letterSpacing: '0.2px' }}>
             Jugar
           </div>
-          <div style={{ fontSize: '14.5px', fontWeight: 700, color: '#FFFBF2', opacity: 0.95 }}>
-            {isGameCompleted
-              ? `¡Juego completado! • ${levelsCount} / ${levelsCount} • ${progress.totalScore} pts`
-              : `Nivel ${progress.currentLevelId} / ${levelsCount} • ${progress.totalScore} pts`}
+          <div
+            style={{
+              fontSize: '14.5px',
+              fontWeight: 700,
+              color: '#FFFBF2',
+              opacity: 0.95,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+            }}
+          >
+            <span>
+              {isGameCompleted
+                ? `¡Juego completado! • ${levelsCount} / ${levelsCount} • `
+                : `Nivel ${progress.currentLevelId} / ${levelsCount} • `}
+            </span>
+            <PawCoinIcon size={16} testId="home-paw-coin-icon" />
+            <span>{progress.totalScore}</span>
           </div>
         </button>
 
