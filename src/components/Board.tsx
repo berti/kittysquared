@@ -167,12 +167,13 @@ export function Board({
             };
 
             const isVictoryCat = isVictory && state === 'cat';
+            const rowDelayMs = Math.min(180, Math.floor(810 / Math.max(1, size - 1)));
             const cellStyle: Record<string, string> = {};
             if (isHighlighted) {
               cellStyle.boxShadow = '0 0 0 3px #6366F1';
             }
             if (isVictoryCat) {
-              cellStyle['--cat-wave-delay'] = `${r * 180}ms`;
+              cellStyle['--cat-wave-delay'] = `${r * rowDelayMs}ms`;
             }
 
             return (
@@ -232,7 +233,7 @@ export function Board({
                               '--tx': vec.tx,
                               '--ty': vec.ty,
                               '--rot': vec.rot,
-                              '--delay': `${r * 180 + 20}ms`,
+                              '--delay': `${r * rowDelayMs + 20}ms`,
                             } as Record<string, string>}
                           />
                         ))}

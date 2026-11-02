@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render } from '@testing-library/preact';
+import { act, cleanup, fireEvent, render } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameScreen } from '../../src/components/GameScreen';
 import { createLevelSession } from '../../src/state/gameState';
@@ -267,10 +267,59 @@ describe('GameScreen component', () => {
     expect(getByTestId('score-float-pop').textContent).toBe('+10');
   });
 
+  it('clears heart-losing class 750ms after a mistake occurs', () => {
+    vi.useFakeTimers();
+    try {
+      const session = createLevelSession(samplePuzzle);
+      const defaultState = getDefaultAppState();
+
+      const { getByTestId, rerender } = render(
+        <GameScreen
+          puzzle={samplePuzzle}
+          totalLevels={100}
+          progress={defaultState.progress}
+          settings={defaultState.settings}
+          session={session}
+          onUpdateSession={vi.fn()}
+          onAdvanceLevel={vi.fn()}
+          onRetryLevel={vi.fn()}
+          onBackToMenu={vi.fn()}
+          onOpenSettings={vi.fn()}
+        />
+      );
+
+      rerender(
+        <GameScreen
+          puzzle={samplePuzzle}
+          totalLevels={100}
+          progress={defaultState.progress}
+          settings={defaultState.settings}
+          session={{ ...session, mistakes: 1 }}
+          onUpdateSession={vi.fn()}
+          onAdvanceLevel={vi.fn()}
+          onRetryLevel={vi.fn()}
+          onBackToMenu={vi.fn()}
+          onOpenSettings={vi.fn()}
+        />
+      );
+
+      expect(getByTestId('status-heart-2').classList.contains('heart-losing')).toBe(true);
+
+      act(() => {
+        vi.advanceTimersByTime(750);
+      });
+
+      expect(getByTestId('status-heart-2').classList.contains('heart-losing')).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('renders 1-star, 2-star, and 3-star Victory Modal states with 3rd-star confetti only on 3 stars, and calls onOpenLevels from Victory and Defeat modals', () => {
     const session = createLevelSession(samplePuzzle);
     session.status = 'won';
     session.mistakes = 0;
+    session.levelBonus = 50;
     const defaultState = getDefaultAppState();
     const onOpenLevels = vi.fn();
 
@@ -290,11 +339,13 @@ describe('GameScreen component', () => {
       />
     );
 
-    // 3 stars (0 mistakes) -> all 3 stars earned + 3rd star confetti present
+    // 3 stars (0 mistakes) -> all 3 stars earned + 3rd star confetti present + detailed bonus & paw coin icon
     expect(getByTestId('victory-star-1').getAttribute('data-earned')).toBe('true');
     expect(getByTestId('victory-star-2').getAttribute('data-earned')).toBe('true');
     expect(getByTestId('victory-star-3').getAttribute('data-earned')).toBe('true');
     expect(getByTestId('victory-third-star-confetti')).toBeTruthy();
+    expect(getByTestId('victory-paw-coin-icon')).toBeTruthy();
+    expect(getByTestId('victory-score-card').textContent).toContain('Bono 3★ (0 fallos): +50');
 
     fireEvent.click(getByTestId('victory-levels-btn'));
     expect(onOpenLevels).toHaveBeenCalledTimes(1);

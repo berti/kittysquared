@@ -74,18 +74,20 @@ export function GameScreen({
     session.status === 'won' ? computeLevelWinOutcome(session, progress) : null;
   const earnedStars = getStarsForMistakes(session.mistakes);
 
-  // Detect puzzle reset / change or mistake / score changes across renders
-  if (prevPuzzleIdRef.current !== puzzle.id || (session.mistakes === 0 && prevMistakesRef.current > 0 && session.partialScore === 0)) {
-    prevPuzzleIdRef.current = puzzle.id;
-    prevMistakesRef.current = session.mistakes;
-    prevPartialScoreRef.current = session.partialScore;
-    if (justLostHeartIndex !== null) {
+  // Detect puzzle reset / change or mistake / score changes via useEffect
+  useEffect(() => {
+    if (
+      prevPuzzleIdRef.current !== puzzle.id ||
+      (session.mistakes === 0 && prevMistakesRef.current > 0 && session.partialScore === 0)
+    ) {
+      prevPuzzleIdRef.current = puzzle.id;
+      prevMistakesRef.current = session.mistakes;
+      prevPartialScoreRef.current = session.partialScore;
       setJustLostHeartIndex(null);
-    }
-    if (scorePopKey !== 0) {
       setScorePopKey(0);
+      return;
     }
-  } else {
+
     if (session.mistakes > prevMistakesRef.current) {
       const lostIdx = Math.max(0, session.maxMistakes - session.mistakes);
       prevMistakesRef.current = session.mistakes;
@@ -103,7 +105,15 @@ export function GameScreen({
     } else if (session.partialScore < prevPartialScoreRef.current) {
       prevPartialScoreRef.current = session.partialScore;
     }
-  }
+  }, [puzzle.id, session.mistakes, session.partialScore, session.maxMistakes, isReplay]);
+
+  useEffect(() => {
+    if (justLostHeartIndex === null) return;
+    const timer = setTimeout(() => {
+      setJustLostHeartIndex(null);
+    }, 750);
+    return () => clearTimeout(timer);
+  }, [justLostHeartIndex]);
 
   useEffect(() => {
     if (prevStatusRef.current === 'won' && session.status !== 'won' && isCelebratingVictory) {
@@ -502,7 +512,6 @@ export function GameScreen({
               width: '100%',
               boxShadow: '0 16px 36px rgba(0,0,0,0.25)',
               textAlign: 'center',
-              overflow: 'hidden',
             }}
           >
             {/* 3-Star Arch */}
@@ -610,10 +619,40 @@ export function GameScreen({
                   ) : (
                     <>
                       <div>Puntos gatos: +{session.partialScore}</div>
-                      <div>Bono por fallos: +{session.levelBonus}</div>
+                      <div>
+                        Bono {earnedStars}★ (
+                        {session.mistakes === 0
+                          ? '0 fallos'
+                          : session.mistakes === 1
+                          ? '1 fallo'
+                          : '2 fallos'}
+                        ): +{session.levelBonus}
+                      </div>
                     </>
                   )}
-                  <div style={{ marginTop: '4px', color: '#3D3135' }}>
+                  <div
+                    style={{
+                      marginTop: '4px',
+                      color: '#3D3135',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '5px',
+                    }}
+                  >
+                    <svg
+                      data-testid="victory-paw-coin-icon"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      style={{ display: 'block', flexShrink: 0 }}
+                    >
+                      <circle cx="12" cy="12" r="10" fill="#FFB703" stroke="#B45309" strokeWidth="2" />
+                      <path
+                        d="M8.5 14.8 C8.5 12.6, 15.5 12.6, 15.5 14.8 C15.5 16.5, 13.8 17.2, 12 17.2 C10.2 17.2, 8.5 16.5, 8.5 14.8 Z"
+                        fill="#B45309"
+                      />
+                    </svg>
                     <strong>Puntuación final: {progress.totalScore + victoryScoreGain} pts</strong>
                   </div>
                 </div>
@@ -683,10 +722,40 @@ export function GameScreen({
                   ) : (
                     <>
                       <div>Puntos gatos: +{session.partialScore}</div>
-                      <div>Bono por fallos: +{session.levelBonus}</div>
+                      <div>
+                        Bono {earnedStars}★ (
+                        {session.mistakes === 0
+                          ? '0 fallos'
+                          : session.mistakes === 1
+                          ? '1 fallo'
+                          : '2 fallos'}
+                        ): +{session.levelBonus}
+                      </div>
                     </>
                   )}
-                  <div style={{ marginTop: '4px', color: '#3D3135' }}>
+                  <div
+                    style={{
+                      marginTop: '4px',
+                      color: '#3D3135',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '5px',
+                    }}
+                  >
+                    <svg
+                      data-testid="victory-paw-coin-icon"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      style={{ display: 'block', flexShrink: 0 }}
+                    >
+                      <circle cx="12" cy="12" r="10" fill="#FFB703" stroke="#B45309" strokeWidth="2" />
+                      <path
+                        d="M8.5 14.8 C8.5 12.6, 15.5 12.6, 15.5 14.8 C15.5 16.5, 13.8 17.2, 12 17.2 C10.2 17.2, 8.5 16.5, 8.5 14.8 Z"
+                        fill="#B45309"
+                      />
+                    </svg>
                     <strong>Nuevo total: {progress.totalScore + victoryScoreGain} pts</strong>
                   </div>
                 </div>

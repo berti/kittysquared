@@ -223,6 +223,7 @@ export function App({
       updateAppState(nextState);
 
       if (currentLvlId >= puzzles.length) {
+        setSession(createLevelSession(session.puzzle));
         setActiveScreen('home');
         return;
       }

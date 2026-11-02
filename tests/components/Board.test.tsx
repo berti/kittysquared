@@ -133,4 +133,34 @@ describe('Board autoCross wave animation', () => {
     // Non-cat cells do not render cat confetti
     expect(queryByTestId('cat-confetti-0-0')).toBeNull();
   });
+
+  it('scales cat victory wave stagger on 10x10 boards so row 9 starts well before the 1400ms modal timeout', () => {
+    const size = 10;
+    const regions10 = Array.from({ length: size }, (_, r) => Array(size).fill(r));
+    const board10: CellState[][] = Array.from({ length: size }, () => Array(size).fill('cross'));
+    const locked10 = Array.from({ length: size }, () => Array(size).fill(false));
+    board10[9][4] = 'cat';
+
+    const { getByTestId } = render(
+      <Board
+        size={size}
+        regions={regions10}
+        board={board10}
+        lockedCats={locked10}
+        conflictingKeys={new Set()}
+        lastPlacedCat={{ row: 9, col: 4 }}
+        lastErrorCell={null}
+        autoCrossCells={[]}
+        isVictory={true}
+        catVariant="black"
+        onCellTap={vi.fn()}
+        onDragCross={vi.fn()}
+      />
+    );
+
+    const catCell9 = getByTestId('cell-9-4');
+    const delayStr = catCell9.style.getPropertyValue('--cat-wave-delay');
+    const delayMs = parseInt(delayStr, 10);
+    expect(delayMs).toBeLessThanOrEqual(900);
+  });
 });
