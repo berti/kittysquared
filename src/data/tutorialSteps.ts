@@ -107,36 +107,39 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
       size: 4,
       maxRuleUsed: 1,
       difficultyScore: 10,
-      solution: [0, 2, 3, 1],
+      solution: [1, 3, 0, 2],
       regions: [
-        [0, 1, 1, 1],
-        [0, 2, 2, 1],
-        [0, 2, 3, 3],
-        [0, 2, 3, 3],
+        [0, 0, 1, 1],
+        [0, 0, 1, 1],
+        [2, 2, 3, 3],
+        [2, 2, 3, 3],
       ],
     },
     initialBoard: [
-      ['cat', 'empty', 'empty', 'empty'],
+      ['empty', 'cat', 'empty', 'empty'],
       ['empty', 'empty', 'empty', 'empty'],
       ['empty', 'empty', 'empty', 'empty'],
       ['empty', 'empty', 'empty', 'empty'],
     ],
     initialLockedCats: [
-      [true, false, false, false],
+      [false, true, false, false],
       [false, false, false, false],
       [false, false, false, false],
       [false, false, false, false],
     ],
     targetHighlightCells: [
-      { row: 0, col: 1 },
+      { row: 0, col: 0 },
       { row: 0, col: 2 },
       { row: 0, col: 3 },
     ],
-    hintText: 'Toca las casillas (0, 1), (0, 2) y (0, 3) para ponerles una cruz.',
+    hintText: 'Toca las casillas (0, 0), (0, 2) y (0, 3) para ponerles una cruz.',
     isComplete: (session) =>
-      session.board[0][1] === 'cross' &&
+      session.board[0][0] === 'cross' &&
       session.board[0][2] === 'cross' &&
-      session.board[0][3] === 'cross',
+      session.board[0][3] === 'cross' &&
+      !session.errorCrosses?.[0]?.[0] &&
+      !session.errorCrosses?.[0]?.[2] &&
+      !session.errorCrosses?.[0]?.[3],
   },
 
   // 4. Fallos y vidas (Cruces rojas)
@@ -155,9 +158,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
       solution: [1, 3, 0, 2],
       regions: [
         [0, 0, 1, 1],
-        [0, 2, 1, 1],
-        [3, 2, 2, 1],
-        [3, 3, 2, 2],
+        [0, 0, 1, 1],
+        [2, 2, 3, 3],
+        [2, 2, 3, 3],
       ],
     },
     initialBoard: [
@@ -195,9 +198,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
       solution: [1, 3, 0, 2],
       regions: [
         [0, 0, 1, 1],
-        [0, 2, 1, 1],
-        [3, 2, 2, 1],
-        [3, 3, 2, 2],
+        [0, 0, 1, 1],
+        [2, 2, 3, 3],
+        [2, 2, 3, 3],
       ],
     },
     initialBoard: [
@@ -224,12 +227,12 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
       size: 4,
       maxRuleUsed: 1,
       difficultyScore: 10,
-      solution: [0, 2, 3, 1],
+      solution: [1, 3, 0, 2],
       regions: [
-        [0, 1, 1, 1],
-        [2, 2, 3, 1],
+        [0, 0, 1, 1],
+        [0, 0, 1, 1],
         [2, 3, 3, 1],
-        [2, 2, 3, 3],
+        [3, 3, 3, 3],
       ],
     },
     initialBoard: [
@@ -238,9 +241,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
       ['empty', 'empty', 'empty', 'empty'],
       ['empty', 'empty', 'empty', 'empty'],
     ],
-    targetHighlightCells: [{ row: 0, col: 0 }],
-    hintText: 'Haz doble toque en la casilla (0, 0) de color amarillo para colocar el gato.',
-    isComplete: (session) => session.board[0][0] === 'cat',
+    targetHighlightCells: [{ row: 2, col: 0 }],
+    hintText: 'Haz doble toque en la casilla (2, 0) de la región solitaria para colocar el gato.',
+    isComplete: (session) => session.board[2][0] === 'cat',
   },
 
   // 7. Región contenida en una fila
@@ -276,7 +279,10 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     ],
     hintText: 'Toca las casillas (0, 2) y (0, 3) de la región azul para descartarlas con cruz.',
     isComplete: (session) =>
-      session.board[0][2] === 'cross' && session.board[0][3] === 'cross',
+      session.board[0][2] === 'cross' &&
+      session.board[0][3] === 'cross' &&
+      !session.errorCrosses?.[0]?.[2] &&
+      !session.errorCrosses?.[0]?.[3],
   },
 
   // 8. Parejas de regiones y filas
@@ -314,7 +320,10 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     ],
     hintText: 'Toca las casillas (0, 4) y (1, 4) para descartarlas con cruces.',
     isComplete: (session) =>
-      session.board[0][4] === 'cross' && session.board[1][4] === 'cross',
+      session.board[0][4] === 'cross' &&
+      session.board[1][4] === 'cross' &&
+      !session.errorCrosses?.[0]?.[4] &&
+      !session.errorCrosses?.[1]?.[4],
   },
 
   // 9. Asfixia a 1 salto de anticipación
@@ -330,13 +339,13 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
       size: 5,
       maxRuleUsed: 5,
       difficultyScore: 50,
-      solution: [0, 3, 1, 4, 2],
+      solution: [0, 2, 4, 1, 3],
       regions: [
         [0, 0, 1, 2, 2],
         [0, 0, 1, 2, 2],
-        [3, 3, 4, 2, 2],
+        [3, 3, 1, 2, 2],
         [3, 3, 4, 4, 4],
-        [3, 4, 4, 4, 4],
+        [3, 3, 4, 4, 4],
       ],
     },
     initialBoard: [
@@ -346,8 +355,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
       ['empty', 'empty', 'empty', 'empty', 'empty'],
       ['empty', 'empty', 'empty', 'empty', 'empty'],
     ],
-    targetHighlightCells: [{ row: 0, col: 2 }],
-    hintText: 'Toca la casilla (0, 2) que asfixiaría a la región vecina para marcar una cruz.',
-    isComplete: (session) => session.board[0][2] === 'cross',
+    targetHighlightCells: [{ row: 1, col: 3 }],
+    hintText: 'Toca la casilla (1, 3) que asfixiaría a la región vecina para marcar una cruz.',
+    isComplete: (session) =>
+      session.board[1][3] === 'cross' && !session.errorCrosses?.[1]?.[3],
   },
 ];

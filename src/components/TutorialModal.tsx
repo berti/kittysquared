@@ -195,7 +195,7 @@ export function TutorialModal({
         </div>
 
         {/* Hearts display for basic rules steps or when mistake made */}
-        {currentStep.part === 'basic' && (
+        {(currentStep.part === 'basic' || session.mistakes > 0) && (
           <div
             style={{
               display: 'flex',

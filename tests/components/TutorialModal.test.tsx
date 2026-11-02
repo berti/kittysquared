@@ -17,6 +17,35 @@ describe('components/TutorialModal', () => {
     expect(TUTORIAL_STEPS.length).toBe(9);
   });
 
+  it('all tutorial steps define valid puzzles obeying non-touching cats and 1 cat per region rules', () => {
+    for (const step of TUTORIAL_STEPS) {
+      const { size, solution, regions } = step.puzzle;
+      expect(solution.length).toBe(size);
+
+      // Verify no two cats touch orthogonally or diagonally
+      for (let r1 = 0; r1 < size; r1++) {
+        for (let r2 = r1 + 1; r2 < size; r2++) {
+          const c1 = solution[r1];
+          const c2 = solution[r2];
+          const touchRow = Math.abs(r1 - r2) <= 1;
+          const touchCol = Math.abs(c1 - c2) <= 1;
+          expect(touchRow && touchCol).toBe(false);
+        }
+      }
+
+      // Verify exactly 1 cat per region
+      const regionCounts = new Map<number, number>();
+      for (let r = 0; r < size; r++) {
+        const c = solution[r];
+        const reg = regions[r][c];
+        regionCounts.set(reg, (regionCounts.get(reg) || 0) + 1);
+      }
+      for (let regId = 0; regId < size; regId++) {
+        expect(regionCounts.get(regId)).toBe(1);
+      }
+    }
+  });
+
   it('guides the player through interactive steps via double-click and enables next', () => {
     const onClose = vi.fn();
     const { getByText, getByTestId } = render(<TutorialModal catVariant="black" onClose={onClose} />);
@@ -69,11 +98,11 @@ describe('components/TutorialModal', () => {
     const nextBtn = getByTestId('tutorial-next-btn') as HTMLButtonElement;
     expect(nextBtn.disabled).toBe(true);
 
-    const c01 = getByTestId('cell-0-1');
+    const c00 = getByTestId('cell-0-0');
     const c02 = getByTestId('cell-0-2');
     const c03 = getByTestId('cell-0-3');
 
-    fireEvent.click(c01);
+    fireEvent.click(c00);
     expect(nextBtn.disabled).toBe(true);
 
     fireEvent.click(c02);
@@ -98,7 +127,7 @@ describe('components/TutorialModal', () => {
     fireEvent.click(getByTestId('cell-1-3'));
     fireEvent.click(getByTestId('tutorial-next-btn'));
 
-    fireEvent.click(getByTestId('cell-0-1'));
+    fireEvent.click(getByTestId('cell-0-0'));
     fireEvent.click(getByTestId('cell-0-2'));
     fireEvent.click(getByTestId('cell-0-3'));
     fireEvent.click(getByTestId('tutorial-next-btn'));
@@ -114,6 +143,12 @@ describe('components/TutorialModal', () => {
     expect(cell02.querySelector('.cross-mark-error')).not.toBeNull();
     expect(getByText('🤍 ❤️ ❤️')).toBeTruthy();
     expect((getByTestId('tutorial-next-btn') as HTMLButtonElement).disabled).toBe(false);
+
+    // Clicking the locked red error cross does not toggle or remove it
+    fireEvent.click(cell02);
+    expect(cell02.querySelector('.cross-mark-error')).not.toBeNull();
+    fireEvent.click(cell02);
+    expect(cell02.querySelector('.cross-mark-error')).not.toBeNull();
   });
 
   it('Step 5: single clicking existing cross removes it and completes step', () => {
@@ -131,7 +166,7 @@ describe('components/TutorialModal', () => {
     fireEvent.click(getByTestId('cell-1-3'));
     fireEvent.click(getByTestId('tutorial-next-btn'));
 
-    fireEvent.click(getByTestId('cell-0-1'));
+    fireEvent.click(getByTestId('cell-0-0'));
     fireEvent.click(getByTestId('cell-0-2'));
     fireEvent.click(getByTestId('cell-0-3'));
     fireEvent.click(getByTestId('tutorial-next-btn'));
