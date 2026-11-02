@@ -65,6 +65,29 @@ describe('components/TutorialModal', () => {
     expect(getByText(TUTORIAL_STEPS[1].title)).toBeTruthy();
   });
 
+  it('Step 2: without green cat at (2, 0), verifies non-touching rule by placing cat at (1, 3)', () => {
+    const onClose = vi.fn();
+    const { getByTestId, getByText } = render(<TutorialModal catVariant="black" onClose={onClose} />);
+
+    // Complete step 1
+    fireEvent.click(getByTestId('cell-2-0'));
+    fireEvent.click(getByTestId('cell-2-0'));
+    fireEvent.click(getByTestId('tutorial-next-btn'));
+
+    // Step 2 title
+    expect(getByText(/2\. Los gatos no pueden tocarse/i)).toBeTruthy();
+
+    // Verify cell (2, 0) does not contain a cat
+    expect(getByTestId('cell-2-0').querySelector('.board-cat-wrapper')).toBeNull();
+
+    // Double-click (1, 3) places cat and unlocks next
+    const cell13 = getByTestId('cell-1-3');
+    fireEvent.click(cell13);
+    fireEvent.click(cell13);
+    expect(cell13.querySelector('.board-cat-wrapper')).not.toBeNull();
+    expect((getByTestId('tutorial-next-btn') as HTMLButtonElement).disabled).toBe(false);
+  });
+
   it('renders region assist indicators (textures, glyphs, numbers) on tutorial board cells when regionAssist is provided', () => {
     const { container: glyContainer, unmount: unmountGly } = render(
       <TutorialModal catVariant="black" regionAssist="glyphs" onClose={() => {}} />

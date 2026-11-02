@@ -62,7 +62,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     part: 'basic',
     title: '2. Los gatos no pueden tocarse',
     explanation:
-      'Ningún gato puede estar en las 8 casillas vecinas de otro gato (ni en horizontal, vertical ni diagonal). En la región naranja de la derecha, una casilla toca al gato en diagonal y la otra no. ¡Haz doble toque en la casilla válida!',
+      'Ningún gato puede estar en las 8 casillas vecinas de otro gato (ni en horizontal, vertical ni diagonal). En la región azul, la casilla (1, 2) toca al gato amarillo en diagonal. ¡Haz doble toque en la casilla (1, 3), que no toca a ningún gato!',
     size: 4,
     puzzle: {
       id: 1002,
@@ -80,13 +80,13 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     initialBoard: [
       ['empty', 'cat', 'empty', 'empty'],
       ['empty', 'empty', 'empty', 'empty'],
-      ['cat', 'empty', 'empty', 'empty'],
+      ['empty', 'empty', 'empty', 'empty'],
       ['empty', 'empty', 'cat', 'empty'],
     ],
     initialLockedCats: [
       [false, true, false, false],
       [false, false, false, false],
-      [true, false, false, false],
+      [false, false, false, false],
       [false, false, true, false],
     ],
     targetHighlightCells: [{ row: 1, col: 3 }],
