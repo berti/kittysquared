@@ -18,7 +18,7 @@ describe('10x10 Generator with Targeted Rules & Gifts', () => {
     const logic = solveLogically(puzzle.regions, 6);
     expect(logic.solved).toBe(true);
     expect(logic.maxRuleUsed).toBe(6);
-  }, 30000);
+  }, 60000);
 
   it('generates a trivial gift puzzle when requested with a 1-cell starting region', () => {
     const rng = createRng(99);

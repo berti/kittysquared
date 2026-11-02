@@ -92,6 +92,26 @@ describe('App integration', () => {
     setTrackSpy.mockRestore();
   });
 
+  it('initializes audio focus lifecycle so background music only plays when app is focused', () => {
+    const initLifecycleSpy = vi.spyOn(soundEngine, 'initLifecycle');
+    const setAppFocusedSpy = vi.spyOn(soundEngine, 'setAppFocused');
+
+    const { unmount } = render(<App />);
+    expect(initLifecycleSpy).toHaveBeenCalled();
+
+    // Blur window: setAppFocused(false) called
+    fireEvent(window, new Event('blur'));
+    expect(setAppFocusedSpy).toHaveBeenCalledWith(false);
+
+    // Focus window: setAppFocused(true) called
+    fireEvent(window, new Event('focus'));
+    expect(setAppFocusedSpy).toHaveBeenCalledWith(true);
+
+    unmount();
+    initLifecycleSpy.mockRestore();
+    setAppFocusedSpy.mockRestore();
+  });
+
   it('GameScreen has restart button in top bar, no undo/clear buttons, and no mode text in status bar', () => {
     localStorage.setItem(
       'kittysquared_state_v1',

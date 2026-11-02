@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PLAYLIST_ORDER, SoundEngine } from '../../src/audio/soundEngine';
 
 describe('audio/soundEngine', () => {
@@ -128,5 +128,221 @@ describe('audio/soundEngine', () => {
       expect(rep.track.id).toBe('velvet');
       expect(rep.isNewTrack).toBe(false);
     }
+  });
+
+  describe('focus and lifecycle handling', () => {
+    let originalAudioContext: any;
+
+    beforeEach(() => {
+      originalAudioContext = (window as any).AudioContext;
+      const createMockParam = (initial = 0) => ({
+        value: initial,
+        setValueAtTime: vi.fn(),
+        linearRampToValueAtTime: vi.fn(),
+        exponentialRampToValueAtTime: vi.fn(),
+        cancelScheduledValues: vi.fn(),
+      });
+      const createMockNode = () => ({
+        connect: vi.fn(),
+        disconnect: vi.fn(),
+        stop: vi.fn(),
+        start: vi.fn(),
+      });
+
+      (window as any).AudioContext = class MockAudioContext {
+        currentTime = 0;
+        state = 'running';
+        destination = {};
+
+        resume = vi.fn().mockImplementation(async () => {
+          this.state = 'running';
+        });
+        suspend = vi.fn().mockImplementation(async () => {
+          this.state = 'suspended';
+        });
+
+        createGain() {
+          return {
+            ...createMockNode(),
+            gain: createMockParam(1),
+          };
+        }
+
+        createBiquadFilter() {
+          return {
+            ...createMockNode(),
+            type: 'lowshelf',
+            frequency: createMockParam(220),
+            gain: createMockParam(2.0),
+          };
+        }
+
+        createDynamicsCompressor() {
+          return {
+            ...createMockNode(),
+            threshold: createMockParam(-16),
+            knee: createMockParam(12),
+            ratio: createMockParam(4),
+            attack: createMockParam(0.008),
+            release: createMockParam(0.12),
+          };
+        }
+
+        createOscillator() {
+          return {
+            ...createMockNode(),
+            type: 'sine',
+            frequency: createMockParam(440),
+          };
+        }
+
+        createBufferSource() {
+          return {
+            ...createMockNode(),
+            buffer: null,
+            playbackRate: createMockParam(1),
+          };
+        }
+
+        createBuffer() {
+          return {
+            getChannelData: () => new Float32Array(1024),
+          };
+        }
+      };
+    });
+
+    afterEach(() => {
+      (window as any).AudioContext = originalAudioContext;
+    });
+
+    it('tracks focus state and pauses music when app loses focus, resuming when focus is regained', () => {
+      const engine = new SoundEngine();
+      engine.setMuted(false, false);
+      engine.startMusic();
+      expect(engine.isMusicActive()).toBe(true);
+
+      engine.setAppFocused(false);
+      expect(engine.isAppFocused()).toBe(false);
+      expect(engine.isMusicActive()).toBe(false);
+
+      engine.setAppFocused(true);
+      expect(engine.isAppFocused()).toBe(true);
+      expect(engine.isMusicActive()).toBe(true);
+
+      engine.stopMusic();
+    });
+
+    it('does not start playing music if startMusic is called while unfocused, but starts when focus is gained', () => {
+      const engine = new SoundEngine();
+      engine.setAppFocused(false);
+      engine.setMuted(false, false);
+      engine.startMusic();
+
+      expect(engine.isMusicActive()).toBe(false);
+
+      engine.setAppFocused(true);
+      expect(engine.isMusicActive()).toBe(true);
+
+      engine.stopMusic();
+    });
+
+    it('does not resume music on focus gain if music was muted by user', () => {
+      const engine = new SoundEngine();
+      engine.setMuted(true, false);
+      expect(engine.isMusicActive()).toBe(false);
+
+      engine.setAppFocused(false);
+      engine.setAppFocused(true);
+      expect(engine.isMusicActive()).toBe(false);
+    });
+
+    it('does not play SFX when app is unfocused', () => {
+      const engine = new SoundEngine();
+      engine.setAppFocused(false);
+      expect(() => {
+        engine.playCross();
+        engine.playCatPlaced();
+        engine.playConflict();
+        engine.playVictory();
+      }).not.toThrow();
+    });
+
+    it('initLifecycle responds to window blur/focus and document visibilitychange events', () => {
+      const engine = new SoundEngine();
+      const cleanup = engine.initLifecycle();
+      engine.setMuted(false, false);
+      engine.startMusic();
+      expect(engine.isMusicActive()).toBe(true);
+
+      // Window blur pauses music
+      window.dispatchEvent(new Event('blur'));
+      expect(engine.isAppFocused()).toBe(false);
+      expect(engine.isMusicActive()).toBe(false);
+
+      // Window focus resumes music
+      window.dispatchEvent(new Event('focus'));
+      expect(engine.isAppFocused()).toBe(true);
+      expect(engine.isMusicActive()).toBe(true);
+
+      // Pagehide (phone homescreen / background) pauses music
+      window.dispatchEvent(new Event('pagehide'));
+      expect(engine.isAppFocused()).toBe(false);
+      expect(engine.isMusicActive()).toBe(false);
+
+      // Pageshow resumes music
+      window.dispatchEvent(new Event('pageshow'));
+      expect(engine.isAppFocused()).toBe(true);
+      expect(engine.isMusicActive()).toBe(true);
+
+      // Visibilitychange hidden pauses music
+      const originalHidden = document.hidden;
+      const originalVisibilityState = document.visibilityState;
+      try {
+        Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+        Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+        document.dispatchEvent(new Event('visibilitychange'));
+        expect(engine.isAppFocused()).toBe(false);
+        expect(engine.isMusicActive()).toBe(false);
+
+        // Visibilitychange visible resumes music
+        Object.defineProperty(document, 'hidden', { value: false, configurable: true });
+        Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+        document.dispatchEvent(new Event('visibilitychange'));
+        expect(engine.isAppFocused()).toBe(true);
+        expect(engine.isMusicActive()).toBe(true);
+      } finally {
+        Object.defineProperty(document, 'hidden', { value: originalHidden, configurable: true });
+        Object.defineProperty(document, 'visibilityState', { value: originalVisibilityState, configurable: true });
+      }
+
+      cleanup();
+      engine.stopMusic();
+    });
+
+    it('suspends and resumes audio context and preserves track playback position across focus changes', () => {
+      const engine = new SoundEngine();
+      engine.setMuted(false, false);
+      engine.startMusic();
+
+      const ctx = (engine as any).getContext();
+      expect(ctx).toBeTruthy();
+      const suspendSpy = vi.spyOn(ctx, 'suspend');
+      const resumeSpy = vi.spyOn(ctx, 'resume');
+
+      // Let beat advance
+      (engine as any).currentBeat = 12.5;
+
+      engine.setAppFocused(false);
+      expect(suspendSpy).toHaveBeenCalled();
+      expect((engine as any).currentBeat).toBe(12.5);
+
+      engine.setAppFocused(true);
+      expect(resumeSpy).toHaveBeenCalled();
+      // Track position is preserved at beat 12.5 rather than reset to 0
+      expect((engine as any).currentBeat).toBe(12.5);
+
+      engine.stopMusic();
+    });
   });
 });

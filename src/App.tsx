@@ -78,6 +78,11 @@ export function App({
     createLevelSession(puzzles[0])
   );
 
+  // Manage audio focus and visibility lifecycle (pauses music when unfocused or backgrounded)
+  useEffect(() => {
+    return soundEngine.initLifecycle();
+  }, []);
+
   // Sync mute settings with soundEngine
   useEffect(() => {
     soundEngine.setMuted(appState.settings.musicMuted, appState.settings.sfxMuted);

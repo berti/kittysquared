@@ -1103,6 +1103,15 @@ export class SoundEngine {
   private currentRepeatCount: number = 0;
   private currentTrackId: ConcreteTrackId = 'marimba';
   private isMusicPlaying: boolean = false;
+  private isFocused: boolean = true;
+
+  private activeTrack: SoundTrackDef | null = null;
+  private currentBeat: number = 0;
+  private scheduledUntilBeat: number = 0;
+  private lastTickTime: number = 0;
+  private pauseUntilTime: number = 0;
+  private readonly lookaheadBeats: number = 1.5;
+  private lifecycleCleanup: (() => void) | null = null;
 
   private getContext(): AudioContext | null {
     if (this.ctx) return this.ctx;
@@ -1226,6 +1235,102 @@ export class SoundEngine {
 
   public isDucking(): boolean {
     return this.isDuckingActive;
+  }
+
+  public setAppFocused(focused: boolean): void {
+    if (this.isFocused === focused) return;
+    this.isFocused = focused;
+
+    if (!focused) {
+      this.pauseMusicPlayback();
+    } else {
+      if (this.isMusicPlaying && !this.musicMuted) {
+        this.resumeMusicPlayback();
+      }
+    }
+  }
+
+  public isAppFocused(): boolean {
+    return this.isFocused;
+  }
+
+  public isMusicActive(): boolean {
+    return this.isMusicPlaying && this.isFocused && !this.musicMuted && this.musicTimer !== null;
+  }
+
+  public initLifecycle(): () => void {
+    if (this.lifecycleCleanup) {
+      this.lifecycleCleanup();
+      this.lifecycleCleanup = null;
+    }
+
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return () => {};
+    }
+
+    const handleFocus = () => {
+      if (document.hidden || document.visibilityState === 'hidden') {
+        this.setAppFocused(false);
+      } else {
+        this.setAppFocused(true);
+      }
+    };
+
+    const handleBlur = () => {
+      this.setAppFocused(false);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden || document.visibilityState === 'hidden') {
+        this.setAppFocused(false);
+      } else {
+        this.setAppFocused(true);
+      }
+    };
+
+    const handlePageHide = () => {
+      this.setAppFocused(false);
+    };
+
+    const handlePageShow = () => {
+      if (document.hidden || document.visibilityState === 'hidden') {
+        this.setAppFocused(false);
+      } else {
+        this.setAppFocused(true);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('blur', handleBlur);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('pageshow', handlePageShow);
+
+    // If already in background or hidden upon initialization, set unfocused
+    if (document.hidden || document.visibilityState === 'hidden') {
+      this.setAppFocused(false);
+    }
+
+    const cleanup = () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('blur', handleBlur);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('pageshow', handlePageShow);
+      if (this.lifecycleCleanup === cleanup) {
+        this.lifecycleCleanup = null;
+      }
+    };
+
+    this.lifecycleCleanup = cleanup;
+    return cleanup;
+  }
+
+  public destroyLifecycle(): void {
+    if (this.lifecycleCleanup) {
+      this.lifecycleCleanup();
+      this.lifecycleCleanup = null;
+    }
   }
 
   // --- WARM SYNTHESIZER VOICES ---
@@ -1625,7 +1730,7 @@ export class SoundEngine {
   // --- GAME SFX ---
 
   public playCross(): void {
-    if (this.sfxMuted) return;
+    if (this.sfxMuted || !this.isFocused) return;
     const ctx = this.getContext();
     if (!ctx || !this.sfxGainNode) return;
 
@@ -1651,7 +1756,7 @@ export class SoundEngine {
   }
 
   public playCatPlaced(): void {
-    if (this.sfxMuted) return;
+    if (this.sfxMuted || !this.isFocused) return;
     const ctx = this.getContext();
     if (!ctx || !this.sfxGainNode) return;
 
@@ -1677,7 +1782,7 @@ export class SoundEngine {
   }
 
   public playConflict(): void {
-    if (this.sfxMuted) return;
+    if (this.sfxMuted || !this.isFocused) return;
     const ctx = this.getContext();
     if (!ctx || !this.sfxGainNode) return;
 
@@ -1703,7 +1808,7 @@ export class SoundEngine {
   }
 
   public playVictory(): void {
-    if (this.sfxMuted) return;
+    if (this.sfxMuted || !this.isFocused) return;
 
     this.isDuckingActive = true;
     this.updateGainLevels();
@@ -1799,8 +1904,81 @@ export class SoundEngine {
     return { track: TRACK_MAP[trackId], isNewTrack: true };
   }
 
-  public startMusic(): void {
-    if (this.musicMuted || this.musicTimer !== null) return;
+  private runMusicTick(): void {
+    if (!this.isMusicPlaying || this.musicMuted || !this.isFocused) return;
+    const ctx = this.getContext();
+    if (!ctx || !this.activeTrack) return;
+
+    const now = ctx.currentTime;
+    if (now < this.pauseUntilTime) {
+      this.lastTickTime = now;
+      return;
+    }
+
+    const beatDur = 60 / this.activeTrack.bpm;
+    const dt = Math.max(0, now - this.lastTickTime);
+    this.lastTickTime = now;
+
+    this.currentBeat += dt / beatDur;
+
+    if (this.currentBeat >= this.activeTrack.totalBeats) {
+      this.activeMusicNodes = [];
+      const nextInfo = this.getNextTrack();
+      this.activeTrack = nextInfo.track;
+      this.currentBeat = 0;
+      this.scheduledUntilBeat = 0;
+      if (nextInfo.isNewTrack) {
+        this.pauseUntilTime = now + 2.5;
+        return;
+      }
+    }
+
+    const targetBeat = Math.min(this.currentBeat + this.lookaheadBeats, this.activeTrack.totalBeats);
+    const windowStart = this.scheduledUntilBeat;
+    const windowEnd = targetBeat;
+
+    for (let i = 0; i < this.activeTrack.events.length; i++) {
+      const ev = this.activeTrack.events[i];
+      if (ev.beat >= windowStart && ev.beat < windowEnd) {
+        const offsetSec = (ev.beat - this.currentBeat) * beatDur;
+        this.triggerEvent(ev, Math.max(now + 0.01, now + offsetSec), beatDur);
+      }
+    }
+
+    this.scheduledUntilBeat = windowEnd;
+
+    if (this.activeMusicNodes.length > 400) {
+      this.activeMusicNodes.splice(0, 200);
+    }
+  }
+
+  private pauseMusicPlayback(): void {
+    if (this.musicTimer !== null) {
+      clearInterval(this.musicTimer);
+      this.musicTimer = null;
+    }
+    this.activeMusicNodes.forEach((node) => {
+      try {
+        if (node.stop) node.stop();
+      } catch (_e) {}
+      try {
+        node.disconnect();
+      } catch (_e) {}
+    });
+    this.activeMusicNodes = [];
+
+    if (this.ctx && this.ctx.state === 'running') {
+      try {
+        this.ctx.suspend().catch(() => {});
+      } catch (_e) {}
+    }
+  }
+
+  private resumeMusicPlayback(): void {
+    if (!this.isMusicPlaying || this.musicMuted || !this.isFocused || this.musicTimer !== null) {
+      return;
+    }
+
     const ctx = this.getContext();
     if (!ctx) return;
     try {
@@ -1809,63 +1987,44 @@ export class SoundEngine {
       }
     } catch (_e) {}
 
+    if (!this.activeTrack) {
+      this.startMusic();
+      return;
+    }
+
+    this.lastTickTime = ctx.currentTime;
+    this.scheduledUntilBeat = this.currentBeat;
+
+    this.runMusicTick();
+    this.musicTimer = window.setInterval(() => this.runMusicTick(), 40);
+  }
+
+  public startMusic(): void {
+    if (this.musicMuted) return;
     this.isMusicPlaying = true;
-    const first = this.getNextTrack();
-    let activeTrack = first.track;
-    let currentBeat = 0;
-    let scheduledUntilBeat = 0;
-    let lastTickTime = ctx.currentTime;
-    let pauseUntilTime = 0;
-    const lookaheadBeats = 1.5;
+    if (!this.isFocused || this.musicTimer !== null) return;
 
-    const tick = (): void => {
-      if (!this.isMusicPlaying || this.musicMuted) return;
-      const now = ctx.currentTime;
-
-      if (now < pauseUntilTime) {
-        lastTickTime = now;
-        return;
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
       }
+    } catch (_e) {}
 
-      const beatDur = 60 / activeTrack.bpm;
-      const dt = Math.max(0, now - lastTickTime);
-      lastTickTime = now;
+    if (!this.activeTrack) {
+      const first = this.getNextTrack();
+      this.activeTrack = first.track;
+      this.currentBeat = 0;
+      this.scheduledUntilBeat = 0;
+      this.pauseUntilTime = 0;
+    }
 
-      currentBeat += dt / beatDur;
+    this.lastTickTime = ctx.currentTime;
+    this.scheduledUntilBeat = this.currentBeat;
 
-      if (currentBeat >= activeTrack.totalBeats) {
-        this.activeMusicNodes = [];
-        const nextInfo = this.getNextTrack();
-        activeTrack = nextInfo.track;
-        currentBeat = 0;
-        scheduledUntilBeat = 0;
-        if (nextInfo.isNewTrack) {
-          pauseUntilTime = now + 2.5;
-          return;
-        }
-      }
-
-      const targetBeat = Math.min(currentBeat + lookaheadBeats, activeTrack.totalBeats);
-      const windowStart = scheduledUntilBeat;
-      const windowEnd = targetBeat;
-
-      for (let i = 0; i < activeTrack.events.length; i++) {
-        const ev = activeTrack.events[i];
-        if (ev.beat >= windowStart && ev.beat < windowEnd) {
-          const offsetSec = (ev.beat - currentBeat) * beatDur;
-          this.triggerEvent(ev, Math.max(now + 0.01, now + offsetSec), beatDur);
-        }
-      }
-
-      scheduledUntilBeat = windowEnd;
-
-      if (this.activeMusicNodes.length > 400) {
-        this.activeMusicNodes.splice(0, 200);
-      }
-    };
-
-    tick();
-    this.musicTimer = window.setInterval(tick, 40);
+    this.runMusicTick();
+    this.musicTimer = window.setInterval(() => this.runMusicTick(), 40);
   }
 
   public stopMusic(): void {
@@ -1874,6 +2033,10 @@ export class SoundEngine {
       this.musicTimer = null;
     }
     this.currentRepeatCount = 0;
+    this.activeTrack = null;
+    this.currentBeat = 0;
+    this.scheduledUntilBeat = 0;
+    this.pauseUntilTime = 0;
     this.activeMusicNodes.forEach((node) => {
       try {
         if (node.stop) node.stop();
