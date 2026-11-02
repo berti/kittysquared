@@ -155,6 +155,12 @@ export function App({
       const newSession = startSessionForLevel(levelId);
       setSession(newSession);
       setActiveScreen('game');
+
+      if (!appState.settings.tutorialSeen && levelId === 1) {
+        setShowTutorial(true);
+        const nextSettings = { ...appState.settings, tutorialSeen: true };
+        updateAppState({ ...appState, settings: nextSettings });
+      }
     });
   };
 

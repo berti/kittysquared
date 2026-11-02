@@ -345,9 +345,19 @@ export function GameScreen({
                 <p style={{ margin: '0 0 16px', fontSize: '15.5px', color: '#7A686E' }}>
                   ¡Has superado los {totalLevels} niveles!
                   <br />
-                  Puntos gatos: +{session.partialScore}
-                  <br />
-                  Bono por fallos: +{session.levelBonus}
+                  {isReplay ? (
+                    <span>
+                      {victoryScoreGain > 0
+                        ? `+${victoryScoreGain} pts (mejora de récord)`
+                        : '+0 pts (ya completado)'}
+                    </span>
+                  ) : (
+                    <>
+                      Puntos gatos: +{session.partialScore}
+                      <br />
+                      Bono por fallos: +{session.levelBonus}
+                    </>
+                  )}
                   <br />
                   <strong>Puntuación final: {progress.totalScore + victoryScoreGain} pts</strong>
                 </p>
@@ -375,9 +385,19 @@ export function GameScreen({
                   ¡Nivel {puzzle.id} superado!
                 </h2>
                 <p style={{ margin: '0 0 16px', fontSize: '15.5px', color: '#7A686E' }}>
-                  Puntos gatos: +{session.partialScore}
-                  <br />
-                  Bono por fallos: +{session.levelBonus}
+                  {isReplay ? (
+                    <span>
+                      {victoryScoreGain > 0
+                        ? `+${victoryScoreGain} pts (mejora de récord)`
+                        : '+0 pts (ya completado)'}
+                    </span>
+                  ) : (
+                    <>
+                      Puntos gatos: +{session.partialScore}
+                      <br />
+                      Bono por fallos: +{session.levelBonus}
+                    </>
+                  )}
                   <br />
                   <strong>Nuevo total: {progress.totalScore + victoryScoreGain} pts</strong>
                 </p>

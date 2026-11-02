@@ -129,7 +129,26 @@ describe('GameScreen component', () => {
     );
 
     expect(getByTestId('game-status-bar').textContent).toContain('(+20)');
+    expect(getByText(/\+20 pts \(mejora de récord\)/i)).toBeTruthy();
     expect(getByText(/Nuevo total: 520 pts/i)).toBeTruthy();
+
+    // When replayed with 1 mistake (2 stars -> +0 improvement)
+    session.mistakes = 1;
+    rerender(
+      <GameScreen
+        puzzle={samplePuzzle}
+        totalLevels={100}
+        progress={defaultState.progress}
+        settings={defaultState.settings}
+        session={{ ...session }}
+        onUpdateSession={vi.fn()}
+        onAdvanceLevel={vi.fn()}
+        onRetryLevel={vi.fn()}
+        onBackToMenu={vi.fn()}
+        onOpenSettings={vi.fn()}
+      />
+    );
+    expect(getByText(/\+0 pts \(ya completado\)/i)).toBeTruthy();
   });
 
   it('renders regular victory modal when not on the final level', () => {

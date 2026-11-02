@@ -268,6 +268,13 @@ export function LevelSelectScreen({
                 ref={isFrontier ? frontierRef : undefined}
                 type="button"
                 disabled={isLocked}
+                aria-label={
+                  isLocked
+                    ? `Nivel ${id}, bloqueado`
+                    : isFrontier
+                    ? `Nivel ${id}, actual`
+                    : `Nivel ${id}, ${displayStars} estrellas`
+                }
                 data-testid={`level-tile-${id}`}
                 onClick={() => {
                   if (!isLocked) {
