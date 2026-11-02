@@ -271,6 +271,7 @@ export function App({
         <TutorialModal
           catVariant={appState.settings.catVariant}
           regionAssist={appState.settings.regionAssist}
+          doubleTapTimeoutMs={appState.settings.doubleTapTimeoutMs}
           onClose={() => setShowTutorial(false)}
         />
       )}

@@ -29,7 +29,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     puzzle: {
       id: 1001,
       size: 4,
-      difficulty: 'easy',
+      maxRuleUsed: 1,
+      difficultyScore: 10,
       solution: [1, 3, 0, 2],
       regions: [
         [0, 0, 1, 1],
@@ -66,7 +67,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     puzzle: {
       id: 1002,
       size: 4,
-      difficulty: 'easy',
+      maxRuleUsed: 1,
+      difficultyScore: 10,
       solution: [1, 3, 0, 2],
       regions: [
         [0, 0, 1, 1],
@@ -103,7 +105,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     puzzle: {
       id: 1003,
       size: 4,
-      difficulty: 'easy',
+      maxRuleUsed: 1,
+      difficultyScore: 10,
       solution: [0, 2, 3, 1],
       regions: [
         [0, 1, 1, 1],
@@ -147,7 +150,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     puzzle: {
       id: 1004,
       size: 4,
-      difficulty: 'easy',
+      maxRuleUsed: 1,
+      difficultyScore: 10,
       solution: [1, 3, 0, 2],
       regions: [
         [0, 0, 1, 1],
@@ -186,7 +190,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     puzzle: {
       id: 1005,
       size: 4,
-      difficulty: 'easy',
+      maxRuleUsed: 1,
+      difficultyScore: 10,
       solution: [1, 3, 0, 2],
       regions: [
         [0, 0, 1, 1],
@@ -217,7 +222,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     puzzle: {
       id: 1006,
       size: 4,
-      difficulty: 'easy',
+      maxRuleUsed: 1,
+      difficultyScore: 10,
       solution: [0, 2, 3, 1],
       regions: [
         [0, 1, 1, 1],
@@ -248,7 +254,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     puzzle: {
       id: 1007,
       size: 4,
-      difficulty: 'easy',
+      maxRuleUsed: 1,
+      difficultyScore: 10,
       solution: [1, 3, 0, 2],
       regions: [
         [0, 0, 1, 1],
@@ -283,7 +290,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     puzzle: {
       id: 1008,
       size: 5,
-      difficulty: 'medium',
+      maxRuleUsed: 3,
+      difficultyScore: 30,
       solution: [0, 2, 4, 1, 3],
       regions: [
         [0, 0, 1, 1, 2],
@@ -320,7 +328,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     puzzle: {
       id: 1009,
       size: 5,
-      difficulty: 'medium',
+      maxRuleUsed: 5,
+      difficultyScore: 50,
       solution: [0, 3, 1, 4, 2],
       regions: [
         [0, 0, 1, 2, 2],
