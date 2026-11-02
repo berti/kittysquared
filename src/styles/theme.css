@@ -264,6 +264,12 @@ body {
   will-change: transform, opacity;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .cross-mark.cross-wave {
+    animation: none;
+  }
+}
+
 .board-cell.has-error-cross {
   cursor: default;
 }

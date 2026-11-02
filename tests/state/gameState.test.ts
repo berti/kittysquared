@@ -243,5 +243,22 @@ describe('state/gameState', () => {
         expect.arrayContaining([{ row: 0, col: 2 }])
       );
     });
+
+    it('Review Focus #3: resolves victory on the exact turn the final cat is placed with autoCross', () => {
+      let s = createLevelSession(samplePuzzle);
+      // Place first 3 cats
+      s = applyCellTap(s, 0, 1, { isDoubleTap: true, autoCross: 'all' });
+      s = applyCellTap(s, 1, 3, { isDoubleTap: true, autoCross: 'all' });
+      s = applyCellTap(s, 2, 0, { isDoubleTap: true, autoCross: 'all' });
+      expect(s.status).toBe('playing');
+
+      // Place 4th (final) cat at (3,2)
+      s = applyCellTap(s, 3, 2, { isDoubleTap: true, autoCross: 'all' });
+      expect(s.status).toBe('won');
+      expect(s.partialScore).toBe(40);
+      expect(s.levelBonus).toBe(50);
+      expect(s.board.flat().filter((c) => c === 'cat')).toHaveLength(4);
+      expect(s.board.flat().filter((c) => c === 'cross')).toHaveLength(12);
+    });
   });
 });

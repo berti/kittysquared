@@ -18,7 +18,7 @@ describe('App integration', () => {
     expect(getByTestId('start-game-btn')).toBeTruthy();
   });
 
-  it('allows configuring double-tap speed, cat variant (black vs white), and resetting progress in Settings', () => {
+  it('allows configuring double-tap speed and cat variant (black vs white) in Settings', () => {
     const { getByTestId, getByText, queryByTestId } = render(<App />);
     // Open settings from home
     fireEvent.click(getByTestId('open-settings-btn'));

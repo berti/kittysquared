@@ -197,6 +197,7 @@ export function applyDragCross(
   return {
     ...state,
     board: newBoard,
+    lastAutoCrossCells: undefined,
     history: [...state.history, { board: cloneBoard(state.board), lockedCats: cloneLocked(state.lockedCats) }],
   };
 }

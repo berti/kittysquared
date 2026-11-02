@@ -112,6 +112,11 @@ export function Board({
     onpointerup: handlePointerUp,
   };
 
+  const autoCrossKeys =
+    autoCrossCells && autoCrossCells.length > 0
+      ? new Set(autoCrossCells.map((ac) => `${ac.row},${ac.col}`))
+      : null;
+
   return (
     <div className="board-container" onPointerUp={handlePointerUp} {...containerPointerProps}>
       <div
@@ -131,7 +136,7 @@ export function Board({
             const isErrorCross = errorCrosses?.[r]?.[c] ?? false;
             const isLocked = (lockedCats[r]?.[c] ?? false) || isErrorCross;
             const isHighlighted = highlightCells?.some((h) => h.row === r && h.col === c) ?? false;
-            const isAutoCross = autoCrossCells?.some((ac) => ac.row === r && ac.col === c) ?? false;
+            const isAutoCross = autoCrossKeys ? autoCrossKeys.has(`${r},${c}`) : false;
 
             let autoCrossDelayMs: number | undefined = undefined;
             if (isAutoCross && lastPlacedCat) {
