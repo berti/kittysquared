@@ -1,39 +1,86 @@
-import { useState } from 'preact/hooks';
-import { CatVariant, CellState, RegionAssistMode } from '../types/puzzle';
+import { useRef, useState } from 'preact/hooks';
+import { CatVariant, RegionAssistMode } from '../types/puzzle';
 import { TUTORIAL_STEPS } from '../data/tutorialSteps';
-import { REGION_GLYPHS } from './Board';
-import { CatSvg } from './CatSvg';
+import { Board } from './Board';
+import { soundEngine } from '../audio/soundEngine';
+import {
+  applyCellTap,
+  applyDragCross,
+  createLevelSession,
+  LevelSessionState,
+} from '../state/gameState';
 
 export interface TutorialModalProps {
   catVariant: CatVariant;
   regionAssist?: RegionAssistMode;
+  doubleTapTimeoutMs?: number;
   onClose: () => void;
 }
 
-export function TutorialModal({ catVariant, regionAssist = 'off', onClose }: TutorialModalProps) {
+function initSessionForStep(stepIndex: number): LevelSessionState {
+  const step = TUTORIAL_STEPS[stepIndex];
+  const base = createLevelSession(step.puzzle);
+  base.board = step.initialBoard.map((row) => [...row]);
+  if (step.initialLockedCats) {
+    base.lockedCats = step.initialLockedCats.map((row) => [...row]);
+  }
+  if (step.initialErrorCrosses) {
+    base.errorCrosses = step.initialErrorCrosses.map((row) => [...row]);
+  }
+  if (step.initialMistakes !== undefined) {
+    base.mistakes = step.initialMistakes;
+  }
+  return base;
+}
+
+export function TutorialModal({
+  catVariant,
+  regionAssist = 'off',
+  doubleTapTimeoutMs = 500,
+  onClose,
+}: TutorialModalProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const currentStep = TUTORIAL_STEPS[stepIndex];
 
-  const [board, setBoard] = useState<CellState[][]>(() =>
-    currentStep.initialBoard.map((row) => [...row])
-  );
-  const [isStepCompleted, setIsStepCompleted] = useState(false);
+  const [session, setSession] = useState<LevelSessionState>(() => initSessionForStep(0));
+  const initialSessionRef = useRef<LevelSessionState>(session);
 
-  const handleCellClick = (r: number, c: number) => {
-    if (r === currentStep.targetCell.row && c === currentStep.targetCell.col) {
-      const nextBoard = board.map((row) => [...row]);
-      nextBoard[r][c] = currentStep.expectedAction;
-      setBoard(nextBoard);
-      setIsStepCompleted(true);
+  const isStepCompleted = currentStep.isComplete(session, initialSessionRef.current);
+
+  const handleCellTap = (r: number, c: number, options?: { isDoubleTap?: boolean }) => {
+    const prevMistakes = session.mistakes;
+    const prevCell = session.board[r][c];
+
+    const next = applyCellTap(session, r, c, options);
+    // In tutorial mode, keep status playing to prevent defeat modal overlay
+    if (next.status === 'lost') {
+      next.status = 'playing';
     }
+
+    setSession(next);
+
+    if (next.mistakes > prevMistakes) {
+      soundEngine.playConflict();
+    } else if (next.board[r][c] === 'cat' && prevCell !== 'cat') {
+      soundEngine.playCatPlaced();
+    } else if (next.board[r][c] !== prevCell) {
+      soundEngine.playCross();
+    }
+  };
+
+  const handleDragCross = (r: number, c: number, target: 'cross' | 'empty') => {
+    const next = applyDragCross(session, r, c, target);
+    setSession(next);
+    soundEngine.playCross();
   };
 
   const handleNext = () => {
     if (stepIndex < TUTORIAL_STEPS.length - 1) {
       const nextIdx = stepIndex + 1;
+      const nextSession = initSessionForStep(nextIdx);
       setStepIndex(nextIdx);
-      setBoard(TUTORIAL_STEPS[nextIdx].initialBoard.map((row) => [...row]));
-      setIsStepCompleted(false);
+      setSession(nextSession);
+      initialSessionRef.current = nextSession;
     } else {
       onClose();
     }
@@ -42,11 +89,18 @@ export function TutorialModal({ catVariant, regionAssist = 'off', onClose }: Tut
   const handleJumpPart = (part: 'basic' | 'advanced') => {
     const idx = TUTORIAL_STEPS.findIndex((s) => s.part === part);
     if (idx !== -1) {
+      const nextSession = initSessionForStep(idx);
       setStepIndex(idx);
-      setBoard(TUTORIAL_STEPS[idx].initialBoard.map((row) => [...row]));
-      setIsStepCompleted(false);
+      setSession(nextSession);
+      initialSessionRef.current = nextSession;
     }
   };
+
+  const hearts = Array.from({ length: 3 }).map((_, i) =>
+    i < session.mistakes ? '🤍' : '❤️'
+  );
+
+  const activeHighlights = !isStepCompleted ? currentStep.targetHighlightCells : undefined;
 
   return (
     <div
@@ -77,12 +131,13 @@ export function TutorialModal({ catVariant, regionAssist = 'off', onClose }: Tut
           boxShadow: '0 16px 36px rgba(0,0,0,0.2)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '16px',
+          gap: '14px',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
+              data-testid="tab-btn-basic"
               onClick={() => handleJumpPart('basic')}
               style={{
                 background: currentStep.part === 'basic' ? '#FF9770' : '#EFE6D5',
@@ -95,9 +150,10 @@ export function TutorialModal({ catVariant, regionAssist = 'off', onClose }: Tut
                 cursor: 'pointer',
               }}
             >
-              1. Básico
+              1. Reglas y Controles
             </button>
             <button
+              data-testid="tab-btn-advanced"
               onClick={() => handleJumpPart('advanced')}
               style={{
                 background: currentStep.part === 'advanced' ? '#FF9770' : '#EFE6D5',
@@ -110,7 +166,7 @@ export function TutorialModal({ catVariant, regionAssist = 'off', onClose }: Tut
                 cursor: 'pointer',
               }}
             >
-              2. Avanzado (1–2 saltos)
+              2. Estrategias
             </button>
           </div>
           <button
@@ -138,75 +194,49 @@ export function TutorialModal({ catVariant, regionAssist = 'off', onClose }: Tut
           </p>
         </div>
 
-        {/* Mini interactive board */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${currentStep.size}, 1fr)`,
-            gridTemplateRows: `repeat(${currentStep.size}, 1fr)`,
-            gap: '6px',
-            padding: '10px',
-            background: '#EFE6D5',
-            borderRadius: '16px',
-            maxWidth: '240px',
-            width: '100%',
-            aspectRatio: '1 / 1',
-            margin: '0 auto',
-            boxSizing: 'border-box',
-          }}
-        >
-          {Array.from({ length: currentStep.size }).map((_, r) =>
-            Array.from({ length: currentStep.size }).map((_, c) => {
-              const regId = currentStep.regions[r][c];
-              const cellState = board[r][c];
-              const isTarget =
-                !isStepCompleted &&
-                currentStep.targetCell.row === r &&
-                currentStep.targetCell.col === c;
+        {/* Hearts display for basic rules steps or when mistake made */}
+        {currentStep.part === 'basic' && (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              fontSize: '19px',
+              letterSpacing: '3px',
+            }}
+          >
+            {hearts.join(' ')}
+          </div>
+        )}
 
-              return (
-                <div
-                  key={`${r}-${c}`}
-                  data-testid={`tutorial-cell-${r}-${c}`}
-                  onClick={() => handleCellClick(r, c)}
-                  className={`board-cell reg-${regId}`}
-                  style={{
-                    boxShadow: isTarget ? '0 0 0 3px #6366F1' : undefined,
-                    cursor: isTarget ? 'pointer' : 'default',
-                  }}
-                >
-                  {regionAssist === 'textures' && (
-                    <div className={`region-pattern pat-${regId}`} />
-                  )}
-                  {regionAssist === 'glyphs' && (
-                    <span className="region-glyph-badge">{REGION_GLYPHS[regId]}</span>
-                  )}
-                  {regionAssist === 'numbers' && (
-                    <span className="region-number-badge">{regId + 1}</span>
-                  )}
-                  {cellState === 'cross' && (
-                    <svg viewBox="0 0 24 24" className="cross-mark">
-                      <line x1="5" y1="5" x2="19" y2="19" />
-                      <line x1="19" y1="5" x2="5" y2="19" />
-                    </svg>
-                  )}
-                  {cellState === 'cat' && (
-                    <div className="board-cat-wrapper">
-                      <CatSvg variant={catVariant} state="placed" />
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
+        {/* Real Interactive Board */}
+        <div style={{ maxWidth: '280px', width: '100%', margin: '0 auto' }}>
+          <Board
+            size={currentStep.size}
+            regions={currentStep.puzzle.regions}
+            board={session.board}
+            lockedCats={session.lockedCats}
+            errorCrosses={session.errorCrosses}
+            conflictingKeys={session.conflictingKeys}
+            lastPlacedCat={session.lastPlacedCat}
+            lastErrorCell={session.lastErrorCell}
+            isVictory={false}
+            catVariant={catVariant}
+            regionAssist={regionAssist}
+            doubleTapTimeoutMs={doubleTapTimeoutMs}
+            highlightCells={activeHighlights}
+            onCellTap={handleCellTap}
+            onDragCross={handleDragCross}
+          />
         </div>
 
         <div
           style={{
-            fontSize: '12.5px',
+            fontSize: '13px',
             textAlign: 'center',
             color: isStepCompleted ? '#10B981' : '#E07A5F',
             fontWeight: 700,
+            minHeight: '20px',
           }}
         >
           {isStepCompleted ? '¡Excelente! Deducción completada.' : currentStep.hintText}

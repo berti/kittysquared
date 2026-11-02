@@ -17,6 +17,7 @@ export interface BoardProps {
   catVariant: CatVariant;
   regionAssist?: RegionAssistMode;
   doubleTapTimeoutMs?: number;
+  highlightCells?: { row: number; col: number }[];
   onCellTap: (row: number, col: number, options?: { isDoubleTap?: boolean }) => void;
   onDragCross: (row: number, col: number, targetState: 'cross' | 'empty') => void;
 }
@@ -36,6 +37,7 @@ export function Board({
   catVariant,
   regionAssist = 'off',
   doubleTapTimeoutMs = DEFAULT_DOUBLE_TAP_TIMEOUT_MS,
+  highlightCells,
   onCellTap,
   onDragCross,
 }: BoardProps) {
@@ -126,6 +128,7 @@ export function Board({
             const isJustPlaced = lastPlacedCat?.row === r && lastPlacedCat?.col === c;
             const isErrorCross = errorCrosses?.[r]?.[c] ?? false;
             const isLocked = (lockedCats[r]?.[c] ?? false) || isErrorCross;
+            const isHighlighted = highlightCells?.some((h) => h.row === r && h.col === c) ?? false;
 
             let catAnim: 'idle' | 'placed' | 'conflict' | 'victory' = 'idle';
             if (isVictory) catAnim = 'victory';
@@ -150,6 +153,7 @@ export function Board({
                 onClick={() => handleClick(r, c)}
                 onPointerDown={onPDown}
                 onPointerEnter={onPEnter}
+                style={isHighlighted ? { boxShadow: '0 0 0 3px #6366F1' } : undefined}
                 {...nativePointerProps}
               >
                 {regionAssist === 'textures' && (
