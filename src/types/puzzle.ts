@@ -4,6 +4,8 @@ export type CatVariant = 'black' | 'white';
 
 export type RegionAssistMode = 'off' | 'textures' | 'glyphs' | 'numbers';
 
+export type AutoCrossMode = 'off' | 'row_col_surround' | 'all';
+
 export type CatAnimState = 'idle' | 'placed' | 'conflict' | 'victory';
 
 export interface CellCoord {

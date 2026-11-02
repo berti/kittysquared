@@ -1,4 +1,4 @@
-import { CatVariant, CellState, RegionAssistMode } from '../types/puzzle';
+import { AutoCrossMode, CatVariant, CellState, RegionAssistMode } from '../types/puzzle';
 
 export interface SavedBoardSnapshot {
   levelId: number;
@@ -29,6 +29,7 @@ export interface AppSettings {
   doubleTapTimeoutMs: number;
   catVariant: CatVariant;
   regionAssist: RegionAssistMode;
+  autoCross: AutoCrossMode;
   musicMuted: boolean;
   sfxMuted: boolean;
   tutorialSeen: boolean;
@@ -62,6 +63,12 @@ export const VALID_REGION_ASSIST_MODES: RegionAssistMode[] = [
   'numbers',
 ];
 
+export const VALID_AUTO_CROSS_MODES: AutoCrossMode[] = [
+  'off',
+  'row_col_surround',
+  'all',
+];
+
 export function getDefaultAppState(): PersistedAppState {
   return {
     progress: {
@@ -73,6 +80,7 @@ export function getDefaultAppState(): PersistedAppState {
       doubleTapTimeoutMs: 500,
       catVariant: 'black',
       regionAssist: 'off',
+      autoCross: 'off',
       musicMuted: false,
       sfxMuted: false,
       tutorialSeen: false,
@@ -112,6 +120,9 @@ export function loadPersistedState(): PersistedAppState {
         doubleTapTimeoutMs,
         regionAssist: VALID_REGION_ASSIST_MODES.includes(cleanRawSettings.regionAssist)
           ? cleanRawSettings.regionAssist
+          : 'off',
+        autoCross: VALID_AUTO_CROSS_MODES.includes(cleanRawSettings.autoCross)
+          ? cleanRawSettings.autoCross
           : 'off',
         musicVolume: VALID_STEPPED_VOLUMES.includes(cleanRawSettings.musicVolume)
           ? cleanRawSettings.musicVolume

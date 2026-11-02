@@ -217,4 +217,42 @@ describe('state/storage', () => {
     const defaultState = getDefaultAppState();
     expect((defaultState.settings as any).controlScheme).toBeUndefined();
   });
+
+  it('initializes and persists autoCross setting with default "off"', () => {
+    const state = getDefaultAppState();
+    expect(state.settings.autoCross).toBe('off');
+
+    state.settings.autoCross = 'row_col_surround';
+    savePersistedState(state);
+
+    const loaded = loadPersistedState();
+    expect(loaded.settings.autoCross).toBe('row_col_surround');
+  });
+
+  it('loadPersistedState defaults autoCross to "off" if missing in older save files', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        progress: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
+        settings: {
+          catVariant: 'black',
+        },
+      })
+    );
+    const loaded = loadPersistedState();
+    expect(loaded.settings.autoCross).toBe('off');
+  });
+
+  it('loadPersistedState falls back to "off" when autoCross is an invalid corrupted string', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        settings: {
+          autoCross: 'invalid_corrupted_value',
+        },
+      })
+    );
+    const loaded = loadPersistedState();
+    expect(loaded.settings.autoCross).toBe('off');
+  });
 });
