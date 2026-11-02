@@ -134,4 +134,114 @@ describe('state/gameState', () => {
     expect(s.board[0][0]).toBe('cross');
     expect(s.errorCrosses[0][0]).toBe(true);
   });
+
+  describe('autoCross assist', () => {
+    it('does not place auto-crosses when autoCross is "off" or unspecified', () => {
+      let s = createLevelSession(samplePuzzle);
+      s = applyCellTap(s, 0, 1, { isDoubleTap: true, autoCross: 'off' });
+      expect(s.board[0][1]).toBe('cat');
+      // Empty cells remain empty
+      expect(s.board[0][0]).toBe('empty');
+      expect(s.board[0][2]).toBe('empty');
+      expect(s.lastAutoCrossCells).toBeUndefined();
+    });
+
+    it('places crosses in row, column, and surround when autoCross is "row_col_surround"', () => {
+      let s = createLevelSession(samplePuzzle);
+      // Place correct cat at (0,1)
+      s = applyCellTap(s, 0, 1, { isDoubleTap: true, autoCross: 'row_col_surround' });
+      expect(s.board[0][1]).toBe('cat');
+
+      // Row 0 cells
+      expect(s.board[0][0]).toBe('cross');
+      expect(s.board[0][2]).toBe('cross');
+      expect(s.board[0][3]).toBe('cross');
+
+      // Col 1 cells
+      expect(s.board[1][1]).toBe('cross');
+      expect(s.board[2][1]).toBe('cross');
+      expect(s.board[3][1]).toBe('cross');
+
+      // Surround cells (1,0) and (1,2)
+      expect(s.board[1][0]).toBe('cross');
+      expect(s.board[1][2]).toBe('cross');
+
+      // Cell (1,3) is another cat's solution and not in row 0, col 1, or surround -> remains empty
+      expect(s.board[1][3]).toBe('empty');
+      // Cell (2,0) remains empty
+      expect(s.board[2][0]).toBe('empty');
+
+      // Verify lastAutoCrossCells contains all auto-crossed coordinates
+      expect(s.lastAutoCrossCells).toBeDefined();
+      expect(s.lastAutoCrossCells?.length).toBe(8);
+      expect(s.lastAutoCrossCells).toEqual(
+        expect.arrayContaining([
+          { row: 0, col: 0 },
+          { row: 0, col: 2 },
+          { row: 0, col: 3 },
+          { row: 1, col: 0 },
+          { row: 1, col: 1 },
+          { row: 1, col: 2 },
+          { row: 2, col: 1 },
+          { row: 3, col: 1 },
+        ])
+      );
+    });
+
+    it('places crosses in row, column, surround, AND region cells when autoCross is "all"', () => {
+      // Create a 5x5 puzzle where a region has a distant cell
+      const customPuzzle: PuzzleDef = {
+        id: 99,
+        size: 5,
+        regions: [
+          [0, 1, 1, 1, 1],
+          [2, 2, 2, 2, 2],
+          [3, 3, 3, 3, 3],
+          [4, 4, 4, 4, 4],
+          [4, 4, 4, 4, 0], // (4,4) is in region 0, same as (0,0)
+        ],
+        solution: [0, 1, 2, 3, 4],
+        maxRuleUsed: 1,
+        difficultyScore: 5,
+      };
+
+      let s = createLevelSession(customPuzzle);
+      // Place correct cat at (0,0)
+      s = applyCellTap(s, 0, 0, { isDoubleTap: true, autoCross: 'all' });
+      expect(s.board[0][0]).toBe('cat');
+      // (4,4) is not in row 0, col 0, or surround, but IS in region 0 -> must be crossed
+      expect(s.board[4][4]).toBe('cross');
+      expect(s.lastAutoCrossCells).toEqual(
+        expect.arrayContaining([{ row: 4, col: 4 }])
+      );
+    });
+
+    it('does not trigger auto-cross when placing an incorrect cat (mistake)', () => {
+      let s = createLevelSession(samplePuzzle);
+      // (0,0) is incorrect
+      s = applyCellTap(s, 0, 0, { isDoubleTap: true, autoCross: 'all' });
+      expect(s.mistakes).toBe(1);
+      expect(s.board[0][0]).toBe('cross');
+      // Other cells in row/col/region remain empty
+      expect(s.board[0][1]).toBe('empty');
+      expect(s.board[0][2]).toBe('empty');
+      expect(s.lastAutoCrossCells).toBeUndefined();
+    });
+
+    it('preserves existing crosses and locked cats untouched during auto-cross', () => {
+      let s = createLevelSession(samplePuzzle);
+      // User placed cross manually at (0,2)
+      s = applyCellTap(s, 0, 2);
+      expect(s.board[0][2]).toBe('cross');
+
+      // Now place correct cat at (0,1) with autoCross
+      s = applyCellTap(s, 0, 1, { isDoubleTap: true, autoCross: 'row_col_surround' });
+      expect(s.board[0][1]).toBe('cat');
+      expect(s.board[0][2]).toBe('cross');
+      // (0,2) was already cross, so it shouldn't be in lastAutoCrossCells (newly added crosses)
+      expect(s.lastAutoCrossCells).not.toEqual(
+        expect.arrayContaining([{ row: 0, col: 2 }])
+      );
+    });
+  });
 });

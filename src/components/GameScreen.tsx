@@ -45,7 +45,10 @@ export function GameScreen({
     const prevCell = session.board[r][c];
     const prevMistakes = session.mistakes;
 
-    const next = applyCellTap(session, r, c, options);
+    const next = applyCellTap(session, r, c, {
+      ...options,
+      autoCross: settings.autoCross,
+    });
     onUpdateSession(next);
 
     // Audio effects

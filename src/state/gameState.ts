@@ -1,4 +1,4 @@
-import { CellState, PuzzleDef } from '../types/puzzle';
+import { AutoCrossMode, CellState, PuzzleDef } from '../types/puzzle';
 import { isBoardSolved } from '../engine/rules';
 
 export interface LevelSessionState {
@@ -14,6 +14,7 @@ export interface LevelSessionState {
   conflictingKeys: Set<string>;
   lastErrorCell: { row: number; col: number } | null;
   lastPlacedCat: { row: number; col: number } | null;
+  lastAutoCrossCells?: { row: number; col: number }[];
   history: { board: CellState[][]; lockedCats: boolean[][] }[];
 }
 
@@ -48,7 +49,7 @@ export function applyCellTap(
   state: LevelSessionState,
   row: number,
   col: number,
-  options?: { isDoubleTap?: boolean }
+  options?: { isDoubleTap?: boolean; autoCross?: AutoCrossMode }
 ): LevelSessionState {
   if (state.status !== 'playing') return state;
 
@@ -90,6 +91,7 @@ export function applyCellTap(
         partialScore: isLost ? 0 : state.partialScore,
         lastErrorCell: { row, col },
         lastPlacedCat: null,
+        lastAutoCrossCells: undefined,
       };
     } else {
       // Correct cat placement
@@ -97,6 +99,36 @@ export function applyCellTap(
       const newLocked = cloneLocked(state.lockedCats);
       newBoard[row][col] = 'cat';
       newLocked[row][col] = true;
+
+      let lastAutoCrossCells: { row: number; col: number }[] | undefined = undefined;
+      const autoCross = options?.autoCross ?? 'off';
+      if (autoCross !== 'off') {
+        const size = state.puzzle.size;
+        const targetRegion = state.puzzle.regions[row][col];
+        const addedCrosses: { row: number; col: number }[] = [];
+
+        for (let r = 0; r < size; r++) {
+          for (let c = 0; c < size; c++) {
+            if (r === row && c === col) continue;
+
+            const sameRow = r === row;
+            const sameCol = c === col;
+            const isNeighbor = Math.abs(r - row) <= 1 && Math.abs(c - col) <= 1;
+            const sameRegion = autoCross === 'all' && state.puzzle.regions[r][c] === targetRegion;
+
+            if (sameRow || sameCol || isNeighbor || sameRegion) {
+              if (newBoard[r][c] === 'empty') {
+                newBoard[r][c] = 'cross';
+                addedCrosses.push({ row: r, col: c });
+              }
+            }
+          }
+        }
+
+        if (addedCrosses.length > 0) {
+          lastAutoCrossCells = addedCrosses;
+        }
+      }
 
       const solved = isBoardSolved(newBoard, state.puzzle.regions);
       let bonus = 0;
@@ -116,6 +148,7 @@ export function applyCellTap(
         conflictingKeys: new Set(),
         lastErrorCell: null,
         lastPlacedCat: { row, col },
+        lastAutoCrossCells,
         // Do not allow undoing locked cats
         history: [],
       };
@@ -132,6 +165,7 @@ export function applyCellTap(
     conflictingKeys: new Set(),
     lastErrorCell: null,
     lastPlacedCat: null,
+    lastAutoCrossCells: undefined,
     history: [...state.history, { board: cloneBoard(state.board), lockedCats: cloneLocked(state.lockedCats) }],
   };
 }
