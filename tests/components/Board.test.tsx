@@ -164,3 +164,51 @@ describe('Board autoCross wave animation', () => {
     expect(delayMs).toBeLessThanOrEqual(900);
   });
 });
+
+describe('Board adaptive sizing for 4x4, 8x8, and 10x10 boards', () => {
+  const createBoardProps = (size: number) => ({
+    size,
+    regions: Array.from({ length: size }, () => Array(size).fill(0)),
+    board: Array.from({ length: size }, () => Array(size).fill('empty') as CellState[]),
+    lockedCats: Array.from({ length: size }, () => Array(size).fill(false)),
+    conflictingKeys: new Set<string>(),
+    lastPlacedCat: null,
+    lastErrorCell: null,
+    isVictory: false,
+    catVariant: 'black' as const,
+    onCellTap: vi.fn(),
+    onDragCross: vi.fn(),
+  });
+
+  it('renders size 4 board with 6px gap, 8px padding, 10px radius', () => {
+    const { container } = render(<Board {...createBoardProps(4)} />);
+    const grid = container.querySelector('.board-grid') as HTMLElement;
+    expect(grid.getAttribute('data-board-size')).toBe('4');
+    expect(grid.style.getPropertyValue('--board-gap')).toBe('6px');
+    expect(grid.style.getPropertyValue('--board-padding')).toBe('8px');
+    expect(grid.style.getPropertyValue('--cell-radius')).toBe('10px');
+  });
+
+  it('renders size 8 board with 4px gap, 7px padding, 8px radius', () => {
+    const { container } = render(<Board {...createBoardProps(8)} />);
+    const grid = container.querySelector('.board-grid') as HTMLElement;
+    expect(grid.getAttribute('data-board-size')).toBe('8');
+    expect(grid.style.getPropertyValue('--board-gap')).toBe('4px');
+    expect(grid.style.getPropertyValue('--board-padding')).toBe('7px');
+    expect(grid.style.getPropertyValue('--cell-radius')).toBe('8px');
+  });
+
+  it('renders size 10 board with 3px gap, 6px padding, 6px radius and scaled glyph icon size 10', () => {
+    const { container } = render(
+      <Board {...createBoardProps(10)} regionAssist="glyphs" />
+    );
+    const grid = container.querySelector('.board-grid') as HTMLElement;
+    expect(grid.getAttribute('data-board-size')).toBe('10');
+    expect(grid.style.getPropertyValue('--board-gap')).toBe('3px');
+    expect(grid.style.getPropertyValue('--board-padding')).toBe('6px');
+    expect(grid.style.getPropertyValue('--cell-radius')).toBe('6px');
+
+    const glyphSvg = container.querySelector('svg[data-region-glyph]');
+    expect(glyphSvg?.getAttribute('width')).toBe('10');
+  });
+});

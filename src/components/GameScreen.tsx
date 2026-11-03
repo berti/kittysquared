@@ -66,6 +66,8 @@ export function GameScreen({
   const prevPartialScoreRef = useRef(session.partialScore);
   const prevPuzzleIdRef = useRef(puzzle.id);
   const prevStatusRef = useRef(session.status);
+  const latestSessionRef = useRef(session);
+  latestSessionRef.current = session;
 
   const placedCatsCount = session.board.flat().filter((c) => c === 'cat').length;
   const isLastLevel = totalLevels !== undefined && puzzle.id >= totalLevels;
@@ -155,13 +157,14 @@ export function GameScreen({
     : session.partialScore + session.levelBonus;
 
   const handleCellTap = (r: number, c: number, options?: { isDoubleTap?: boolean }) => {
-    const prevCell = session.board[r][c];
-    const prevMistakes = session.mistakes;
+    const prevCell = latestSessionRef.current.board[r][c];
+    const prevMistakes = latestSessionRef.current.mistakes;
 
-    const next = applyCellTap(session, r, c, {
+    const next = applyCellTap(latestSessionRef.current, r, c, {
       ...options,
       autoCross: settings.autoCross,
     });
+    latestSessionRef.current = next;
     onUpdateSession(next);
 
     // Audio & 2-phase celebration effects
@@ -185,9 +188,13 @@ export function GameScreen({
   };
 
   const handleDragCross = (r: number, c: number, target: 'cross' | 'empty') => {
-    const next = applyDragCross(session, r, c, target);
+    const prevCell = latestSessionRef.current.board[r][c];
+    const next = applyDragCross(latestSessionRef.current, r, c, target);
+    latestSessionRef.current = next;
     onUpdateSession(next);
-    soundEngine.playCross();
+    if (next.board[r][c] !== prevCell) {
+      soundEngine.playCross();
+    }
   };
 
   const remainingLives = Math.max(0, session.maxMistakes - session.mistakes);

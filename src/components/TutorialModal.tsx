@@ -45,19 +45,22 @@ export function TutorialModal({
 
   const [session, setSession] = useState<LevelSessionState>(() => initSessionForStep(0));
   const initialSessionRef = useRef<LevelSessionState>(session);
+  const latestSessionRef = useRef(session);
+  latestSessionRef.current = session;
 
   const isStepCompleted = currentStep.isComplete(session, initialSessionRef.current);
 
   const handleCellTap = (r: number, c: number, options?: { isDoubleTap?: boolean }) => {
-    const prevMistakes = session.mistakes;
-    const prevCell = session.board[r][c];
+    const prevMistakes = latestSessionRef.current.mistakes;
+    const prevCell = latestSessionRef.current.board[r][c];
 
-    const next = applyCellTap(session, r, c, options);
+    const next = applyCellTap(latestSessionRef.current, r, c, options);
     // In tutorial mode, keep status playing to prevent defeat modal overlay
     if (next.status === 'lost') {
       next.status = 'playing';
     }
 
+    latestSessionRef.current = next;
     setSession(next);
 
     if (next.mistakes > prevMistakes) {
@@ -70,9 +73,13 @@ export function TutorialModal({
   };
 
   const handleDragCross = (r: number, c: number, target: 'cross' | 'empty') => {
-    const next = applyDragCross(session, r, c, target);
+    const prevCell = latestSessionRef.current.board[r][c];
+    const next = applyDragCross(latestSessionRef.current, r, c, target);
+    latestSessionRef.current = next;
     setSession(next);
-    soundEngine.playCross();
+    if (next.board[r][c] !== prevCell) {
+      soundEngine.playCross();
+    }
   };
 
   const handleNext = () => {
@@ -80,6 +87,7 @@ export function TutorialModal({
       const nextIdx = stepIndex + 1;
       const nextSession = initSessionForStep(nextIdx);
       setStepIndex(nextIdx);
+      latestSessionRef.current = nextSession;
       setSession(nextSession);
       initialSessionRef.current = nextSession;
     } else {
@@ -92,6 +100,7 @@ export function TutorialModal({
     if (idx !== -1) {
       const nextSession = initSessionForStep(idx);
       setStepIndex(idx);
+      latestSessionRef.current = nextSession;
       setSession(nextSession);
       initialSessionRef.current = nextSession;
     }

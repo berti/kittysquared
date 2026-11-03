@@ -69,3 +69,25 @@ describe('theme.css Milestone 2 game juice and victory celebration styles', () =
   });
 });
 
+describe('theme.css Milestone 4 board sizing and tile styling', () => {
+  it('updates .board-grid with max-width: 410px, touch-action: none, and CSS gap/padding variables', () => {
+    const css = fs.readFileSync(path.resolve(__dirname, '../../src/styles/theme.css'), 'utf-8');
+    expect(css).toMatch(/\.board-grid\s*\{[^}]*max-width:\s*410px/);
+    expect(css).toMatch(/\.board-grid\s*\{[^}]*touch-action:\s*none/);
+    expect(css).toMatch(/\.board-grid\s*\{[^}]*gap:\s*var\(--board-gap/);
+    expect(css).toMatch(/\.board-grid\s*\{[^}]*padding:\s*var\(--board-padding/);
+  });
+
+  it('updates .board-cell with var(--cell-radius) and inset 0 1.5px 0 highlight', () => {
+    const css = fs.readFileSync(path.resolve(__dirname, '../../src/styles/theme.css'), 'utf-8');
+    expect(css).toMatch(/\.board-cell\s*\{[^}]*border-radius:\s*var\(--cell-radius/);
+    expect(css).toContain('inset 0 1.5px 0 rgba(255, 255, 255, 0.35)');
+  });
+
+  it('includes scaled badge positioning for 9x9 and 10x10 boards', () => {
+    const css = fs.readFileSync(path.resolve(__dirname, '../../src/styles/theme.css'), 'utf-8');
+    expect(css).toContain('[data-board-size="9"]');
+    expect(css).toContain('[data-board-size="10"]');
+  });
+});
+

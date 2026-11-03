@@ -72,7 +72,18 @@ describe('components/CatSvg & Board', () => {
     fireEvent.pointerDown(cell00, { button: 0 });
     fireEvent.pointerEnter(cell01);
     fireEvent.pointerUp(cell01);
-    expect(onDragCross).toHaveBeenCalledWith(0, 1, 'cross');
+    expect(onDragCross).toHaveBeenCalledTimes(2);
+    expect(onDragCross).toHaveBeenNthCalledWith(1, 0, 0, 'cross');
+    expect(onDragCross).toHaveBeenNthCalledWith(2, 0, 1, 'cross');
+
+    // Simple click without crossing does not trigger onDragCross
+    onDragCross.mockClear();
+    onCellTap.mockClear();
+    fireEvent.pointerDown(cell00, { button: 0 });
+    fireEvent.pointerUp(cell00);
+    fireEvent.click(cell00);
+    expect(onDragCross).not.toHaveBeenCalled();
+    expect(onCellTap).toHaveBeenCalledTimes(1);
   });
 
   it('renders a red cross with cross-mark-error class on error crosses in Classic mode', () => {

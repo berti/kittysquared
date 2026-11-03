@@ -48,6 +48,39 @@ describe('GameScreen component', () => {
     expect(getByText(/Gato/i)).not.toBeNull();
   });
 
+  it('updates both origin cell and entered cell when dragging across cells', () => {
+    let currentSession = createLevelSession(samplePuzzle);
+    const onUpdateSession = vi.fn((next) => {
+      currentSession = next;
+    });
+    const defaultState = getDefaultAppState();
+
+    const { getByTestId } = render(
+      <GameScreen
+        puzzle={samplePuzzle}
+        progress={defaultState.progress}
+        settings={defaultState.settings}
+        session={currentSession}
+        onUpdateSession={onUpdateSession}
+        onAdvanceLevel={vi.fn()}
+        onRetryLevel={vi.fn()}
+        onBackToMenu={vi.fn()}
+        onOpenSettings={vi.fn()}
+      />
+    );
+
+    const cell00 = getByTestId('cell-0-0');
+    const cell01 = getByTestId('cell-0-1');
+
+    fireEvent.pointerDown(cell00, { button: 0 });
+    fireEvent.pointerEnter(cell01);
+    fireEvent.pointerUp(cell01);
+
+    expect(onUpdateSession).toHaveBeenCalledTimes(2);
+    expect(currentSession.board[0][0]).toBe('cross');
+    expect(currentSession.board[0][1]).toBe('cross');
+  });
+
   it('renders top bar buttons and enlarged status bar with cats, lives, and score', () => {
     const session = createLevelSession(samplePuzzle);
     const defaultState = getDefaultAppState();
