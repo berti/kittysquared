@@ -14,6 +14,7 @@ import {
 } from './state/gameState';
 import {
   AppSettings,
+  getTotalEarnedStars,
   loadPersistedState,
   PersistedAppState,
   resetProgress,
@@ -334,12 +335,25 @@ export function App({
           onBackToMenu={handleBackToMenuFromGame}
           onOpenLevels={handleOpenLevelsFromGame}
           onOpenSettings={() => setShowSettings(true)}
+          onSelectCatVariant={(variant) =>
+            handleUpdateSettings({ ...appState.settings, catVariant: variant })
+          }
         />
       )}
 
       {showSettings && (
         <SettingsModal
           settings={appState.settings}
+          totalStars={
+            getTotalEarnedStars(appState.progress) +
+            (activeScreen === 'game' && session.status === 'won'
+              ? Math.max(
+                  0,
+                  computeLevelWinOutcome(session, appState.progress).bestStars -
+                    (appState.progress.levelStars?.[session.puzzle.id] ?? 0)
+                )
+              : 0)
+          }
           onUpdateSettings={handleUpdateSettings}
           onClose={() => setShowSettings(false)}
         />

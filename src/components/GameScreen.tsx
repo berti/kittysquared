@@ -7,8 +7,13 @@ import {
   getStarsForMistakes,
   LevelSessionState,
 } from '../state/gameState';
-import { AppSettings, ModeProgress } from '../state/storage';
-import { PuzzleDef } from '../types/puzzle';
+import {
+  AppSettings,
+  getNewlyUnlockedBreeds,
+  getTotalEarnedStars,
+  ModeProgress,
+} from '../state/storage';
+import { CatVariant, PuzzleDef } from '../types/puzzle';
 import { Board } from './Board';
 import { CatSvg } from './CatSvg';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -41,6 +46,7 @@ export interface GameScreenProps {
   onBackToMenu: () => void;
   onOpenLevels?: () => void;
   onOpenSettings: () => void;
+  onSelectCatVariant?: (variant: CatVariant) => void;
 }
 
 export function GameScreen({
@@ -55,6 +61,7 @@ export function GameScreen({
   onBackToMenu,
   onOpenLevels,
   onOpenSettings,
+  onSelectCatVariant,
 }: GameScreenProps) {
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
   const [isCelebratingVictory, setIsCelebratingVictory] = useState(false);
@@ -76,6 +83,16 @@ export function GameScreen({
   const winOutcome =
     session.status === 'won' ? computeLevelWinOutcome(session, progress) : null;
   const earnedStars = getStarsForMistakes(session.mistakes);
+
+  const beforeStars = getTotalEarnedStars(progress);
+  const prevLevelStars = progress.levelStars?.[puzzle.id] ?? 0;
+  const starGain = winOutcome ? Math.max(0, winOutcome.bestStars - prevLevelStars) : 0;
+  const afterStars = beforeStars + starGain;
+  const newlyUnlockedBreeds = winOutcome ? getNewlyUnlockedBreeds(beforeStars, afterStars) : [];
+  const latestUnlockedBreed =
+    newlyUnlockedBreeds.length > 0
+      ? newlyUnlockedBreeds[newlyUnlockedBreeds.length - 1]
+      : null;
 
   // Detect puzzle reset / change or mistake / score changes via useEffect
   useEffect(() => {
@@ -593,6 +610,75 @@ export function GameScreen({
                     <strong>Puntuación final: {progress.totalScore + victoryScoreGain} pts</strong>
                   </div>
                 </div>
+                {latestUnlockedBreed && (
+                  <div
+                    data-testid="victory-unlocked-breed-banner"
+                    style={{
+                      background: '#FFF8E7',
+                      border: '2px solid #F6D88A',
+                      borderRadius: '16px',
+                      padding: '10px 14px',
+                      marginBottom: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '10px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '40px', height: '40px', flexShrink: 0 }}>
+                        <CatSvg variant={latestUnlockedBreed.id} state="victory" />
+                      </div>
+                      <div style={{ textAlign: 'left' }}>
+                        <div
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 900,
+                            color: '#92400E',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em',
+                          }}
+                        >
+                          ¡Nuevo gatito desbloqueado!
+                        </div>
+                        <div
+                          style={{
+                            fontSize: '15px',
+                            fontWeight: 900,
+                            color: '#3D3135',
+                          }}
+                        >
+                          {latestUnlockedBreed.name}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      data-testid="victory-equip-breed-btn"
+                      disabled={settings.catVariant === latestUnlockedBreed.id}
+                      onClick={() => onSelectCatVariant?.(latestUnlockedBreed.id)}
+                      style={{
+                        background:
+                          settings.catVariant === latestUnlockedBreed.id ? '#E2D6C1' : '#FF9770',
+                        color:
+                          settings.catVariant === latestUnlockedBreed.id ? '#7A686F' : '#FFF',
+                        border: 'none',
+                        borderRadius: '10px',
+                        padding: '8px 14px',
+                        fontSize: '13px',
+                        fontWeight: 800,
+                        cursor:
+                          settings.catVariant === latestUnlockedBreed.id ? 'default' : 'pointer',
+                        boxShadow:
+                          settings.catVariant === latestUnlockedBreed.id ? 'none' : '0 2px 0 #D9724C',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {settings.catVariant === latestUnlockedBreed.id ? '¡Equipado!' : 'Equipar'}
+                    </button>
+                  </div>
+                )}
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
                     type="button"
@@ -684,6 +770,75 @@ export function GameScreen({
                     <strong>Nuevo total: {progress.totalScore + victoryScoreGain} pts</strong>
                   </div>
                 </div>
+                {latestUnlockedBreed && (
+                  <div
+                    data-testid="victory-unlocked-breed-banner"
+                    style={{
+                      background: '#FFF8E7',
+                      border: '2px solid #F6D88A',
+                      borderRadius: '16px',
+                      padding: '10px 14px',
+                      marginBottom: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '10px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '40px', height: '40px', flexShrink: 0 }}>
+                        <CatSvg variant={latestUnlockedBreed.id} state="victory" />
+                      </div>
+                      <div style={{ textAlign: 'left' }}>
+                        <div
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 900,
+                            color: '#92400E',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em',
+                          }}
+                        >
+                          ¡Nuevo gatito desbloqueado!
+                        </div>
+                        <div
+                          style={{
+                            fontSize: '15px',
+                            fontWeight: 900,
+                            color: '#3D3135',
+                          }}
+                        >
+                          {latestUnlockedBreed.name}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      data-testid="victory-equip-breed-btn"
+                      disabled={settings.catVariant === latestUnlockedBreed.id}
+                      onClick={() => onSelectCatVariant?.(latestUnlockedBreed.id)}
+                      style={{
+                        background:
+                          settings.catVariant === latestUnlockedBreed.id ? '#E2D6C1' : '#FF9770',
+                        color:
+                          settings.catVariant === latestUnlockedBreed.id ? '#7A686F' : '#FFF',
+                        border: 'none',
+                        borderRadius: '10px',
+                        padding: '8px 14px',
+                        fontSize: '13px',
+                        fontWeight: 800,
+                        cursor:
+                          settings.catVariant === latestUnlockedBreed.id ? 'default' : 'pointer',
+                        boxShadow:
+                          settings.catVariant === latestUnlockedBreed.id ? 'none' : '0 2px 0 #D9724C',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {settings.catVariant === latestUnlockedBreed.id ? '¡Equipado!' : 'Equipar'}
+                    </button>
+                  </div>
+                )}
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
                     type="button"

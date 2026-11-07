@@ -2,8 +2,8 @@
 import { act, cleanup, fireEvent, render } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameScreen } from '../../src/components/GameScreen';
-import { createLevelSession } from '../../src/state/gameState';
-import { getDefaultAppState } from '../../src/state/storage';
+import { createLevelSession, LevelSessionState } from '../../src/state/gameState';
+import { getDefaultAppState, ModeProgress } from '../../src/state/storage';
 import { PuzzleDef } from '../../src/types/puzzle';
 
 const samplePuzzle: PuzzleDef = {
@@ -523,5 +523,104 @@ describe('GameScreen component', () => {
     fireEvent.click(getByTestId('victory-celebration-overlay'));
     expect(queryByTestId('victory-celebration-overlay')).toBeNull();
     expect(getByTestId('victory-modal-backdrop')).toBeTruthy();
+  });
+
+  it('Review Focus #5: displays victory-unlocked-breed-banner when level win crosses a star milestone and allows one-tap equipping', () => {
+    const onSelectCatVariant = vi.fn();
+    const defaultState = getDefaultAppState();
+    // 8 levels with 3 stars = 24 stars. Winning level 9 with 0 mistakes (+3★ -> 27★) crosses 25★ (Naranjito)
+    const levelStars = Object.fromEntries(Array.from({ length: 8 }, (_, i) => [i + 1, 3 as const]));
+    const progress: ModeProgress = {
+      currentLevelId: 9,
+      totalScore: 800,
+      activeSnapshot: null,
+      levelStars,
+    };
+    const wonSession: LevelSessionState = {
+      ...createLevelSession(samplePuzzle),
+      puzzle: { ...samplePuzzle, id: 9 },
+      status: 'won',
+      mistakes: 0,
+      partialScore: 40,
+      levelBonus: 60,
+    };
+
+    const { getByTestId, rerender } = render(
+      <GameScreen
+        puzzle={wonSession.puzzle}
+        progress={progress}
+        settings={defaultState.settings}
+        session={wonSession}
+        onUpdateSession={vi.fn()}
+        onAdvanceLevel={vi.fn()}
+        onRetryLevel={vi.fn()}
+        onBackToMenu={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onSelectCatVariant={onSelectCatVariant}
+      />
+    );
+
+    const banner = getByTestId('victory-unlocked-breed-banner');
+    expect(banner.textContent).toContain('¡Nuevo gatito desbloqueado!');
+    expect(banner.textContent).toContain('Naranjito');
+
+    const equipBtn = getByTestId('victory-equip-breed-btn');
+    expect(equipBtn.textContent).toBe('Equipar');
+    fireEvent.click(equipBtn);
+    expect(onSelectCatVariant).toHaveBeenCalledWith('orange');
+
+    // Once equipped, button shows ¡Equipado! and is disabled
+    rerender(
+      <GameScreen
+        puzzle={wonSession.puzzle}
+        progress={progress}
+        settings={{ ...defaultState.settings, catVariant: 'orange' }}
+        session={wonSession}
+        onUpdateSession={vi.fn()}
+        onAdvanceLevel={vi.fn()}
+        onRetryLevel={vi.fn()}
+        onBackToMenu={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onSelectCatVariant={onSelectCatVariant}
+      />
+    );
+    expect(getByTestId('victory-equip-breed-btn').textContent).toBe('¡Equipado!');
+    expect((getByTestId('victory-equip-breed-btn') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('does not display victory-unlocked-breed-banner on a replay that does not cross a star threshold', () => {
+    const defaultState = getDefaultAppState();
+    // Already has 27 stars (level 9 already has 3★)
+    const levelStars = Object.fromEntries(Array.from({ length: 9 }, (_, i) => [i + 1, 3 as const]));
+    const progress: ModeProgress = {
+      currentLevelId: 10,
+      totalScore: 900,
+      activeSnapshot: null,
+      levelStars,
+    };
+    const wonReplaySession: LevelSessionState = {
+      ...createLevelSession(samplePuzzle),
+      puzzle: { ...samplePuzzle, id: 9 },
+      status: 'won',
+      mistakes: 0,
+      partialScore: 40,
+      levelBonus: 60,
+    };
+
+    const { queryByTestId } = render(
+      <GameScreen
+        puzzle={wonReplaySession.puzzle}
+        progress={progress}
+        settings={defaultState.settings}
+        session={wonReplaySession}
+        onUpdateSession={vi.fn()}
+        onAdvanceLevel={vi.fn()}
+        onRetryLevel={vi.fn()}
+        onBackToMenu={vi.fn()}
+        onOpenSettings={vi.fn()}
+      />
+    );
+
+    expect(queryByTestId('victory-unlocked-breed-banner')).toBeNull();
   });
 });
