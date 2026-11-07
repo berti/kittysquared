@@ -396,6 +396,12 @@ export function SettingsModal({
                         data-testid={`select-cat-${breed.id}`}
                         data-locked={isUnlocked ? 'false' : 'true'}
                         aria-disabled={!isUnlocked}
+                        title={breed.name}
+                        aria-label={
+                          isUnlocked
+                            ? breed.name
+                            : `${breed.name} (Requiere ${breed.requiredStars}★)`
+                        }
                         onClick={() => {
                           if (isUnlocked) {
                             setVariant(breed.id);

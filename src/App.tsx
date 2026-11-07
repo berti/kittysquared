@@ -259,6 +259,10 @@ export function App({
 
   const handleRetryLevel = () => {
     navigateWithTransition('forward', () => {
+      const nextState = commitCurrentLevelWinIfNeeded(appState);
+      if (nextState !== appState) {
+        updateAppState(nextState);
+      }
       const fresh = createLevelSession(session.puzzle);
       handleUpdateSession(fresh);
     });
@@ -335,9 +339,13 @@ export function App({
           onBackToMenu={handleBackToMenuFromGame}
           onOpenLevels={handleOpenLevelsFromGame}
           onOpenSettings={() => setShowSettings(true)}
-          onSelectCatVariant={(variant) =>
-            handleUpdateSettings({ ...appState.settings, catVariant: variant })
-          }
+          onSelectCatVariant={(variant) => {
+            const nextState = commitCurrentLevelWinIfNeeded(appState);
+            updateAppState({
+              ...nextState,
+              settings: { ...nextState.settings, catVariant: variant },
+            });
+          }}
         />
       )}
 
