@@ -1,6 +1,20 @@
 export type CellState = 'empty' | 'cross' | 'cat';
 
-export type CatVariant = 'black' | 'white';
+export type CatVariant =
+  | 'black'
+  | 'white'
+  | 'orange'
+  | 'siamese'
+  | 'calico'
+  | 'tuxedo'
+  | 'russian'
+  | 'sakura';
+
+export interface CatBreedDef {
+  id: CatVariant;
+  name: string;
+  requiredStars: number;
+}
 
 export type RegionAssistMode = 'off' | 'textures' | 'glyphs' | 'numbers';
 

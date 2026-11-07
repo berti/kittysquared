@@ -1,8 +1,11 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  CAT_BREEDS,
   getDefaultAppState,
+  getNewlyUnlockedBreeds,
   getTotalEarnedStars,
+  isCatBreedUnlocked,
   loadPersistedState,
   resetProgress,
   savePersistedState,
@@ -286,5 +289,71 @@ describe('state/storage', () => {
     const after = resetProgress(state);
     expect(after.progress.levelStars).toEqual({});
     expect(getTotalEarnedStars(after.progress)).toBe(0);
+  });
+
+  it('defines all 8 cat breeds with ascending star milestones (0 to 280)', () => {
+    expect(CAT_BREEDS.map((b) => [b.id, b.name, b.requiredStars])).toEqual([
+      ['black', 'Gato Negro', 0],
+      ['white', 'Gato Blanco', 0],
+      ['orange', 'Naranjito', 25],
+      ['siamese', 'Siamés', 60],
+      ['calico', 'Calicó', 100],
+      ['tuxedo', 'Esmoquin', 150],
+      ['russian', 'Azul Ruso', 210],
+      ['sakura', 'Sakura Mochi', 280],
+    ]);
+    expect(isCatBreedUnlocked('black', 0)).toBe(true);
+    expect(isCatBreedUnlocked('white', 0)).toBe(true);
+    expect(isCatBreedUnlocked('orange', 24)).toBe(false);
+    expect(isCatBreedUnlocked('orange', 25)).toBe(true);
+    expect(isCatBreedUnlocked('sakura', 279)).toBe(false);
+    expect(isCatBreedUnlocked('sakura', 280)).toBe(true);
+  });
+
+  it('getNewlyUnlockedBreeds returns breeds whose milestone was crossed between beforeStars and afterStars', () => {
+    expect(getNewlyUnlockedBreeds(23, 26).map((b) => b.id)).toEqual(['orange']);
+    expect(getNewlyUnlockedBreeds(25, 25)).toEqual([]);
+    expect(getNewlyUnlockedBreeds(58, 61).map((b) => b.id)).toEqual(['siamese']);
+  });
+
+  it('Review Focus #1: loadPersistedState preserves unlocked catVariant and falls back to "black" for unknown or locked breeds', () => {
+    const stars25 = Object.fromEntries(Array.from({ length: 9 }, (_, i) => [i + 1, 3])); // 27 stars
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        progress: { currentLevelId: 10, totalScore: 900, activeSnapshot: null, levelStars: stars25 },
+        settings: { catVariant: 'orange' },
+      })
+    );
+    expect(loadPersistedState().settings.catVariant).toBe('orange');
+
+    // Locked breed for 27 stars ('sakura' needs 280) falls back to 'black'
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        progress: { currentLevelId: 10, totalScore: 900, activeSnapshot: null, levelStars: stars25 },
+        settings: { catVariant: 'sakura' },
+      })
+    );
+    expect(loadPersistedState().settings.catVariant).toBe('black');
+
+    // Unknown breed ID falls back to 'black'
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        progress: { currentLevelId: 10, totalScore: 900, activeSnapshot: null, levelStars: stars25 },
+        settings: { catVariant: 'invalid_cat' },
+      })
+    );
+    expect(loadPersistedState().settings.catVariant).toBe('black');
+  });
+
+  it('Review Focus #2: resetProgress resets star-locked catVariant to "black" while preserving "white"', () => {
+    const state = getDefaultAppState();
+    state.progress.currentLevelId = 30;
+    state.settings.catVariant = 'siamese';
+    const afterResetLocked = resetProgress(state);
+    expect(afterResetLocked.settings.catVariant).toBe('black');
+    expect(loadPersistedState().settings.catVariant).toBe('black');
   });
 });

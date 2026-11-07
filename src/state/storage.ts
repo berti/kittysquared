@@ -1,4 +1,10 @@
-import { AutoCrossMode, CatVariant, CellState, RegionAssistMode } from '../types/puzzle';
+import {
+  AutoCrossMode,
+  CatBreedDef,
+  CatVariant,
+  CellState,
+  RegionAssistMode,
+} from '../types/puzzle';
 
 export interface SavedBoardSnapshot {
   levelId: number;
@@ -71,6 +77,37 @@ export const VALID_AUTO_CROSS_MODES: AutoCrossMode[] = [
   'row_col_surround',
   'all',
 ];
+
+export const CAT_BREEDS: readonly CatBreedDef[] = [
+  { id: 'black', name: 'Gato Negro', requiredStars: 0 },
+  { id: 'white', name: 'Gato Blanco', requiredStars: 0 },
+  { id: 'orange', name: 'Naranjito', requiredStars: 25 },
+  { id: 'siamese', name: 'Siamés', requiredStars: 60 },
+  { id: 'calico', name: 'Calicó', requiredStars: 100 },
+  { id: 'tuxedo', name: 'Esmoquin', requiredStars: 150 },
+  { id: 'russian', name: 'Azul Ruso', requiredStars: 210 },
+  { id: 'sakura', name: 'Sakura Mochi', requiredStars: 280 },
+] as const;
+
+export const VALID_CAT_VARIANTS: readonly CatVariant[] = CAT_BREEDS.map((b) => b.id);
+
+export function getCatBreedDef(variant: CatVariant): CatBreedDef {
+  return CAT_BREEDS.find((b) => b.id === variant) ?? CAT_BREEDS[0];
+}
+
+export function isCatBreedUnlocked(variant: CatVariant, totalStars: number): boolean {
+  return totalStars >= getCatBreedDef(variant).requiredStars;
+}
+
+export function getNewlyUnlockedBreeds(
+  beforeStars: number,
+  afterStars: number
+): CatBreedDef[] {
+  if (afterStars <= beforeStars) return [];
+  return CAT_BREEDS.filter(
+    (b) => b.requiredStars > beforeStars && b.requiredStars <= afterStars
+  );
+}
 
 export function getDefaultAppState(): PersistedAppState {
   return {
@@ -155,15 +192,25 @@ export function loadPersistedState(): PersistedAppState {
         ? mergedProgress.currentLevelId
         : 1;
 
+    const sanitizedProgress: ModeProgress = {
+      ...mergedProgress,
+      currentLevelId,
+      levelStars: sanitizeAndBackfillLevelStars(rawProgress.levelStars, currentLevelId),
+    };
+    const totalStars = getTotalEarnedStars(sanitizedProgress);
+
+    const rawCatVariant = cleanRawSettings.catVariant as CatVariant;
+    const catVariant =
+      VALID_CAT_VARIANTS.includes(rawCatVariant) && isCatBreedUnlocked(rawCatVariant, totalStars)
+        ? rawCatVariant
+        : 'black';
+
     return {
-      progress: {
-        ...mergedProgress,
-        currentLevelId,
-        levelStars: sanitizeAndBackfillLevelStars(rawProgress.levelStars, currentLevelId),
-      },
+      progress: sanitizedProgress,
       settings: {
         ...defaults.settings,
         ...cleanRawSettings,
+        catVariant,
         doubleTapTimeoutMs,
         regionAssist: VALID_REGION_ASSIST_MODES.includes(cleanRawSettings.regionAssist)
           ? cleanRawSettings.regionAssist
@@ -196,6 +243,9 @@ export function savePersistedState(state: PersistedAppState): void {
 }
 
 export function resetProgress(state: PersistedAppState): PersistedAppState {
+  const nextCatVariant = isCatBreedUnlocked(state.settings.catVariant, 0)
+    ? state.settings.catVariant
+    : 'black';
   const next: PersistedAppState = {
     ...state,
     progress: {
@@ -203,6 +253,10 @@ export function resetProgress(state: PersistedAppState): PersistedAppState {
       totalScore: 0,
       activeSnapshot: null,
       levelStars: {},
+    },
+    settings: {
+      ...state.settings,
+      catVariant: nextCatVariant,
     },
   };
   savePersistedState(next);
