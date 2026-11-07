@@ -175,6 +175,45 @@ describe('SettingsModal component', () => {
     expect(queryByText(/Muestra cómo lucen los gatos/i)).toBeNull();
   });
 
+  it('Review Focus #4: Graphics tab renders 8 cat breeds, displays totalStars badge, blocks locked breeds, and selects unlocked breeds', () => {
+    const onUpdateSettings = vi.fn();
+    const { getByTestId, rerender } = render(
+      <SettingsModal
+        settings={defaultSettings}
+        totalStars={24}
+        onUpdateSettings={onUpdateSettings}
+        onClose={vi.fn()}
+      />
+    );
+
+    fireEvent.click(getByTestId('tab-btn-graphics'));
+    expect(getByTestId('settings-total-stars').textContent).toContain('24★');
+
+    // Black and White are unlocked at 24 stars; Orange (25★) is locked
+    const orangeCard = getByTestId('select-cat-orange');
+    expect(orangeCard.getAttribute('data-locked')).toBe('true');
+    fireEvent.click(orangeCard);
+    expect(onUpdateSettings).not.toHaveBeenCalled();
+
+    // Rerender with 60 stars -> Orange (25★) and Siamese (60★) are unlocked, Calico (100★) is locked
+    rerender(
+      <SettingsModal
+        settings={defaultSettings}
+        totalStars={60}
+        onUpdateSettings={onUpdateSettings}
+        onClose={vi.fn()}
+      />
+    );
+    expect(getByTestId('select-cat-orange').getAttribute('data-locked')).toBe('false');
+    expect(getByTestId('select-cat-siamese').getAttribute('data-locked')).toBe('false');
+    expect(getByTestId('select-cat-calico').getAttribute('data-locked')).toBe('true');
+
+    fireEvent.click(getByTestId('select-cat-siamese'));
+    expect(onUpdateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ catVariant: 'siamese' })
+    );
+  });
+
   it('Graphics tab: mini-board preview renders distinct SVG glyphs and textures matching region IDs', () => {
     const { getByTestId, rerender } = render(
       <SettingsModal

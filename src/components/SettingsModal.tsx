@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { soundEngine } from '../audio/soundEngine';
-import { AppSettings, MusicTrackOption, VALID_STEPPED_VOLUMES } from '../state/storage';
+import {
+  AppSettings,
+  CAT_BREEDS,
+  isCatBreedUnlocked,
+  MusicTrackOption,
+  VALID_STEPPED_VOLUMES,
+} from '../state/storage';
 import { AutoCrossMode, CatVariant, RegionAssistMode } from '../types/puzzle';
 import { REGION_GLYPHS, RegionGlyphIcon } from './Board';
 import { CatSvg } from './CatSvg';
@@ -17,12 +23,14 @@ export type SettingsTab = 'controls' | 'graphics' | 'sound' | 'ayudas';
 
 export interface SettingsModalProps {
   settings: AppSettings;
+  totalStars?: number;
   onUpdateSettings: (settings: AppSettings) => void;
   onClose: () => void;
 }
 
 export function SettingsModal({
   settings,
+  totalStars = 0,
   onUpdateSettings,
   onClose,
 }: SettingsModalProps) {
@@ -331,61 +339,128 @@ export function SettingsModal({
               style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}
             >
               <div>
-                <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51', marginBottom: '8px' }}>
-                  DISEÑO DE GATITO
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '8px',
+                  }}
+                >
+                  <span style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51' }}>
+                    DISEÑO DE GATITO
+                  </span>
+                  <span
+                    data-testid="settings-total-stars"
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      color: '#92400E',
+                      background: '#FEF3C7',
+                      border: '1px solid #FDE68A',
+                      padding: '2px 8px',
+                      borderRadius: '8px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '3px',
+                    }}
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="#D97706"
+                      stroke="#B45309"
+                      strokeWidth="1.5"
+                    >
+                      <path d="M12 2.4l2.85 5.78 6.38.93-4.61 4.5 1.09 6.35L12 17l-5.71 2.96 1.09-6.35-4.61-4.5 6.38-.93L12 2.4z" />
+                    </svg>
+                    <span>{totalStars}★</span>
+                  </span>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <div
-                    data-testid="select-cat-black"
-                    onClick={() => setVariant('black')}
-                    style={{
-                      flex: 1,
-                      height: '66px',
-                      boxSizing: 'border-box',
-                      background: settings.catVariant === 'black' ? '#FFF' : '#EFE6D5',
-                      border: '2px solid',
-                      borderColor: settings.catVariant === 'black' ? '#6366F1' : '#E2D6C1',
-                      boxShadow: settings.catVariant === 'black' ? '0 0 0 1px #6366F1' : 'none',
-                      borderRadius: '12px',
-                      padding: '6px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <div style={{ width: '32px', height: '32px', marginBottom: '2px' }}>
-                      <CatSvg variant="black" state="idle" />
-                    </div>
-                    <span style={{ fontSize: '13.5px', fontWeight: 800 }}>Gato Negro</span>
-                  </div>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gap: '6px',
+                  }}
+                >
+                  {CAT_BREEDS.map((breed) => {
+                    const isUnlocked = isCatBreedUnlocked(breed.id, totalStars);
+                    const isSelected = settings.catVariant === breed.id;
 
-                  <div
-                    data-testid="select-cat-white"
-                    onClick={() => setVariant('white')}
-                    style={{
-                      flex: 1,
-                      height: '66px',
-                      boxSizing: 'border-box',
-                      background: settings.catVariant === 'white' ? '#FFF' : '#EFE6D5',
-                      border: '2px solid',
-                      borderColor: settings.catVariant === 'white' ? '#6366F1' : '#E2D6C1',
-                      boxShadow: settings.catVariant === 'white' ? '0 0 0 1px #6366F1' : 'none',
-                      borderRadius: '12px',
-                      padding: '6px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <div style={{ width: '32px', height: '32px', marginBottom: '2px' }}>
-                      <CatSvg variant="white" state="idle" />
-                    </div>
-                    <span style={{ fontSize: '13.5px', fontWeight: 800 }}>Gato Blanco</span>
-                  </div>
+                    return (
+                      <button
+                        key={breed.id}
+                        type="button"
+                        data-testid={`select-cat-${breed.id}`}
+                        data-locked={isUnlocked ? 'false' : 'true'}
+                        aria-disabled={!isUnlocked}
+                        onClick={() => {
+                          if (isUnlocked) {
+                            setVariant(breed.id);
+                          }
+                        }}
+                        style={{
+                          height: '66px',
+                          boxSizing: 'border-box',
+                          background: isSelected
+                            ? '#FFF'
+                            : isUnlocked
+                            ? '#EFE6D5'
+                            : '#E8DFCE',
+                          border: '2px solid',
+                          borderColor: isSelected
+                            ? '#6366F1'
+                            : isUnlocked
+                            ? '#E2D6C1'
+                            : '#D6C9B1',
+                          boxShadow: isSelected ? '0 0 0 1px #6366F1' : 'none',
+                          borderRadius: '12px',
+                          padding: '4px 2px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: isUnlocked ? 'pointer' : 'not-allowed',
+                          opacity: isUnlocked ? 1 : 0.72,
+                        }}
+                      >
+                        <div style={{ width: '28px', height: '28px', marginBottom: '2px' }}>
+                          <CatSvg variant={breed.id} state="idle" />
+                        </div>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            color: '#3D3135',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            maxWidth: '100%',
+                          }}
+                        >
+                          {breed.name}
+                        </span>
+                        {!isUnlocked && (
+                          <span
+                            style={{
+                              fontSize: '9.5px',
+                              fontWeight: 800,
+                              color: '#92400E',
+                              background: '#FEF3C7',
+                              borderRadius: '4px',
+                              padding: '1px 3px',
+                              lineHeight: 1,
+                              marginTop: '1px',
+                            }}
+                          >
+                            {breed.requiredStars}★
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
