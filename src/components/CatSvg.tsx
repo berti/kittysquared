@@ -9,6 +9,10 @@ export interface CatSvgProps {
 
 const HEAD_PATH =
   'M 24 12.8 Q 27.5 12.8, 30.5 14.0 Q 34.2 9.2, 37.8 6.8 Q 39.6 5.6, 40.2 7.8 Q 41.4 13.5, 40.8 20.2 C 43.2 27.2, 41.2 39.2, 24 40.2 C 6.8 39.2, 4.8 27.2, 7.2 20.2 Q 6.6 13.5, 7.8 7.8 Q 8.4 5.6, 10.2 6.8 Q 13.8 9.2, 17.5 14.0 Q 20.5 12.8, 24 12.8 Z';
+const LEFT_EAR_PATH =
+  'M 7.2 20.2 Q 6.6 13.5, 7.8 7.8 Q 8.4 5.6, 10.2 6.8 Q 13.8 9.2, 17.5 14.0 Q 12 17.5, 7.2 20.2 Z';
+const RIGHT_EAR_PATH =
+  'M 30.5 14.0 Q 34.2 9.2, 37.8 6.8 Q 39.6 5.6, 40.2 7.8 Q 41.4 13.5, 40.8 20.2 Q 36 17.5, 30.5 14.0 Z';
 const LEFT_INNER_EAR =
   'M 9.8 18.2 Q 9.5 13.5, 10.2 9.8 Q 10.5 8.8, 11.4 9.6 Q 13.8 11.6, 15.8 14.8 Q 12.6 16.4, 9.8 18.2 Z';
 const RIGHT_INNER_EAR =
@@ -118,8 +122,8 @@ const BREED_THEMES: Record<CatVariant, BreedTheme> = {
     rimHighlight: 'rgba(255,255,255,0.4)',
     markings: (
       <>
-        <path d="M 6 21.5 Q 12 17.5 18 14 L 19 4 L 5 4 Z" fill="#4A2F21" />
-        <path d="M 42 21.5 Q 36 17.5 30 14 L 29 4 L 43 4 Z" fill="#4A2F21" />
+        <path d={LEFT_EAR_PATH} fill="#4A2F21" />
+        <path d={RIGHT_EAR_PATH} fill="#4A2F21" />
         <ellipse cx="24" cy="26.2" rx="13.2" ry="8.4" fill="#9A6F55" />
         <ellipse cx="24" cy="28.2" rx="8.2" ry="5.5" fill="#7D563F" />
       </>
@@ -138,8 +142,8 @@ const BREED_THEMES: Record<CatVariant, BreedTheme> = {
     rimHighlight: 'rgba(255,255,255,0.45)',
     markings: (
       <>
-        <path d="M 5.5 22 Q 11.5 17.5 18 14 L 19 4 L 5 4 Z" fill="#EA580C" />
-        <path d="M 42.5 22 Q 36.5 17.5 30 14 L 29 4 L 43 4 Z" fill="#332B3B" />
+        <path d={LEFT_EAR_PATH} fill="#EA580C" />
+        <path d={RIGHT_EAR_PATH} fill="#332B3B" />
         <circle cx="39.5" cy="33.5" r="5.5" fill="#FB923C" />
       </>
     ),
@@ -251,7 +255,12 @@ export function CatSvg({ variant, state }: CatSvgProps) {
         <path data-cat-part="head" d={HEAD_PATH} fill={theme.baseFill} />
 
         {/* 2. Clipped Markings & Soft-Clay Shading */}
-        <g clipPath={`url(#${clipId})`} data-cat-part="markings">
+        <g
+          clipPath={`url(#${clipId})`}
+          clip-path={`url(#${clipId})`}
+          style={{ clipPath: `url(#${clipId})` }}
+          data-cat-part="markings"
+        >
           {theme.markings}
           {/* Forehead top highlight */}
           <path
