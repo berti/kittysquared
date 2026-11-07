@@ -3,24 +3,60 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render } from '@testing-library/preact';
 import { Board } from '../../src/components/Board';
 import { CatSvg } from '../../src/components/CatSvg';
-import { CellState } from '../../src/types/puzzle';
+import { CatVariant, CellState } from '../../src/types/puzzle';
 
 describe('components/CatSvg & Board', () => {
   beforeEach(() => {
     cleanup();
     document.body.innerHTML = '';
   });
-  it('renders both black and white cat variants keeping ears, pink nose, and 4 whiskers across all 4 states', () => {
-    for (const variant of ['black', 'white'] as const) {
+  it('renders all 8 cat variants keeping clipped markings, ears, nose, and 4 whiskers across all 4 states', () => {
+    const variants: CatVariant[] = [
+      'black',
+      'white',
+      'orange',
+      'siamese',
+      'calico',
+      'tuxedo',
+      'russian',
+      'sakura',
+    ];
+    for (const variant of variants) {
       for (const state of ['idle', 'placed', 'conflict', 'victory'] as const) {
         const { container } = render(<CatSvg variant={variant} state={state} />);
         expect(container.querySelector('[data-cat-part="head"]')).not.toBeNull();
+        expect(container.querySelector('[data-cat-part="markings"]')).not.toBeNull();
         expect(container.querySelector('[data-cat-part="ears"]')).not.toBeNull();
         expect(container.querySelector('[data-cat-part="nose"]')).not.toBeNull();
         expect(container.querySelectorAll('[data-cat-part="whisker"]')).toHaveLength(4);
         expect(container.querySelector(`[data-cat-state="${state}"]`)).not.toBeNull();
       }
     }
+  });
+
+  it('Review Focus #3: generates unique clipPath IDs per instance and uses high-contrast closed-eye and mouth strokes on siamese, tuxedo, and russian', () => {
+    const { container } = render(
+      <div>
+        <CatSvg variant="siamese" state="placed" />
+        <CatSvg variant="tuxedo" state="placed" />
+        <CatSvg variant="russian" state="placed" />
+      </div>
+    );
+    const clipPaths = container.querySelectorAll('clipPath');
+    expect(clipPaths).toHaveLength(3);
+    const ids = Array.from(clipPaths).map((cp) => cp.getAttribute('id'));
+    expect(new Set(ids).size).toBe(3);
+
+    const svgs = container.querySelectorAll('svg.cat-svg');
+    // Siamese: dark espresso (#23140D) closed eyes and mouth
+    expect(svgs[0].querySelector('[data-cat-part="eye-closed"]')?.getAttribute('stroke')).toBe('#23140D');
+    expect(svgs[0].querySelector('[data-cat-part="mouth"]')?.getAttribute('stroke')).toBe('#23140D');
+    // Tuxedo: white (#FFFFFF) closed eyes on black hood, dark (#201C29) mouth on white muzzle
+    expect(svgs[1].querySelector('[data-cat-part="eye-closed"]')?.getAttribute('stroke')).toBe('#FFFFFF');
+    expect(svgs[1].querySelector('[data-cat-part="mouth"]')?.getAttribute('stroke')).toBe('#201C29');
+    // Russian Blue: dark slate-charcoal (#1E2631) closed eyes and mouth
+    expect(svgs[2].querySelector('[data-cat-part="eye-closed"]')?.getAttribute('stroke')).toBe('#1E2631');
+    expect(svgs[2].querySelector('[data-cat-part="mouth"]')?.getAttribute('stroke')).toBe('#1E2631');
   });
 
   it('assigns independent random blink intervals to idle cats so they are not synchronized', () => {
