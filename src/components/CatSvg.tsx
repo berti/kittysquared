@@ -108,7 +108,7 @@ const BREED_THEMES: Record<CatVariant, BreedTheme> = {
   siamese: {
     baseFill: '#F5EFE6',
     outline: '#2B1B12',
-    innerEar: '#6E4735',
+    innerEar: '#382216',
     eyeIris: '#38BDF8',
     eyePupil: '#0F172A',
     eyeStroke: '#23140D',
@@ -118,8 +118,8 @@ const BREED_THEMES: Record<CatVariant, BreedTheme> = {
     rimHighlight: 'rgba(255,255,255,0.4)',
     markings: (
       <>
-        <polygon points="0,0 21,0 18,20 0,22" fill="#4A2F21" />
-        <polygon points="48,0 27,0 30,20 48,22" fill="#4A2F21" />
+        <path d="M 6 21.5 Q 12 17.5 18 14 L 19 4 L 5 4 Z" fill="#4A2F21" />
+        <path d="M 42 21.5 Q 36 17.5 30 14 L 29 4 L 43 4 Z" fill="#4A2F21" />
         <ellipse cx="24" cy="26.2" rx="13.2" ry="8.4" fill="#9A6F55" />
         <ellipse cx="24" cy="28.2" rx="8.2" ry="5.5" fill="#7D563F" />
       </>
@@ -138,8 +138,8 @@ const BREED_THEMES: Record<CatVariant, BreedTheme> = {
     rimHighlight: 'rgba(255,255,255,0.45)',
     markings: (
       <>
-        <circle cx="10.0" cy="12.5" r="10.2" fill="#EA580C" />
-        <circle cx="39.0" cy="13.0" r="9.5" fill="#332B3B" />
+        <path d="M 5.5 22 Q 11.5 17.5 18 14 L 19 4 L 5 4 Z" fill="#EA580C" />
+        <path d="M 42.5 22 Q 36.5 17.5 30 14 L 29 4 L 43 4 Z" fill="#332B3B" />
         <circle cx="39.5" cy="33.5" r="5.5" fill="#FB923C" />
       </>
     ),
@@ -253,12 +253,12 @@ export function CatSvg({ variant, state }: CatSvgProps) {
         {/* 2. Clipped Markings & Soft-Clay Shading */}
         <g clipPath={`url(#${clipId})`} data-cat-part="markings">
           {theme.markings}
-          {/* Top highlight */}
+          {/* Forehead top highlight */}
           <path
-            d="M 8 10 Q 24 15 40 10"
+            d="M 18 13.8 Q 24 15 30 13.8"
             fill="none"
             stroke={theme.rimHighlight}
-            strokeWidth={4}
+            strokeWidth={2.4}
             strokeLinecap="round"
           />
           {/* Bottom shadow */}
