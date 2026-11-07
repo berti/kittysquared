@@ -41,14 +41,14 @@ With 300 levels (`900★` maximum), the 8 breeds unlock across a smooth progress
 
 | ID (`CatVariant`) | Display Name (`name`) | Required Stars (`requiredStars`) | Visual Summary |
 | :--- | :--- | :---: | :--- |
-| `'black'` | `Gato Negro` | `0` | Velvet obsidian coat (`#231F2B`), glowing amber eyes (`#FBBF24`), pink inner ears/nose, white whiskers. |
-| `'white'` | `Gato Blanco` | `0` | Marshmallow cream coat (`#FFFDF9`), sky-blue eyes (`#38BDF8`), petal-pink inner ears, dark cocoa outline/whiskers. |
-| `'orange'` | `Naranjito` | `25` | Warm tangerine (`#FB923C`), cinnamon forehead `"M"` & cheek stripes (`#C2410C`), cream muzzle (`#FFFBEB`), emerald eyes (`#10B981`). |
-| `'siamese'` | `Siamés` | `60` | Toasted almond cream (`#F5EFE6`), espresso seal-point ears & center mask (`#4A2F21`), ice-blue eyes (`#0EA5E9`). |
-| `'calico'` | `Calicó` | `100` | Milk-white base (`#FFFDF9`), clipped ginger (`#EA580C`) and dark slate (`#332B3B`) ear/cheek patches, amber-honey eyes (`#F59E0B`). |
-| `'tuxedo'` | `Esmoquin` | `150` | Jet-black hood (`#201C29`), symmetrical white inverted-V blaze & white cheeks/chin (`#FFFDF9`), jade green eyes (`#22C55E`). |
-| `'russian'` | `Azul Ruso` | `210` | Plush slate-blue coat (`#64748B`), pewter muzzle (`#94A3B8`) & forehead chevrons (`#334155`), mauve inner ears (`#F4ACB7`), lime-emerald eyes (`#34D399`). |
-| `'sakura'` | `Sakura Mochi` | `280` | Cherry-blossom pink (`#FDA4AF`), cream mochi cheeks & forehead blossom mark (`#FFF1F2`), berry outline (`#6B1D2F`), violet eyes (`#A855F7`). |
+| `'black'` | `Gato Negro` | `0` | Velvet obsidian coat (`#231F2B`), glowing amber eyes (`#FBBF24`), white closed-eye & mouth strokes (`#FFFFFF`), pink inner ears/nose, white whiskers. |
+| `'white'` | `Gato Blanco` | `0` | Marshmallow cream coat (`#FFFDF9`), sky-blue eyes (`#38BDF8`), dark cocoa closed-eye & mouth strokes (`#352A2E`), petal-pink inner ears. |
+| `'orange'` | `Naranjito` | `25` | Warm tangerine (`#FB923C`), cinnamon forehead `"M"` & cheek stripes (`#C2410C`), cream muzzle (`#FFFBEB`), emerald eyes (`#10B981`), dark espresso closed-eye & mouth strokes (`#3B2314`). |
+| `'siamese'` | `Siamés` | `60` | Toasted almond cream (`#F5EFE6`), chocolate ears (`#4A2F21`) & warm toasted-cocoa seal mask (`#9A6F55` / `#7D563F`), ice-blue eyes (`#38BDF8`), dark espresso closed-eye & mouth strokes (`#23140D`) for crisp contrast across both mask and cream fur. |
+| `'calico'` | `Calicó` | `100` | Milk-white base (`#FFFDF9`), clipped ginger (`#EA580C`) and dark slate (`#332B3B`) ear/temple patches kept cleanly above the eye line, amber-honey eyes (`#F59E0B`), dark closed-eye & mouth strokes (`#2D2327`). |
+| `'tuxedo'` | `Esmoquin` | `150` | Jet-black hood (`#201C29`), symmetrical white inverted-V blaze (`M 24 21.5 ...`) & white lower cheeks/chin (`#FFFDF9`), jade green eyes (`#22C55E`), crisp white closed-eye strokes (`#FFFFFF`) on the black hood and dark mouth stroke (`#201C29`) on the white muzzle. |
+| `'russian'` | `Azul Ruso` | `210` | Plush slate-blue coat (`#64748B`), pewter muzzle (`#94A3B8`) & dark slate forehead chevrons (`#1E2631`), mauve inner ears (`#F4ACB7`), lime-emerald eyes (`#34D399`), dark slate-charcoal closed-eye & mouth strokes (`#1E2631`). |
+| `'sakura'` | `Sakura Mochi` | `280` | Cherry-blossom pink (`#FDA4AF`), cream mochi cheeks & forehead blossom mark (`#FFF1F2`), berry outline & closed-eye/mouth strokes (`#6B1D2F`), violet eyes (`#A855F7`). |
 
 ### 2.3 Progression Helpers & Persistence Sanitization (`src/state/storage.ts`)
 
