@@ -1,16 +1,23 @@
 import { useState } from 'preact/hooks';
-import { CatVariant } from '../types/puzzle';
-import { getTotalEarnedStars, ModeProgress } from '../state/storage';
+import { CatVariant, DailyProgress } from '../types/puzzle';
+import { DEFAULT_DAILY_PROGRESS, getTotalEarnedStars, ModeProgress } from '../state/storage';
+import {
+  formatDailyDateSpanish,
+  getEffectiveStreak,
+  getTodayDateString,
+} from '../engine/daily';
 import { CatSvg } from './CatSvg';
 import { ConfirmDialog } from './ConfirmDialog';
-import { PawCoinIcon, WarningIcon } from './Icons';
+import { CalendarIcon, CheckIcon, FlameIcon, PawCoinIcon, WarningIcon } from './Icons';
 import { PostGameModal } from './PostGameModal';
 
 export interface HomeScreenProps {
   progress: ModeProgress;
   totalLevels?: number;
   catVariant: CatVariant;
+  daily?: DailyProgress;
   onPlay: () => void;
+  onOpenDaily?: () => void;
   onOpenLevels?: () => void;
   onReplayLastLevel?: () => void;
   onResetProgress?: () => void;
@@ -22,7 +29,9 @@ export function HomeScreen({
   progress,
   totalLevels,
   catVariant,
+  daily = DEFAULT_DAILY_PROGRESS,
   onPlay,
+  onOpenDaily = () => {},
   onOpenLevels,
   onReplayLastLevel,
   onResetProgress,
@@ -36,6 +45,12 @@ export function HomeScreen({
   const isGameCompleted = progress.currentLevelId > levelsCount;
   const totalEarnedStars = getTotalEarnedStars(progress);
   const maxStars = levelsCount * 3;
+
+  const todayStr = getTodayDateString();
+  const formattedDailyDate = formatDailyDateSpanish(todayStr, 'long');
+  const effectiveStreak = getEffectiveStreak(daily, todayStr);
+  const todayResult = daily.history[todayStr];
+  const isDailyCompletedToday = Boolean(todayResult);
 
   const handlePlayClick = () => {
     if (isGameCompleted) {
@@ -108,6 +123,153 @@ export function HomeScreen({
             </span>
             <PawCoinIcon size={16} testId="home-paw-coin-icon" />
             <span>{progress.totalScore}</span>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          data-testid="open-daily-btn"
+          onClick={() => onOpenDaily?.()}
+          style={{
+            width: '100%',
+            background: '#FFF8F0',
+            border: '2px solid #EADCC9',
+            boxShadow: '0 3px 0 #E2D6C1',
+            borderRadius: '14px',
+            padding: '14px 18px',
+            cursor: 'pointer',
+            boxSizing: 'border-box',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '12px',
+            fontFamily: 'inherit',
+            textAlign: 'left',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              minWidth: 0,
+            }}
+          >
+            <CalendarIcon size={24} testId="daily-calendar-icon" />
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <span
+                style={{
+                  fontSize: '15.5px',
+                  fontWeight: 800,
+                  color: '#3D3135',
+                  lineHeight: 1.2,
+                }}
+              >
+                Reto Diario
+              </span>
+              <span
+                style={{
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  color: '#8A7A70',
+                  textTransform: 'capitalize',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {formattedDailyDate}
+              </span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              flexShrink: 0,
+              flexWrap: 'wrap',
+              justifyContent: 'flex-end',
+            }}
+          >
+            {isDailyCompletedToday ? (
+              <>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    background: '#E8F5E9',
+                    color: '#2E7D32',
+                    border: '1px solid #C8E6C9',
+                    borderRadius: '8px',
+                    padding: '3px 8px',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                  }}
+                >
+                  <CheckIcon size={14} color="#2E7D32" testId="daily-check-icon" />
+                  <span>Completado</span>
+                </span>
+                {todayResult && (
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '2px',
+                      fontSize: '13.5px',
+                      fontWeight: 800,
+                      color: '#D97706',
+                    }}
+                  >
+                    <span>{`${todayResult.stars}★`}</span>
+                  </span>
+                )}
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    fontSize: '13.5px',
+                    fontWeight: 800,
+                    color: '#E07A5F',
+                  }}
+                >
+                  <FlameIcon size={16} testId="daily-flame-icon" />
+                  <span>{effectiveStreak}</span>
+                </span>
+              </>
+            ) : (
+              <>
+                <span
+                  style={{
+                    background: '#FFE8D6',
+                    color: '#B25E3B',
+                    border: '1px solid #FFD0B5',
+                    borderRadius: '8px',
+                    padding: '3px 8px',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                  }}
+                >
+                  10×10 Difícil
+                </span>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    fontSize: '13.5px',
+                    fontWeight: 800,
+                    color: '#E07A5F',
+                  }}
+                >
+                  <FlameIcon size={16} testId="daily-flame-icon" />
+                  <span>{effectiveStreak}</span>
+                </span>
+              </>
+            )}
           </div>
         </button>
 

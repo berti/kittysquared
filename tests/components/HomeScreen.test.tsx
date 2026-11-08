@@ -2,6 +2,12 @@
 import { fireEvent, render, screen } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HomeScreen } from '../../src/components/HomeScreen';
+import {
+  formatDailyDateSpanish,
+  getPreviousDateString,
+  getTodayDateString,
+} from '../../src/engine/daily';
+import { DailyProgress } from '../../src/types/puzzle';
 
 describe('HomeScreen component', () => {
   beforeEach(() => {
@@ -181,5 +187,140 @@ describe('HomeScreen component', () => {
     expect(levelsBtn.textContent).toContain('8 / 900');
     fireEvent.click(levelsBtn);
     expect(onOpenLevels).toHaveBeenCalledTimes(1);
+  });
+
+  describe('Reto Diario Card', () => {
+    it('renders Reto Diario card between Jugar and Niveles with calendar icon and date', () => {
+      render(
+        <HomeScreen
+          progress={defaultProgress}
+          catVariant="black"
+          onPlay={vi.fn()}
+          onOpenLevels={vi.fn()}
+          onOpenTutorial={vi.fn()}
+          onOpenSettings={vi.fn()}
+        />
+      );
+
+      const playBtn = screen.getByTestId('start-game-btn');
+      const dailyCard = screen.getByTestId('open-daily-btn');
+      const levelsBtn = screen.getByTestId('open-levels-btn');
+
+      expect(playBtn.compareDocumentPosition(dailyCard) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(dailyCard.compareDocumentPosition(levelsBtn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+      expect(screen.getByTestId('daily-calendar-icon')).toBeDefined();
+      expect(dailyCard.textContent).toContain('Reto Diario');
+
+      const todayStr = getTodayDateString();
+      const expectedDate = formatDailyDateSpanish(todayStr, 'long');
+      expect(dailyCard.textContent).toContain(expectedDate);
+    });
+
+    it('renders unplayed today state with 10x10 Dificil pill and effective streak', () => {
+      const todayStr = getTodayDateString();
+      const yesterdayStr = getPreviousDateString(todayStr);
+      const dailyUnplayed: DailyProgress = {
+        lastPlayedDate: yesterdayStr,
+        currentStreak: 4,
+        maxStreak: 6,
+        history: {},
+        activeSnapshot: null,
+        activeSnapshotDate: null,
+      };
+
+      render(
+        <HomeScreen
+          progress={defaultProgress}
+          daily={dailyUnplayed}
+          catVariant="black"
+          onPlay={vi.fn()}
+          onOpenTutorial={vi.fn()}
+          onOpenSettings={vi.fn()}
+        />
+      );
+
+      const dailyCard = screen.getByTestId('open-daily-btn');
+      expect(dailyCard.textContent).toContain('10×10 Difícil');
+      expect(dailyCard.textContent).toContain('4');
+      expect(screen.getByTestId('daily-flame-icon')).toBeDefined();
+      expect(screen.queryByTestId('daily-check-icon')).toBeNull();
+      expect(dailyCard.textContent).not.toContain('Completado');
+    });
+
+    it('renders completed today state with CheckIcon, Completado pill, stars, and streak', () => {
+      const todayStr = getTodayDateString();
+      const dailyCompleted: DailyProgress = {
+        lastPlayedDate: todayStr,
+        currentStreak: 5,
+        maxStreak: 7,
+        history: {
+          [todayStr]: {
+            date: todayStr,
+            stars: 3,
+            mistakes: 0,
+            timeSeconds: 120,
+            completedAt: new Date().toISOString(),
+          },
+        },
+        activeSnapshot: null,
+        activeSnapshotDate: null,
+      };
+
+      render(
+        <HomeScreen
+          progress={defaultProgress}
+          daily={dailyCompleted}
+          catVariant="black"
+          onPlay={vi.fn()}
+          onOpenTutorial={vi.fn()}
+          onOpenSettings={vi.fn()}
+        />
+      );
+
+      const dailyCard = screen.getByTestId('open-daily-btn');
+      expect(dailyCard.textContent).toContain('Completado');
+      expect(screen.getByTestId('daily-check-icon')).toBeDefined();
+      expect(dailyCard.textContent).toContain('3★');
+      expect(screen.getByTestId('daily-flame-icon')).toBeDefined();
+      expect(dailyCard.textContent).toContain('5');
+      expect(dailyCard.textContent).not.toContain('10×10 Difícil');
+    });
+
+    it('triggers onOpenDaily callback when Reto Diario card is clicked', () => {
+      const onOpenDaily = vi.fn();
+      render(
+        <HomeScreen
+          progress={defaultProgress}
+          catVariant="black"
+          onPlay={vi.fn()}
+          onOpenDaily={onOpenDaily}
+          onOpenTutorial={vi.fn()}
+          onOpenSettings={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('open-daily-btn'));
+      expect(onOpenDaily).toHaveBeenCalledTimes(1);
+    });
+
+    it('handles backward compatibility when daily prop is omitted', () => {
+      render(
+        <HomeScreen
+          progress={defaultProgress}
+          catVariant="black"
+          onPlay={vi.fn()}
+          onOpenTutorial={vi.fn()}
+          onOpenSettings={vi.fn()}
+        />
+      );
+
+      const dailyCard = screen.getByTestId('open-daily-btn');
+      expect(dailyCard).toBeDefined();
+      expect(dailyCard.textContent).toContain('Reto Diario');
+      expect(dailyCard.textContent).toContain('10×10 Difícil');
+      expect(dailyCard.textContent).toContain('0');
+      expect(screen.queryByTestId('daily-check-icon')).toBeNull();
+    });
   });
 });
