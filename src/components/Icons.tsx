@@ -2,6 +2,7 @@ export interface IconProps {
   size?: number;
   className?: string;
   testId?: string;
+  color?: string;
 }
 
 export const REGION_GLYPH_IDS = [
@@ -451,6 +452,112 @@ export function RegionGlyphIcon({ regionId, size = 13 }: RegionGlyphIconProps) {
           fill={color}
         />
       )}
+    </svg>
+  );
+}
+
+export function FlameIcon({ size = 20, className, testId = 'icon-flame' }: IconProps) {
+  return (
+    <svg
+      data-testid={testId}
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      style={{ display: 'block', flexShrink: 0 }}
+    >
+      <defs>
+        <linearGradient id="flame-gradient" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" stopColor="#FF6B4A" />
+          <stop offset="60%" stopColor="#FF9F1C" />
+          <stop offset="100%" stopColor="#FFD166" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M12 2.5C10.5 5 7 8.5 7 13c0 3.3 2.2 6.5 5 6.5s5-3.2 5-6.5c0-2-.8-3.8-2-5 .2 1.5-.5 3-2 3.5.5-2-.2-4.5-1-6.5Z"
+        fill="url(#flame-gradient)"
+        stroke="#4A3B32"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 11c-1 1.2-2 2.4-2 4 0 1.7 1 3 2 3s2-1.3 2-3c0-1.6-1-2.8-2-4Z"
+        fill="#FFE66D"
+      />
+    </svg>
+  );
+}
+
+export function CalendarIcon({ size = 20, className, testId = 'icon-calendar' }: IconProps) {
+  return (
+    <svg
+      data-testid={testId}
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      style={{ display: 'block', flexShrink: 0 }}
+    >
+      <rect
+        x="3.5"
+        y="5.5"
+        width="17"
+        height="15"
+        rx="3.5"
+        fill="#FFF8F0"
+        stroke="#4A3B32"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M3.5 10.5h17"
+        stroke="#4A3B32"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M3.5 9a3.5 3.5 0 0 1 3.5-3.5h10A3.5 3.5 0 0 1 20.5 9v1.5h-17V9Z"
+        fill="#FF7E67"
+      />
+      <rect x="6.8" y="2.5" width="2.4" height="4.5" rx="1.2" fill="#FFE66D" stroke="#4A3B32" strokeWidth="1.4" />
+      <rect x="14.8" y="2.5" width="2.4" height="4.5" rx="1.2" fill="#FFE66D" stroke="#4A3B32" strokeWidth="1.4" />
+      <circle cx="8" cy="14" r="1.1" fill="#FFB5A7" />
+      <circle cx="12" cy="14" r="1.1" fill="#FF7E67" />
+      <circle cx="16" cy="14" r="1.1" fill="#FFB5A7" />
+      <circle cx="8" cy="17.2" r="1.1" fill="#FFB5A7" />
+      <circle cx="12" cy="17.2" r="1.1" fill="#FFB5A7" />
+      <circle cx="16" cy="17.2" r="1.1" fill="#FFB5A7" />
+    </svg>
+  );
+}
+
+export function CheckIcon({
+  size = 20,
+  className,
+  testId = 'icon-check',
+  color = '#2B9348',
+}: IconProps) {
+  return (
+    <svg
+      data-testid={testId}
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      style={{ display: 'block', flexShrink: 0 }}
+    >
+      <path
+        d="M5 12.5l4.5 4.5L19 7"
+        stroke={color}
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

@@ -5,7 +5,10 @@ import { cleanup, render } from '@testing-library/preact';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   AssistsTabIcon,
+  CalendarIcon,
+  CheckIcon,
   ControlsTabIcon,
+  FlameIcon,
   GearIcon,
   GraphicsTabIcon,
   HeartSvg,
@@ -51,6 +54,28 @@ describe('Soft-Clay SVG Icon Library (Icons.tsx)', () => {
     expect(getByTestId('icon-tab-sound')).toBeDefined();
     expect(getByTestId('icon-tab-ayudas')).toBeDefined();
     expect(getByTestId('icon-tap-prompt')).toBeDefined();
+  });
+
+  it('renders bespoke daily and streak icons (FlameIcon, CalendarIcon, CheckIcon)', () => {
+    const { getByTestId } = render(
+      <div>
+        <FlameIcon size={22} testId="icon-flame" />
+        <CalendarIcon size={24} testId="icon-calendar" />
+        <CheckIcon size={18} testId="icon-check" />
+      </div>
+    );
+
+    const flame = getByTestId('icon-flame');
+    expect(flame.tagName.toLowerCase()).toBe('svg');
+    expect(flame.getAttribute('width')).toBe('22');
+
+    const calendar = getByTestId('icon-calendar');
+    expect(calendar.tagName.toLowerCase()).toBe('svg');
+    expect(calendar.getAttribute('width')).toBe('24');
+
+    const check = getByTestId('icon-check');
+    expect(check.tagName.toLowerCase()).toBe('svg');
+    expect(check.getAttribute('width')).toBe('18');
   });
 
   it('renders HeartSvg in full, empty, and heart-losing states', () => {
