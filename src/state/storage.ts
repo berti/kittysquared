@@ -2,18 +2,14 @@ import {
   AutoCrossMode,
   CatBreedDef,
   CatVariant,
-  CellState,
+  DailyProgress,
+  DailyPuzzleResult,
   RegionAssistMode,
+  SavedBoardSnapshot,
 } from '../types/puzzle';
+import { getTodayDateString } from '../engine/daily';
 
-export interface SavedBoardSnapshot {
-  levelId: number;
-  board: CellState[][];
-  lockedCats: boolean[][];
-  errorCrosses?: boolean[][];
-  mistakes: number;
-  partialScore: number;
-}
+export type { SavedBoardSnapshot };
 
 export type StarRating = 1 | 2 | 3;
 
@@ -50,7 +46,17 @@ export interface AppSettings {
 export interface PersistedAppState {
   progress: ModeProgress;
   settings: AppSettings;
+  daily: DailyProgress;
 }
+
+export const DEFAULT_DAILY_PROGRESS: DailyProgress = {
+  lastPlayedDate: null,
+  currentStreak: 0,
+  maxStreak: 0,
+  history: {},
+  activeSnapshot: null,
+  activeSnapshotDate: null,
+};
 
 const STORAGE_KEY = 'kittysquared_state_v1';
 
@@ -129,6 +135,7 @@ export function getDefaultAppState(): PersistedAppState {
       sfxVolume: 0.75,
       musicTrack: 'auto',
     },
+    daily: { ...DEFAULT_DAILY_PROGRESS },
   };
 }
 
@@ -164,6 +171,73 @@ function sanitizeAndBackfillLevelStars(
   }
 
   return sanitized;
+}
+
+function sanitizeDailyProgress(rawDaily: unknown): DailyProgress {
+  if (!rawDaily || typeof rawDaily !== 'object') {
+    return { ...DEFAULT_DAILY_PROGRESS };
+  }
+  const raw = rawDaily as Record<string, unknown>;
+
+  const lastPlayedDate =
+    typeof raw.lastPlayedDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.lastPlayedDate)
+      ? raw.lastPlayedDate
+      : null;
+
+  const currentStreak =
+    typeof raw.currentStreak === 'number' && Number.isFinite(raw.currentStreak) && raw.currentStreak >= 0
+      ? Math.floor(raw.currentStreak)
+      : 0;
+
+  const maxStreak =
+    typeof raw.maxStreak === 'number' && Number.isFinite(raw.maxStreak) && raw.maxStreak >= 0
+      ? Math.floor(raw.maxStreak)
+      : 0;
+
+  const history: Record<string, DailyPuzzleResult> = {};
+  if (raw.history && typeof raw.history === 'object') {
+    for (const [key, val] of Object.entries(raw.history as Record<string, unknown>)) {
+      if (val && typeof val === 'object') {
+        const v = val as Record<string, unknown>;
+        if (
+          typeof v.date === 'string' &&
+          (v.stars === 1 || v.stars === 2 || v.stars === 3) &&
+          typeof v.mistakes === 'number' &&
+          typeof v.timeSeconds === 'number' &&
+          typeof v.completedAt === 'string'
+        ) {
+          history[key] = {
+            date: v.date,
+            stars: v.stars as 1 | 2 | 3,
+            mistakes: v.mistakes,
+            timeSeconds: v.timeSeconds,
+            completedAt: v.completedAt,
+          };
+        }
+      }
+    }
+  }
+
+  const todayStr = getTodayDateString();
+  let activeSnapshot: SavedBoardSnapshot | null = null;
+  let activeSnapshotDate: string | null = null;
+  if (
+    raw.activeSnapshot &&
+    typeof raw.activeSnapshot === 'object' &&
+    raw.activeSnapshotDate === todayStr
+  ) {
+    activeSnapshot = raw.activeSnapshot as SavedBoardSnapshot;
+    activeSnapshotDate = todayStr;
+  }
+
+  return {
+    lastPlayedDate,
+    currentStreak,
+    maxStreak,
+    history,
+    activeSnapshot,
+    activeSnapshotDate,
+  };
 }
 
 export function loadPersistedState(): PersistedAppState {
@@ -228,6 +302,7 @@ export function loadPersistedState(): PersistedAppState {
           ? cleanRawSettings.musicTrack
           : 'auto',
       },
+      daily: sanitizeDailyProgress(parsed.daily),
     };
   } catch (_e) {
     return defaults;
@@ -258,6 +333,7 @@ export function resetProgress(state: PersistedAppState): PersistedAppState {
       ...state.settings,
       catVariant: nextCatVariant,
     },
+    daily: state.daily ? { ...state.daily } : { ...DEFAULT_DAILY_PROGRESS },
   };
   savePersistedState(next);
   return next;

@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
+import { getTodayDateString } from '../../src/engine/daily';
 import {
   CAT_BREEDS,
+  DEFAULT_DAILY_PROGRESS,
   getDefaultAppState,
   getNewlyUnlockedBreeds,
   getTotalEarnedStars,
@@ -355,5 +357,113 @@ describe('state/storage', () => {
     const afterResetLocked = resetProgress(state);
     expect(afterResetLocked.settings.catVariant).toBe('black');
     expect(loadPersistedState().settings.catVariant).toBe('black');
+  });
+
+  it('initializes DEFAULT_DAILY_PROGRESS when loading legacy state without daily field', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        progress: { currentLevelId: 4, totalScore: 200, activeSnapshot: null },
+        settings: { catVariant: 'black' },
+      })
+    );
+    const loaded = loadPersistedState();
+    expect(loaded.daily).toEqual(DEFAULT_DAILY_PROGRESS);
+    expect(loaded.daily.currentStreak).toBe(0);
+    expect(loaded.daily.maxStreak).toBe(0);
+    expect(loaded.daily.lastPlayedDate).toBeNull();
+    expect(loaded.daily.history).toEqual({});
+    expect(loaded.daily.activeSnapshot).toBeNull();
+    expect(loaded.daily.activeSnapshotDate).toBeNull();
+  });
+
+  it('discards activeSnapshot from daily progress if activeSnapshotDate does not match today', () => {
+    const dummySnapshot = {
+      levelId: 1001,
+      board: [['empty' as const]],
+      lockedCats: [[false]],
+      mistakes: 1,
+      partialScore: 0,
+    };
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        daily: {
+          lastPlayedDate: '2026-11-07',
+          currentStreak: 3,
+          maxStreak: 5,
+          history: {},
+          activeSnapshot: dummySnapshot,
+          activeSnapshotDate: '2026-11-07',
+        },
+      })
+    );
+    const loaded = loadPersistedState();
+    expect(loaded.daily.activeSnapshot).toBeNull();
+    expect(loaded.daily.activeSnapshotDate).toBeNull();
+    expect(loaded.daily.currentStreak).toBe(3);
+    expect(loaded.daily.maxStreak).toBe(5);
+  });
+
+  it('retains activeSnapshot from daily progress if activeSnapshotDate matches today', () => {
+    const todayStr = getTodayDateString();
+    const dummySnapshot = {
+      levelId: 1001,
+      board: [['empty' as const]],
+      lockedCats: [[false]],
+      mistakes: 1,
+      partialScore: 0,
+    };
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        daily: {
+          lastPlayedDate: '2026-11-07',
+          currentStreak: 3,
+          maxStreak: 5,
+          history: {},
+          activeSnapshot: dummySnapshot,
+          activeSnapshotDate: todayStr,
+        },
+      })
+    );
+    const loaded = loadPersistedState();
+    expect(loaded.daily.activeSnapshot).toEqual(dummySnapshot);
+    expect(loaded.daily.activeSnapshotDate).toBe(todayStr);
+  });
+
+  it('preserves daily progress intact when resetting campaign progress', () => {
+    const state = getDefaultAppState();
+    state.progress.currentLevelId = 12;
+    state.progress.totalScore = 950;
+    state.progress.levelStars = { 1: 3, 2: 3 };
+    state.daily = {
+      lastPlayedDate: '2026-11-08',
+      currentStreak: 7,
+      maxStreak: 14,
+      history: {
+        '2026-11-08': {
+          date: '2026-11-08',
+          stars: 3,
+          mistakes: 0,
+          timeSeconds: 90,
+          completedAt: '2026-11-08T12:00:00Z',
+        },
+      },
+      activeSnapshot: null,
+      activeSnapshotDate: null,
+    };
+
+    const afterReset = resetProgress(state);
+    expect(afterReset.progress.currentLevelId).toBe(1);
+    expect(afterReset.progress.totalScore).toBe(0);
+    expect(afterReset.progress.levelStars).toEqual({});
+    expect(afterReset.daily).toEqual(state.daily);
+    expect(afterReset.daily.currentStreak).toBe(7);
+    expect(afterReset.daily.maxStreak).toBe(14);
+    expect(afterReset.daily.history['2026-11-08']).toBeDefined();
+
+    const reloaded = loadPersistedState();
+    expect(reloaded.daily).toEqual(state.daily);
   });
 });

@@ -27,6 +27,32 @@ export interface CellCoord {
   col: number;
 }
 
+export interface SavedBoardSnapshot {
+  levelId: number;
+  board: CellState[][];
+  lockedCats: boolean[][];
+  errorCrosses?: boolean[][];
+  mistakes: number;
+  partialScore: number;
+}
+
+export interface DailyPuzzleResult {
+  date: string; // 'YYYY-MM-DD'
+  stars: 1 | 2 | 3;
+  mistakes: number;
+  timeSeconds: number;
+  completedAt: string; // ISO 8601
+}
+
+export interface DailyProgress {
+  lastPlayedDate: string | null; // 'YYYY-MM-DD'
+  currentStreak: number;
+  maxStreak: number;
+  history: Record<string, DailyPuzzleResult>; // Keyed by 'YYYY-MM-DD'
+  activeSnapshot: SavedBoardSnapshot | null;
+  activeSnapshotDate: string | null;
+}
+
 export interface PuzzleDef {
   id: number;
   size: number;
