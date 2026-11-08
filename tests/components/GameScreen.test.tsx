@@ -623,4 +623,170 @@ describe('GameScreen component', () => {
 
     expect(queryByTestId('victory-unlocked-breed-banner')).toBeNull();
   });
+
+  it('renders daily mode header with "Reto Diario" and formatted date, and shows active live timer instead of score', () => {
+    vi.useFakeTimers();
+    try {
+      const session = createLevelSession(samplePuzzle);
+      const defaultState = getDefaultAppState();
+
+      const { getByText, queryByText, getByTestId, queryByTestId } = render(
+        <GameScreen
+          puzzle={samplePuzzle}
+          progress={defaultState.progress}
+          settings={defaultState.settings}
+          session={session}
+          onUpdateSession={vi.fn()}
+          onAdvanceLevel={vi.fn()}
+          onRetryLevel={vi.fn()}
+          onBackToMenu={vi.fn()}
+          onOpenSettings={vi.fn()}
+          gameMode="daily"
+          dailyDate="2026-11-08"
+          dailyStreak={5}
+        />
+      );
+
+      expect(getByText('Reto Diario')).toBeDefined();
+      expect(getByText('8 nov 2026')).toBeDefined();
+      expect(queryByText('Nivel 42')).toBeNull();
+      expect(queryByTestId('score-paw-coin-icon')).toBeNull();
+
+      const timer = getByTestId('daily-timer');
+      expect(timer.textContent).toBe('00:00');
+
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(timer.textContent).toBe('00:03');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('renders specialized daily victory modal with streak, time, and share button, bypassing campaign rewards and firing onDailyWin', () => {
+    const onDailyWin = vi.fn();
+    const onBackToMenu = vi.fn();
+    const defaultState = getDefaultAppState();
+
+    const wonSession: LevelSessionState = {
+      ...createLevelSession(samplePuzzle),
+      status: 'won',
+      mistakes: 0,
+      partialScore: 40,
+      levelBonus: 60,
+    };
+
+    const { getByText, queryByText, getByTestId, queryByTestId } = render(
+      <GameScreen
+        puzzle={samplePuzzle}
+        progress={defaultState.progress}
+        settings={defaultState.settings}
+        session={wonSession}
+        onUpdateSession={vi.fn()}
+        onAdvanceLevel={vi.fn()}
+        onRetryLevel={vi.fn()}
+        onBackToMenu={onBackToMenu}
+        onOpenSettings={vi.fn()}
+        gameMode="daily"
+        dailyDate="2026-11-08"
+        dailyStreak={5}
+        onDailyWin={onDailyWin}
+      />
+    );
+
+    expect(getByText('¡Reto Diario Completado!')).toBeDefined();
+    expect(queryByText(/Nivel 42 superado/i)).toBeNull();
+    expect(queryByTestId('victory-paw-coin-icon')).toBeNull();
+    expect(queryByTestId('victory-score-card')).toBeNull();
+    expect(queryByTestId('victory-unlocked-breed-banner')).toBeNull();
+
+    // Stars and streak
+    expect(getByTestId('victory-star-1').getAttribute('data-earned')).toBe('true');
+    expect(getByTestId('victory-star-2').getAttribute('data-earned')).toBe('true');
+    expect(getByTestId('victory-star-3').getAttribute('data-earned')).toBe('true');
+    expect(getByText('0 fallos')).toBeDefined();
+    expect(getByText(/Racha:/i)).toBeDefined();
+    expect(getByText(/5 d\u00edas|5/)).toBeDefined();
+    expect(getByTestId('icon-flame')).toBeDefined();
+
+    // Primary action button is "Volver al inicio"
+    expect(queryByTestId('victory-next-btn')).toBeNull();
+    const homeBtn = getByText('Volver al inicio');
+    expect(homeBtn).toBeDefined();
+    fireEvent.click(homeBtn);
+    expect(onBackToMenu).toHaveBeenCalledTimes(1);
+
+    // Secondary action button is "Compartir"
+    expect(getByTestId('daily-share-btn')).toBeDefined();
+
+    // Fires onDailyWin callback
+    expect(onDailyWin).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stars: 3,
+        mistakes: 0,
+        timeSeconds: expect.any(Number),
+      })
+    );
+  });
+
+  it('clicking Compartir invokes shareDailyResult and shows floating toast banner when copied', async () => {
+    const originalNavigator = globalThis.navigator;
+    const mockWriteText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(globalThis, 'navigator', {
+      value: {
+        clipboard: {
+          writeText: mockWriteText,
+        },
+      },
+      configurable: true,
+      writable: true,
+    });
+
+    try {
+      const defaultState = getDefaultAppState();
+      const wonSession: LevelSessionState = {
+        ...createLevelSession(samplePuzzle),
+        status: 'won',
+        mistakes: 1,
+        partialScore: 40,
+        levelBonus: 50,
+      };
+
+      const { getByTestId, queryByTestId, findByTestId } = render(
+        <GameScreen
+          puzzle={samplePuzzle}
+          progress={defaultState.progress}
+          settings={defaultState.settings}
+          session={wonSession}
+          onUpdateSession={vi.fn()}
+          onAdvanceLevel={vi.fn()}
+          onRetryLevel={vi.fn()}
+          onBackToMenu={vi.fn()}
+          onOpenSettings={vi.fn()}
+          gameMode="daily"
+          dailyDate="2026-11-08"
+          dailyStreak={4}
+        />
+      );
+
+      expect(queryByTestId('share-toast')).toBeNull();
+      const shareBtn = getByTestId('daily-share-btn');
+
+      await act(async () => {
+        fireEvent.click(shareBtn);
+      });
+
+      expect(mockWriteText).toHaveBeenCalled();
+      const toast = await findByTestId('share-toast');
+      expect(toast).toBeDefined();
+      expect(toast.textContent).toContain('¡Resultado copiado al portapapeles!');
+    } finally {
+      Object.defineProperty(globalThis, 'navigator', {
+        value: originalNavigator,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
 });

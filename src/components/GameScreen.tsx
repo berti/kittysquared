@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { soundEngine } from '../audio/soundEngine';
+import { formatDailyDateSpanish, getTodayDateString } from '../engine/daily';
+import { formatDailyShareText, shareDailyResult } from '../engine/share';
 import {
   applyCellTap,
   applyDragCross,
@@ -17,7 +19,14 @@ import { CatVariant, PuzzleDef } from '../types/puzzle';
 import { Board } from './Board';
 import { CatSvg } from './CatSvg';
 import { ConfirmDialog } from './ConfirmDialog';
-import { GearIcon, HeartSvg, MiniCatIcon, PawCoinIcon, RestartIcon } from './Icons';
+import {
+  FlameIcon,
+  GearIcon,
+  HeartSvg,
+  MiniCatIcon,
+  PawCoinIcon,
+  RestartIcon,
+} from './Icons';
 
 const STAR3_CONFETTI_VECTORS = [
   { tx: '-72px', ty: '-34px', rot: '-260deg', color: '#FF8FA3', round: false },
@@ -47,6 +56,10 @@ export interface GameScreenProps {
   onOpenLevels?: () => void;
   onOpenSettings: () => void;
   onSelectCatVariant?: (variant: CatVariant) => void;
+  gameMode?: 'campaign' | 'daily';
+  dailyDate?: string;
+  dailyStreak?: number;
+  onDailyWin?: (result: { stars: 1 | 2 | 3; mistakes: number; timeSeconds: number }) => void;
 }
 
 export function GameScreen({
@@ -62,13 +75,21 @@ export function GameScreen({
   onOpenLevels,
   onOpenSettings,
   onSelectCatVariant,
+  gameMode = 'campaign',
+  dailyDate,
+  dailyStreak = 0,
+  onDailyWin,
 }: GameScreenProps) {
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
   const [isCelebratingVictory, setIsCelebratingVictory] = useState(false);
   const [justLostHeartIndex, setJustLostHeartIndex] = useState<number | null>(null);
   const [scorePopKey, setScorePopKey] = useState(0);
+  const [timeSeconds, setTimeSeconds] = useState(0);
+  const [showToast, setShowToast] = useState(false);
 
   const victoryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasFiredDailyWinRef = useRef(false);
   const prevMistakesRef = useRef(session.mistakes);
   const prevPartialScoreRef = useRef(session.partialScore);
   const prevPuzzleIdRef = useRef(puzzle.id);
@@ -76,23 +97,61 @@ export function GameScreen({
   const latestSessionRef = useRef(session);
   latestSessionRef.current = session;
 
+  const minutes = Math.floor(timeSeconds / 60);
+  const seconds = timeSeconds % 60;
+  const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
   const placedCatsCount = session.board.flat().filter((c) => c === 'cat').length;
   const isLastLevel = totalLevels !== undefined && puzzle.id >= totalLevels;
   const isReplay =
     puzzle.id < progress.currentLevelId || progress.levelStars?.[puzzle.id] !== undefined;
   const winOutcome =
-    session.status === 'won' ? computeLevelWinOutcome(session, progress) : null;
-  const earnedStars = getStarsForMistakes(session.mistakes);
+    session.status === 'won' && gameMode !== 'daily'
+      ? computeLevelWinOutcome(session, progress)
+      : null;
+  const earnedStars = getStarsForMistakes(session.mistakes) as 1 | 2 | 3;
 
   const beforeStars = getTotalEarnedStars(progress);
   const prevLevelStars = progress.levelStars?.[puzzle.id] ?? 0;
   const starGain = winOutcome ? Math.max(0, winOutcome.bestStars - prevLevelStars) : 0;
   const afterStars = beforeStars + starGain;
-  const newlyUnlockedBreeds = winOutcome ? getNewlyUnlockedBreeds(beforeStars, afterStars) : [];
+  const newlyUnlockedBreeds =
+    winOutcome && gameMode !== 'daily' ? getNewlyUnlockedBreeds(beforeStars, afterStars) : [];
   const latestUnlockedBreed =
     newlyUnlockedBreeds.length > 0
       ? newlyUnlockedBreeds[newlyUnlockedBreeds.length - 1]
       : null;
+
+  // Live timer for daily mode
+  useEffect(() => {
+    if (gameMode !== 'daily' || session.status !== 'playing') {
+      return;
+    }
+    const timer = setInterval(() => {
+      setTimeSeconds((s) => s + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [gameMode, session.status]);
+
+  // Daily win notification
+  useEffect(() => {
+    if (gameMode === 'daily' && session.status === 'won' && !hasFiredDailyWinRef.current) {
+      hasFiredDailyWinRef.current = true;
+      const stars = getStarsForMistakes(session.mistakes) as 1 | 2 | 3;
+      onDailyWin?.({ stars, mistakes: session.mistakes, timeSeconds });
+    }
+    if (session.status !== 'won') {
+      hasFiredDailyWinRef.current = false;
+    }
+  }, [gameMode, session.status, session.mistakes, timeSeconds, onDailyWin]);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current !== null) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
 
   // Detect puzzle reset / change or mistake / score changes via useEffect
   useEffect(() => {
@@ -105,6 +164,7 @@ export function GameScreen({
       prevPartialScoreRef.current = session.partialScore;
       setJustLostHeartIndex(null);
       setScorePopKey(0);
+      setTimeSeconds(0);
       return;
     }
 
@@ -265,12 +325,39 @@ export function GameScreen({
         victoryTimerRef.current = null;
         setIsCelebratingVictory(false);
       }, 1400);
+
+      if (gameMode === 'daily' && !hasFiredDailyWinRef.current) {
+        hasFiredDailyWinRef.current = true;
+        const stars = getStarsForMistakes(next.mistakes) as 1 | 2 | 3;
+        onDailyWin?.({ stars, mistakes: next.mistakes, timeSeconds });
+      }
     } else if (next.mistakes > prevMistakes || next.conflictingKeys.size > session.conflictingKeys.size) {
       soundEngine.playConflict();
     } else if (next.board[r][c] === 'cat' && prevCell !== 'cat') {
       soundEngine.playCatPlaced();
     } else if (next.board[r][c] !== prevCell) {
       soundEngine.playCross();
+    }
+  };
+
+  const handleShare = async () => {
+    const text = formatDailyShareText({
+      dateStr: dailyDate ?? getTodayDateString(),
+      stars: earnedStars,
+      mistakes: session.mistakes,
+      timeSeconds,
+      streak: dailyStreak,
+    });
+    const res = await shareDailyResult(text);
+    if (res === 'copied') {
+      setShowToast(true);
+      if (toastTimerRef.current !== null) {
+        clearTimeout(toastTimerRef.current);
+      }
+      toastTimerRef.current = setTimeout(() => {
+        setShowToast(false);
+        toastTimerRef.current = null;
+      }, 2500);
     }
   };
 
@@ -325,10 +412,15 @@ export function GameScreen({
           >
             ← Menú
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ fontWeight: 900, fontSize: '19px', color: '#3D3135' }}>
-              Nivel {puzzle.id}
+              {gameMode === 'daily' ? 'Reto Diario' : `Nivel ${puzzle.id}`}
             </div>
+            {gameMode === 'daily' && dailyDate && (
+              <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#7A686F' }}>
+                {formatDailyDateSpanish(dailyDate, 'short')}
+              </div>
+            )}
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
@@ -428,18 +520,33 @@ export function GameScreen({
             })}
           </span>
 
-          <span
-            key={scorePopKey}
-            className={scorePopKey > 0 ? 'score-pill-pulse' : undefined}
-            style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
-          >
-            <PawCoinIcon size={20} testId="score-paw-coin-icon" />
-            {progress.totalScore}{' '}
-            {statusScoreDelta > 0 && (
-              <span style={{ color: '#E07A5F' }}>(+{statusScoreDelta})</span>
-            )}
-          </span>
-          {scorePopKey > 0 && (
+          {gameMode === 'daily' ? (
+            <span
+              data-testid="daily-timer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                fontVariantNumeric: 'tabular-nums',
+                fontWeight: 800,
+                color: '#5C4B51',
+              }}
+            >
+              {formattedTime}
+            </span>
+          ) : (
+            <span
+              key={scorePopKey}
+              className={scorePopKey > 0 ? 'score-pill-pulse' : undefined}
+              style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+            >
+              <PawCoinIcon size={20} testId="score-paw-coin-icon" />
+              {progress.totalScore}{' '}
+              {statusScoreDelta > 0 && (
+                <span style={{ color: '#E07A5F' }}>(+{statusScoreDelta})</span>
+              )}
+            </span>
+          )}
+          {gameMode !== 'daily' && scorePopKey > 0 && (
             <span
               key={`pop-${scorePopKey}`}
               data-testid="score-float-pop"
@@ -627,7 +734,100 @@ export function GameScreen({
               <CatSvg variant={settings.catVariant} state="victory" />
             </div>
 
-            {isLastLevel ? (
+            {gameMode === 'daily' ? (
+              <>
+                <h2 style={{ margin: '0 0 8px', fontSize: '23px', fontWeight: 900, color: '#3D3135' }}>
+                  ¡Reto Diario Completado!
+                </h2>
+                <div
+                  data-testid="daily-victory-stats"
+                  style={{
+                    background: '#F3E9D2',
+                    border: '2px solid #E2D6C1',
+                    borderRadius: '14px',
+                    padding: '12px 14px',
+                    marginBottom: '16px',
+                    fontSize: '14.5px',
+                    color: '#5C4B51',
+                    fontWeight: 700,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Fallos:</span>
+                    <strong>
+                      {session.mistakes === 0
+                        ? '0 fallos'
+                        : session.mistakes === 1
+                        ? '1 fallo'
+                        : `${session.mistakes} fallos`}
+                    </strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Tiempo:</span>
+                    <strong>{formattedTime}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Racha:</span>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        color: '#E07A5F',
+                        fontWeight: 900,
+                      }}
+                    >
+                      <FlameIcon size={18} /> {dailyStreak} {dailyStreak === 1 ? 'd\u00eda' : 'd\u00edas'}
+                    </span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    data-testid="daily-share-btn"
+                    onClick={handleShare}
+                    style={{
+                      background: '#F3E9D2',
+                      color: '#5C4B51',
+                      border: '2px solid #E2D6C1',
+                      borderRadius: '14px',
+                      padding: '14px',
+                      fontWeight: 800,
+                      fontSize: '15px',
+                      boxShadow: '0 4px 0 #E2D6C1',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    Compartir
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="daily-home-btn"
+                    onClick={onBackToMenu}
+                    style={{
+                      flex: 1,
+                      background: '#FF9770',
+                      color: '#FFF',
+                      border: 'none',
+                      borderRadius: '14px',
+                      padding: '14px',
+                      fontWeight: 800,
+                      fontSize: '16px',
+                      boxShadow: '0 4px 0 #D9724C',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Volver al inicio
+                  </button>
+                </div>
+              </>
+            ) : isLastLevel ? (
               <>
                 <h2 style={{ margin: '0 0 6px', fontSize: '23px', fontWeight: 900, color: '#3D3135' }}>
                   ¡Juego completado!
@@ -953,6 +1153,33 @@ export function GameScreen({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {showToast && (
+        <div
+          data-testid="share-toast"
+          role="status"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#FFF8F0',
+            color: '#3D3135',
+            border: '2px solid #EADCC9',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            borderRadius: '14px',
+            padding: '10px 18px',
+            fontWeight: 800,
+            fontSize: '14px',
+            zIndex: 1100,
+            textAlign: 'center',
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          ¡Resultado copiado al portapapeles!
         </div>
       )}
     </div>
