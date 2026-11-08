@@ -1,4 +1,4 @@
-import { AutoCrossMode, CellState, PuzzleDef } from '../types/puzzle';
+import { AutoCrossMode, CellState, PuzzleDef, SavedBoardSnapshot } from '../types/puzzle';
 import { isBoardSolved } from '../engine/rules';
 import { ModeProgress, StarRating } from './storage';
 
@@ -90,6 +90,23 @@ export function createLevelSession(puzzle: PuzzleDef): LevelSessionState {
     lastPlacedCat: null,
     history: [],
   };
+}
+
+export function restoreLevelSession(
+  puzzle: PuzzleDef,
+  snapshot?: SavedBoardSnapshot | null
+): LevelSessionState {
+  const session = createLevelSession(puzzle);
+  if (snapshot && snapshot.levelId === puzzle.id) {
+    session.board = snapshot.board.map((row) => [...row]);
+    session.lockedCats = snapshot.lockedCats.map((row) => [...row]);
+    if (snapshot.errorCrosses) {
+      session.errorCrosses = snapshot.errorCrosses.map((row) => [...row]);
+    }
+    session.mistakes = snapshot.mistakes;
+    session.partialScore = snapshot.partialScore;
+  }
+  return session;
 }
 
 function cloneBoard(board: CellState[][]): CellState[][] {

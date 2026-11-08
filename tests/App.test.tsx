@@ -3,6 +3,7 @@ import { act, fireEvent, render } from '@testing-library/preact';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../src/App';
 import { soundEngine } from '../src/audio/soundEngine';
+import { getDailyPuzzleForDate, getTodayDateString } from '../src/engine/daily';
 
 describe('App integration', () => {
   beforeEach(() => {
@@ -476,6 +477,207 @@ describe('App integration', () => {
       expect(saved.progress.currentLevelId).toBe(2);
       expect(saved.progress.totalScore).toBe(100);
       expect(saved.progress.levelStars['1']).toBe(3);
+    });
+  });
+
+  describe('Daily challenge mode integration', () => {
+    it('navigates to daily game mode when tapping Reto Diario button and loads today puzzle', () => {
+      const { getByTestId, queryByTestId, getByText } = render(<App transitionDurationMs={0} />);
+      const dailyBtn = getByTestId('open-daily-btn');
+      expect(dailyBtn).toBeTruthy();
+
+      fireEvent.click(dailyBtn);
+
+      expect(getByText('Reto Diario')).toBeTruthy();
+      expect(getByTestId('daily-timer')).toBeTruthy();
+      expect(queryByTestId('level-progress-indicator')).toBeNull();
+      // 10x10 board
+      expect(getByTestId('cell-9-9')).toBeTruthy();
+    });
+
+    it('auto-saves daily cell updates into daily.activeSnapshot without modifying progress.activeSnapshot', () => {
+      const todayStr = getTodayDateString();
+      const campaignSnapshot = {
+        levelId: 1,
+        board: [['empty', 'empty', 'empty', 'empty', 'empty']],
+        lockedCats: [[false, false, false, false, false]],
+        mistakes: 0,
+        partialScore: 0,
+      };
+
+      localStorage.setItem(
+        'kittysquared_state_v1',
+        JSON.stringify({
+          progress: {
+            currentLevelId: 1,
+            totalScore: 40,
+            activeSnapshot: campaignSnapshot,
+          },
+          settings: {
+            catVariant: 'black',
+            musicMuted: true,
+            sfxMuted: true,
+            tutorialSeen: true,
+          },
+        })
+      );
+
+      const { getByTestId } = render(<App transitionDurationMs={0} />);
+      fireEvent.click(getByTestId('open-daily-btn'));
+
+      // Place a cross on cell-0-0
+      const cell00 = getByTestId('cell-0-0');
+      fireEvent.click(cell00);
+
+      const saved = JSON.parse(localStorage.getItem('kittysquared_state_v1') || '{}');
+      expect(saved.daily.activeSnapshot).toBeTruthy();
+      expect(saved.daily.activeSnapshotDate).toBe(todayStr);
+      expect(saved.daily.activeSnapshot.board[0][0]).toBe('cross');
+
+      // Campaign snapshot remains untouched
+      expect(saved.progress.activeSnapshot).toEqual(campaignSnapshot);
+      expect(saved.progress.totalScore).toBe(40);
+    });
+
+    it('restores daily activeSnapshot when launching Reto Diario if snapshot date matches today', () => {
+      const todayStr = getTodayDateString();
+      const todayPuzzle = getDailyPuzzleForDate(todayStr);
+      const size = todayPuzzle.size;
+
+      const board = Array.from({ length: size }, () => Array(size).fill('empty'));
+      board[0][0] = 'cross';
+
+      const lockedCats = Array.from({ length: size }, () => Array(size).fill(false));
+      const errorCrosses = Array.from({ length: size }, () => Array(size).fill(false));
+
+      localStorage.setItem(
+        'kittysquared_state_v1',
+        JSON.stringify({
+          progress: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
+          settings: {
+            catVariant: 'black',
+            musicMuted: true,
+            sfxMuted: true,
+            tutorialSeen: true,
+          },
+          daily: {
+            lastPlayedDate: null,
+            currentStreak: 0,
+            maxStreak: 0,
+            history: {},
+            activeSnapshot: {
+              levelId: todayPuzzle.id,
+              board,
+              lockedCats,
+              errorCrosses,
+              mistakes: 1,
+              partialScore: 0,
+            },
+            activeSnapshotDate: todayStr,
+          },
+        })
+      );
+
+      const { getByTestId } = render(<App transitionDurationMs={0} />);
+      fireEvent.click(getByTestId('open-daily-btn'));
+
+      const cell00 = getByTestId('cell-0-0');
+      expect(cell00.querySelector('svg.cross-mark')).not.toBeNull();
+      // Mistakes should be 1, so heart 2 is empty and hearts 0 and 1 are full
+      expect(getByTestId('status-heart-0').getAttribute('data-state')).toBe('full');
+      expect(getByTestId('status-heart-1').getAttribute('data-state')).toBe('full');
+      expect(getByTestId('status-heart-2').getAttribute('data-state')).toBe('empty');
+    });
+
+    it('commits daily win via computeDailyWinOutcome and leaves campaign progress completely isolated', () => {
+      const todayStr = getTodayDateString();
+      const todayPuzzle = getDailyPuzzleForDate(todayStr);
+
+      localStorage.setItem(
+        'kittysquared_state_v1',
+        JSON.stringify({
+          progress: {
+            currentLevelId: 3,
+            totalScore: 150,
+            levelStars: { 1: 3, 2: 2 },
+            activeSnapshot: null,
+          },
+          settings: {
+            catVariant: 'black',
+            musicMuted: true,
+            sfxMuted: true,
+            tutorialSeen: true,
+          },
+        })
+      );
+
+      const { getByTestId, getByText } = render(<App transitionDurationMs={0} />);
+      fireEvent.click(getByTestId('open-daily-btn'));
+
+      // Solve today's puzzle
+      for (let r = 0; r < todayPuzzle.size; r++) {
+        const c = todayPuzzle.solution[r];
+        const cell = getByTestId(`cell-${r}-${c}`);
+        fireEvent.click(cell);
+        fireEvent.click(cell);
+      }
+
+      // Skip celebration overlay
+      fireEvent.click(getByTestId('victory-celebration-overlay'));
+
+      // Verify daily victory modal content
+      expect(getByText('¡Reto Diario Completado!')).toBeTruthy();
+      const homeBtn = getByText('Volver al inicio');
+      expect(homeBtn).toBeTruthy();
+
+      // Check saved storage
+      const saved = JSON.parse(localStorage.getItem('kittysquared_state_v1') || '{}');
+      expect(saved.daily.history[todayStr]).toBeDefined();
+      expect(saved.daily.history[todayStr].stars).toBe(3);
+      expect(saved.daily.currentStreak).toBe(1);
+      expect(saved.daily.activeSnapshot).toBeNull();
+      expect(saved.daily.activeSnapshotDate).toBeNull();
+
+      // Campaign progress is strictly untouched
+      expect(saved.progress.totalScore).toBe(150);
+      expect(saved.progress.currentLevelId).toBe(3);
+      expect(saved.progress.levelStars).toEqual({ '1': 3, '2': 2 });
+
+      // Return to home screen
+      fireEvent.click(homeBtn);
+      expect(getByTestId('daily-check-icon')).toBeTruthy();
+      expect(getByTestId('open-daily-btn').textContent).toContain('Completado');
+    });
+
+    it('locks session date when entering daily mode so completion after midnight commits to locked start date', () => {
+      vi.useFakeTimers();
+      const startDate = new Date(2026, 10, 8, 23, 55, 0); // Nov 8 2026
+      vi.setSystemTime(startDate);
+
+      const puzzleNov8 = getDailyPuzzleForDate('2026-11-08');
+
+      const { getByTestId } = render(<App transitionDurationMs={0} />);
+      fireEvent.click(getByTestId('open-daily-btn'));
+
+      // Advance time past midnight to Nov 9 2026
+      vi.setSystemTime(new Date(2026, 10, 9, 0, 10, 0));
+
+      // Solve puzzle
+      for (let r = 0; r < puzzleNov8.size; r++) {
+        const c = puzzleNov8.solution[r];
+        const cell = getByTestId(`cell-${r}-${c}`);
+        fireEvent.click(cell);
+        fireEvent.click(cell);
+      }
+
+      fireEvent.click(getByTestId('victory-celebration-overlay'));
+
+      const saved = JSON.parse(localStorage.getItem('kittysquared_state_v1') || '{}');
+      expect(saved.daily.history['2026-11-08']).toBeDefined();
+      expect(saved.daily.history['2026-11-09']).toBeUndefined();
+      expect(saved.daily.lastPlayedDate).toBe('2026-11-08');
+
+      vi.useRealTimers();
     });
   });
 });

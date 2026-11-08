@@ -8,9 +8,16 @@ import { SettingsModal } from './components/SettingsModal';
 import { TutorialModal } from './components/TutorialModal';
 import puzzlesData from './data/puzzles.json';
 import {
+  computeDailyWinOutcome,
+  getDailyPuzzleForDate,
+  getEffectiveStreak,
+  getTodayDateString,
+} from './engine/daily';
+import {
   computeLevelWinOutcome,
   createLevelSession,
   LevelSessionState,
+  restoreLevelSession,
 } from './state/gameState';
 import {
   AppSettings,
@@ -20,7 +27,7 @@ import {
   resetProgress,
   savePersistedState,
 } from './state/storage';
-import { PuzzleDef } from './types/puzzle';
+import { PuzzleDef, SavedBoardSnapshot } from './types/puzzle';
 
 const puzzles = puzzlesData as PuzzleDef[];
 
@@ -33,8 +40,16 @@ export function App({
 }: AppProps = {}) {
   const [appState, setAppState] = useState<PersistedAppState>(() => loadPersistedState());
   const [activeScreen, setActiveScreen] = useState<'home' | 'levels' | 'game'>('home');
+  const [activeGameMode, setActiveGameMode] = useState<'campaign' | 'daily'>('campaign');
+  const [dailySessionDate, setDailySessionDate] = useState<string | null>(null);
+  const dailySessionDateRef = useRef<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+
+  const lockDailySessionDate = (date: string | null) => {
+    dailySessionDateRef.current = date;
+    setDailySessionDate(date);
+  };
   const [transitionState, setTransitionState] = useState<{
     isTransitioning: boolean;
     direction: 'forward' | 'backward';
@@ -105,9 +120,14 @@ export function App({
   }, [appState.settings.musicTrack]);
 
   // Persist state on change
-  const updateAppState = (next: PersistedAppState) => {
-    setAppState(next);
-    savePersistedState(next);
+  const updateAppState = (
+    next: PersistedAppState | ((prev: PersistedAppState) => PersistedAppState)
+  ) => {
+    setAppState((prev) => {
+      const resolved = typeof next === 'function' ? next(prev) : next;
+      savePersistedState(resolved);
+      return resolved;
+    });
   };
 
   const startSessionForLevel = (
@@ -115,21 +135,13 @@ export function App({
     snapshotToCheck = appState.progress.activeSnapshot
   ): LevelSessionState => {
     const puzzle = puzzles.find((p) => p.id === levelId) || puzzles[0];
-    const newSession = createLevelSession(puzzle);
-
-    if (snapshotToCheck && snapshotToCheck.levelId === levelId) {
-      newSession.board = snapshotToCheck.board;
-      newSession.lockedCats = snapshotToCheck.lockedCats;
-      if (snapshotToCheck.errorCrosses) newSession.errorCrosses = snapshotToCheck.errorCrosses;
-      newSession.mistakes = snapshotToCheck.mistakes;
-      newSession.partialScore = snapshotToCheck.partialScore;
-    }
-
-    return newSession;
+    return restoreLevelSession(puzzle, snapshotToCheck);
   };
 
   const handlePlay = () => {
     navigateWithTransition('forward', () => {
+      setActiveGameMode('campaign');
+      lockDailySessionDate(null);
       const currentLvlId = appState.progress.currentLevelId;
       const newSession = startSessionForLevel(currentLvlId);
 
@@ -140,8 +152,31 @@ export function App({
       if (!appState.settings.tutorialSeen && currentLvlId === 1) {
         setShowTutorial(true);
         const nextSettings = { ...appState.settings, tutorialSeen: true };
-        updateAppState({ ...appState, settings: nextSettings });
+        updateAppState((prev) => ({ ...prev, settings: nextSettings }));
       }
+    });
+  };
+
+  const handleOpenDaily = () => {
+    navigateWithTransition('forward', () => {
+      const todayStr = getTodayDateString();
+      setActiveGameMode('daily');
+      lockDailySessionDate(todayStr);
+
+      const dailyPuzzle = getDailyPuzzleForDate(todayStr);
+      let newSession: LevelSessionState;
+
+      if (
+        appState.daily.activeSnapshot &&
+        appState.daily.activeSnapshotDate === todayStr
+      ) {
+        newSession = restoreLevelSession(dailyPuzzle, appState.daily.activeSnapshot);
+      } else {
+        newSession = createLevelSession(dailyPuzzle);
+      }
+
+      setSession(newSession);
+      setActiveScreen('game');
     });
   };
 
@@ -153,6 +188,8 @@ export function App({
 
   const handleSelectLevel = (levelId: number) => {
     navigateWithTransition('forward', () => {
+      setActiveGameMode('campaign');
+      lockDailySessionDate(null);
       const newSession = startSessionForLevel(levelId);
       setSession(newSession);
       setActiveScreen('game');
@@ -160,13 +197,39 @@ export function App({
       if (!appState.settings.tutorialSeen && levelId === 1) {
         setShowTutorial(true);
         const nextSettings = { ...appState.settings, tutorialSeen: true };
-        updateAppState({ ...appState, settings: nextSettings });
+        updateAppState((prev) => ({ ...prev, settings: nextSettings }));
       }
     });
   };
 
   const handleUpdateSession = (nextSession: LevelSessionState) => {
     setSession(nextSession);
+
+    if (activeGameMode === 'daily') {
+      const puzzleDate = dailySessionDateRef.current ?? dailySessionDate ?? getTodayDateString();
+      const snap: SavedBoardSnapshot | null =
+        nextSession.status === 'playing'
+          ? {
+              levelId: nextSession.puzzle.id,
+              board: nextSession.board,
+              lockedCats: nextSession.lockedCats,
+              errorCrosses: nextSession.errorCrosses,
+              mistakes: nextSession.mistakes,
+              partialScore: nextSession.partialScore,
+            }
+          : null;
+
+      updateAppState((prev) => ({
+        ...prev,
+        daily: {
+          ...prev.daily,
+          activeSnapshot: snap,
+          activeSnapshotDate: snap ? puzzleDate : null,
+        },
+      }));
+      return;
+    }
+
     // Only auto-save snapshot if playing the frontier level
     const isFrontierSession = nextSession.puzzle.id === appState.progress.currentLevelId;
     if (!isFrontierSession) {
@@ -185,12 +248,37 @@ export function App({
           }
         : null;
 
-    updateAppState({
-      ...appState,
+    updateAppState((prev) => ({
+      ...prev,
       progress: {
-        ...appState.progress,
+        ...prev.progress,
         activeSnapshot: snap,
       },
+    }));
+  };
+
+  const handleDailyWin = ({
+    stars,
+    mistakes,
+    timeSeconds,
+  }: {
+    stars: 1 | 2 | 3;
+    mistakes: number;
+    timeSeconds: number;
+  }) => {
+    const puzzleDate = dailySessionDateRef.current ?? dailySessionDate ?? getTodayDateString();
+    updateAppState((prev) => {
+      const newDaily = computeDailyWinOutcome(
+        prev.daily,
+        puzzleDate,
+        stars,
+        mistakes,
+        timeSeconds
+      );
+      return {
+        ...prev,
+        daily: newDaily,
+      };
     });
   };
 
@@ -236,32 +324,46 @@ export function App({
 
   const handleOpenLevelsFromGame = () => {
     navigateWithTransition('backward', () => {
-      const nextState = commitCurrentLevelWinIfNeeded(appState);
-      if (nextState !== appState) {
-        updateAppState(nextState);
-        // Reset session status so leaving and returning doesn't double-commit
+      if (activeGameMode === 'campaign') {
+        const nextState = commitCurrentLevelWinIfNeeded(appState);
+        if (nextState !== appState) {
+          updateAppState(nextState);
+          // Reset session status so leaving and returning doesn't double-commit
+          setSession(createLevelSession(session.puzzle));
+        }
+      } else {
         setSession(createLevelSession(session.puzzle));
       }
+      setActiveGameMode('campaign');
+      lockDailySessionDate(null);
       setActiveScreen('levels');
     });
   };
 
   const handleBackToMenuFromGame = () => {
     navigateWithTransition('backward', () => {
-      const nextState = commitCurrentLevelWinIfNeeded(appState);
-      if (nextState !== appState) {
-        updateAppState(nextState);
+      if (activeGameMode === 'campaign') {
+        const nextState = commitCurrentLevelWinIfNeeded(appState);
+        if (nextState !== appState) {
+          updateAppState(nextState);
+          setSession(createLevelSession(session.puzzle));
+        }
+      } else {
         setSession(createLevelSession(session.puzzle));
       }
+      setActiveGameMode('campaign');
+      lockDailySessionDate(null);
       setActiveScreen('home');
     });
   };
 
   const handleRetryLevel = () => {
     navigateWithTransition('forward', () => {
-      const nextState = commitCurrentLevelWinIfNeeded(appState);
-      if (nextState !== appState) {
-        updateAppState(nextState);
+      if (activeGameMode === 'campaign') {
+        const nextState = commitCurrentLevelWinIfNeeded(appState);
+        if (nextState !== appState) {
+          updateAppState(nextState);
+        }
       }
       const fresh = createLevelSession(session.puzzle);
       handleUpdateSession(fresh);
@@ -270,6 +372,8 @@ export function App({
 
   const handleReplayLastLevel = () => {
     navigateWithTransition('forward', () => {
+      setActiveGameMode('campaign');
+      lockDailySessionDate(null);
       const lastPuzzle = puzzles[puzzles.length - 1];
       const freshSession = createLevelSession(lastPuzzle);
       setSession(freshSession);
@@ -304,7 +408,9 @@ export function App({
           progress={appState.progress}
           totalLevels={puzzles.length}
           catVariant={appState.settings.catVariant}
+          daily={appState.daily}
           onPlay={handlePlay}
+          onOpenDaily={handleOpenDaily}
           onOpenLevels={handleOpenLevels}
           onReplayLastLevel={handleReplayLastLevel}
           onResetProgress={handleResetProgress}
@@ -340,12 +446,23 @@ export function App({
           onOpenLevels={handleOpenLevelsFromGame}
           onOpenSettings={() => setShowSettings(true)}
           onSelectCatVariant={(variant) => {
-            const nextState = commitCurrentLevelWinIfNeeded(appState);
-            updateAppState({
-              ...nextState,
-              settings: { ...nextState.settings, catVariant: variant },
-            });
+            if (activeGameMode === 'campaign') {
+              const nextState = commitCurrentLevelWinIfNeeded(appState);
+              updateAppState({
+                ...nextState,
+                settings: { ...nextState.settings, catVariant: variant },
+              });
+            } else {
+              updateAppState((prev) => ({
+                ...prev,
+                settings: { ...prev.settings, catVariant: variant },
+              }));
+            }
           }}
+          gameMode={activeGameMode}
+          dailyDate={dailySessionDate ?? getTodayDateString()}
+          dailyStreak={getEffectiveStreak(appState.daily, dailySessionDate ?? undefined)}
+          onDailyWin={handleDailyWin}
         />
       )}
 
@@ -354,7 +471,7 @@ export function App({
           settings={appState.settings}
           totalStars={
             getTotalEarnedStars(appState.progress) +
-            (activeScreen === 'game' && session.status === 'won'
+            (activeScreen === 'game' && activeGameMode === 'campaign' && session.status === 'won'
               ? Math.max(
                   0,
                   computeLevelWinOutcome(session, appState.progress).bestStars -
