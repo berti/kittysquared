@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "generate-puzzles": "tsx scripts/generate-puzzles.ts",
+    "generate-daily-puzzles": "tsx scripts/generate-daily-puzzles.ts",
     "generate-icons": "tsx scripts/generate-icons.ts"
   },
   "dependencies": {

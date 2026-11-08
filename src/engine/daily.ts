@@ -1,4 +1,5 @@
-import { DailyProgress } from '../types/puzzle';
+import dailyPuzzlesData from '../data/dailyPuzzles.json';
+import { DailyProgress, PuzzleDef } from '../types/puzzle';
 
 const SPANISH_MONTHS_LONG = [
   'enero',
@@ -130,3 +131,18 @@ export function formatDailyDateSpanish(
   const longMonth = SPANISH_MONTHS_LONG[monthIdx] ?? '';
   return `${day} de ${longMonth}`;
 }
+
+export function getDailyPuzzleForDate(dateStr: string): PuzzleDef {
+  const [year] = dateStr.split('-').map(Number);
+  const index = getDailyPuzzleIndex(dateStr, dailyPuzzlesData.length);
+  const basePuzzle = dailyPuzzlesData[index] as PuzzleDef;
+  const virtualId = 10000 + (year % 100) * 1000 + index;
+
+  return {
+    ...basePuzzle,
+    id: virtualId,
+    regions: basePuzzle.regions.map((row) => [...row]),
+    solution: [...basePuzzle.solution],
+  };
+}
+
