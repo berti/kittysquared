@@ -4,6 +4,7 @@ import {
   CatVariant,
   DailyProgress,
   DailyPuzzleResult,
+  Language,
   RegionAssistMode,
   SavedBoardSnapshot,
 } from '../types/puzzle';
@@ -31,6 +32,7 @@ export type MusicTrackOption =
   | 'samba';
 
 export interface AppSettings {
+  language: Language;
   doubleTapTimeoutMs: number;
   catVariant: CatVariant;
   regionAssist: RegionAssistMode;
@@ -59,6 +61,22 @@ export const DEFAULT_DAILY_PROGRESS: DailyProgress = {
 };
 
 const STORAGE_KEY = 'kittysquared_state_v1';
+
+export const VALID_LANGUAGES: readonly Language[] = ['auto', 'es', 'en'];
+
+export const DEFAULT_APP_SETTINGS: AppSettings = {
+  language: 'auto',
+  doubleTapTimeoutMs: 500,
+  catVariant: 'black',
+  regionAssist: 'off',
+  autoCross: 'off',
+  musicMuted: false,
+  sfxMuted: false,
+  tutorialSeen: false,
+  musicVolume: 0.75,
+  sfxVolume: 0.75,
+  musicTrack: 'auto',
+};
 
 export const VALID_STEPPED_VOLUMES: SteppedVolume[] = [0, 0.25, 0.5, 0.75, 1.0];
 export const VALID_MUSIC_TRACKS: MusicTrackOption[] = [
@@ -123,18 +141,7 @@ export function getDefaultAppState(): PersistedAppState {
       activeSnapshot: null,
       levelStars: {},
     },
-    settings: {
-      doubleTapTimeoutMs: 500,
-      catVariant: 'black',
-      regionAssist: 'off',
-      autoCross: 'off',
-      musicMuted: false,
-      sfxMuted: false,
-      tutorialSeen: false,
-      musicVolume: 0.75,
-      sfxVolume: 0.75,
-      musicTrack: 'auto',
-    },
+    settings: { ...DEFAULT_APP_SETTINGS },
     daily: { ...DEFAULT_DAILY_PROGRESS },
   };
 }
@@ -279,11 +286,16 @@ export function loadPersistedState(): PersistedAppState {
         ? rawCatVariant
         : 'black';
 
+    const language: Language = VALID_LANGUAGES.includes(cleanRawSettings.language)
+      ? cleanRawSettings.language
+      : 'auto';
+
     return {
       progress: sanitizedProgress,
       settings: {
         ...defaults.settings,
         ...cleanRawSettings,
+        language,
         catVariant,
         doubleTapTimeoutMs,
         regionAssist: VALID_REGION_ASSIST_MODES.includes(cleanRawSettings.regionAssist)

@@ -6,6 +6,7 @@ import { soundEngine } from '../../src/audio/soundEngine';
 import { AppSettings } from '../../src/state/storage';
 
 const defaultSettings: AppSettings = {
+  language: 'auto',
   doubleTapTimeoutMs: 500,
   catVariant: 'black',
   regionAssist: 'off',

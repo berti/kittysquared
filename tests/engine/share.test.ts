@@ -41,7 +41,7 @@ describe('engine/share', () => {
       const expected = [
         'KittySquared \u2014 Reto Diario 2026-11-09',
         '\u2605 \u2022 2 fallos \u2022 1:05',
-        'Racha: 1 d\u00edas',
+        'Racha: 1 d\u00eda',
         'https://custom.kittysquared.game',
       ].join('\n');
 
@@ -95,6 +95,56 @@ describe('engine/share', () => {
         /[\u{1F300}-\u{1FAFF}\u{2600}-\u{2604}\u{2606}-\u{2714}\u{2716}-\u{27BF}\u{2B50}\u{21BA}]/u;
       expect(forbiddenEmojiRegex.test(text)).toBe(false);
     });
+
+    it('formats in English with singular and plural mistake/streak copy', () => {
+      const zeroMistakesMultiStreak = formatDailyShareText({
+        dateStr: '2026-11-08',
+        stars: 3,
+        mistakes: 0,
+        timeSeconds: 125,
+        streak: 5,
+        lang: 'en',
+      });
+      expect(zeroMistakesMultiStreak).toContain('KittySquared \u2014 Daily Challenge 2026-11-08');
+      expect(zeroMistakesMultiStreak).toContain('\u2605\u2605\u2605 \u2022 0 mistakes \u2022 2:05');
+      expect(zeroMistakesMultiStreak).toContain('Streak: 5 days');
+
+      const oneMistakeOneStreak = formatDailyShareText({
+        dateStr: '2026-11-08',
+        stars: 2,
+        mistakes: 1,
+        timeSeconds: 60,
+        streak: 1,
+        lang: 'en',
+      });
+      expect(oneMistakeOneStreak).toContain('\u2605\u2605 \u2022 1 mistake \u2022 1:00');
+      expect(oneMistakeOneStreak).toContain('Streak: 1 day');
+
+      const multiMistakes = formatDailyShareText({
+        dateStr: '2026-11-08',
+        stars: 1,
+        mistakes: 3,
+        timeSeconds: 90,
+        streak: 2,
+        lang: 'en',
+      });
+      expect(multiMistakes).toContain('\u2605 \u2022 3 mistakes \u2022 1:30');
+      expect(multiMistakes).toContain('Streak: 2 days');
+    });
+
+    it('formats singular mistake and singular streak in Spanish', () => {
+      const singleMistakeSingleStreak = formatDailyShareText({
+        dateStr: '2026-11-08',
+        stars: 2,
+        mistakes: 1,
+        timeSeconds: 80,
+        streak: 1,
+        lang: 'es',
+      });
+      expect(singleMistakeSingleStreak).toContain('KittySquared \u2014 Reto Diario 2026-11-08');
+      expect(singleMistakeSingleStreak).toContain('1 fallo');
+      expect(singleMistakeSingleStreak).toContain('Racha: 1 d\u00eda');
+    });
   });
 
   describe('shareDailyResult', () => {
@@ -126,6 +176,24 @@ describe('engine/share', () => {
       expect(result).toBe('shared');
       expect(mockShare).toHaveBeenCalledWith({
         title: 'KittySquared Reto Diario',
+        text: 'Test share text',
+      });
+    });
+
+    it('passes English title to navigator.share when lang is "en"', async () => {
+      const mockShare = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(globalThis, 'navigator', {
+        value: {
+          share: mockShare,
+        },
+        configurable: true,
+        writable: true,
+      });
+
+      const result = await shareDailyResult('Test share text', 'en');
+      expect(result).toBe('shared');
+      expect(mockShare).toHaveBeenCalledWith({
+        title: 'KittySquared Daily Challenge',
         text: 'Test share text',
       });
     });

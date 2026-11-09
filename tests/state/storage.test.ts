@@ -466,4 +466,69 @@ describe('state/storage', () => {
     const reloaded = loadPersistedState();
     expect(reloaded.daily).toEqual(state.daily);
   });
+
+  it('initializes default language as "auto" in default state', () => {
+    const state = getDefaultAppState();
+    expect(state.settings.language).toBe('auto');
+  });
+
+  it('defaults language to "auto" when loading legacy state without settings.language', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        progress: { currentLevelId: 2, totalScore: 100, activeSnapshot: null },
+        settings: {
+          catVariant: 'white',
+        },
+      })
+    );
+    const loaded = loadPersistedState();
+    expect(loaded.settings.language).toBe('auto');
+  });
+
+  it('sanitizes invalid language strings to "auto"', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        settings: {
+          language: 'french',
+        },
+      })
+    );
+    expect(loadPersistedState().settings.language).toBe('auto');
+
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        settings: {
+          language: 123,
+        },
+      })
+    );
+    expect(loadPersistedState().settings.language).toBe('auto');
+  });
+
+  it('persists and reloads valid language choices ("es", "en", "auto")', () => {
+    for (const lang of ['es', 'en', 'auto'] as const) {
+      const state = getDefaultAppState();
+      state.settings.language = lang;
+      savePersistedState(state);
+      expect(loadPersistedState().settings.language).toBe(lang);
+    }
+  });
+
+  it('preserves settings.language intact when resetting progress', () => {
+    const state = getDefaultAppState();
+    state.progress.currentLevelId = 15;
+    state.progress.totalScore = 1200;
+    state.settings.language = 'en';
+
+    const afterReset = resetProgress(state);
+    expect(afterReset.progress.currentLevelId).toBe(1);
+    expect(afterReset.progress.totalScore).toBe(0);
+    expect(afterReset.settings.language).toBe('en');
+
+    const loaded = loadPersistedState();
+    expect(loaded.settings.language).toBe('en');
+  });
 });

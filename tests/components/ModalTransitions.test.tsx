@@ -76,6 +76,7 @@ describe('ModalTransitions', () => {
     const { getByTestId } = render(
       <SettingsModal
         settings={{
+          language: 'auto',
           doubleTapTimeoutMs: 500,
           catVariant: 'black',
           regionAssist: 'off',
@@ -120,6 +121,7 @@ describe('ModalTransitions', () => {
         puzzle={dummyPuzzle}
         progress={{ currentLevelId: 1, totalScore: 0, activeSnapshot: null }}
         settings={{
+          language: 'auto',
           doubleTapTimeoutMs: 500,
           catVariant: 'black',
           regionAssist: 'off',
@@ -153,6 +155,7 @@ describe('ModalTransitions', () => {
         puzzle={dummyPuzzle}
         progress={{ currentLevelId: 1, totalScore: 0, activeSnapshot: null }}
         settings={{
+          language: 'auto',
           doubleTapTimeoutMs: 500,
           catVariant: 'black',
           regionAssist: 'off',

@@ -1,5 +1,5 @@
 import dailyPuzzlesData from '../data/dailyPuzzles.json';
-import { DailyProgress, PuzzleDef } from '../types/puzzle';
+import { DailyProgress, EffectiveLanguage, PuzzleDef } from '../types/puzzle';
 
 const SPANISH_MONTHS_LONG = [
   'enero',
@@ -29,6 +29,36 @@ const SPANISH_MONTHS_SHORT = [
   'oct',
   'nov',
   'dic',
+];
+
+const ENGLISH_MONTHS_LONG = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+const ENGLISH_MONTHS_SHORT = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 export function getTodayDateString(now: Date = new Date()): string {
@@ -114,14 +144,24 @@ export function computeDailyWinOutcome(
   };
 }
 
-export function formatDailyDateSpanish(
+export function formatDailyDate(
   dateStr: string,
-  style: 'long' | 'short' = 'long'
+  style: 'long' | 'short' = 'long',
+  lang: EffectiveLanguage = 'es'
 ): string {
   const [yearStr, monthStr, dayStr] = dateStr.split('-');
   const year = Number(yearStr);
   const monthIdx = Number(monthStr) - 1;
   const day = Number(dayStr);
+
+  if (lang === 'en') {
+    if (style === 'short') {
+      const shortMonth = ENGLISH_MONTHS_SHORT[monthIdx] ?? '';
+      return `${shortMonth} ${day}, ${year}`;
+    }
+    const longMonth = ENGLISH_MONTHS_LONG[monthIdx] ?? '';
+    return `${longMonth} ${day}`;
+  }
 
   if (style === 'short') {
     const shortMonth = SPANISH_MONTHS_SHORT[monthIdx] ?? '';
@@ -130,6 +170,13 @@ export function formatDailyDateSpanish(
 
   const longMonth = SPANISH_MONTHS_LONG[monthIdx] ?? '';
   return `${day} de ${longMonth}`;
+}
+
+export function formatDailyDateSpanish(
+  dateStr: string,
+  style: 'long' | 'short' = 'long'
+): string {
+  return formatDailyDate(dateStr, style, 'es');
 }
 
 export function getDailyPuzzleForDate(dateStr: string): PuzzleDef {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   computeDailyWinOutcome,
+  formatDailyDate,
   formatDailyDateSpanish,
   getDailyPuzzleIndex,
   getDayOfYearIndex,
@@ -279,6 +280,70 @@ describe('engine/daily', () => {
         expect(formatDailyDateSpanish(dateStr, 'long')).toBe(`15 de ${longMonths[m - 1]}`);
         expect(formatDailyDateSpanish(dateStr, 'short')).toBe(`15 ${shortMonths[m - 1]} 2026`);
       }
+    });
+  });
+
+  describe('formatDailyDate', () => {
+    it('defaults to Spanish and long style when style and lang are omitted', () => {
+      expect(formatDailyDate('2026-11-08')).toBe('8 de noviembre');
+    });
+
+    it('formats in Spanish long and short styles', () => {
+      expect(formatDailyDate('2026-11-08', 'long', 'es')).toBe('8 de noviembre');
+      expect(formatDailyDate('2026-11-08', 'short', 'es')).toBe('8 nov 2026');
+    });
+
+    it('formats in English long style ("November 8")', () => {
+      expect(formatDailyDate('2026-11-08', 'long', 'en')).toBe('November 8');
+      expect(formatDailyDate('2026-01-01', 'long', 'en')).toBe('January 1');
+    });
+
+    it('formats in English short style ("Nov 8, 2026")', () => {
+      expect(formatDailyDate('2026-11-08', 'short', 'en')).toBe('Nov 8, 2026');
+      expect(formatDailyDate('2026-01-01', 'short', 'en')).toBe('Jan 1, 2026');
+    });
+
+    it('formats all 12 English months correctly in both styles', () => {
+      const enLongMonths = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ];
+      const enShortMonths = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+
+      for (let m = 1; m <= 12; m++) {
+        const mm = String(m).padStart(2, '0');
+        const dateStr = `2026-${mm}-15`;
+        expect(formatDailyDate(dateStr, 'long', 'en')).toBe(`${enLongMonths[m - 1]} 15`);
+        expect(formatDailyDate(dateStr, 'short', 'en')).toBe(`${enShortMonths[m - 1]} 15, 2026`);
+      }
+    });
+
+    it('preserves backward compatibility with formatDailyDateSpanish', () => {
+      expect(formatDailyDateSpanish('2026-11-08', 'long')).toBe(formatDailyDate('2026-11-08', 'long', 'es'));
+      expect(formatDailyDateSpanish('2026-11-08', 'short')).toBe(formatDailyDate('2026-11-08', 'short', 'es'));
     });
   });
 });
