@@ -132,7 +132,8 @@ describe('Soft-Clay SVG Icon Library (Icons.tsx)', () => {
 
   it('enforces Zero-Emoji Audit across all source files in src/', () => {
     const srcDir = path.resolve(__dirname, '../../src');
-    const forbiddenEmojiRegex = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{2604}\u{2606}-\u{2714}\u{2716}-\u{27BF}\u{2B50}\u{21BA}]/u;
+    const forbiddenEmojiRegex =
+      /[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{2600}-\u{2604}\u{2606}-\u{2714}\u{2716}-\u{27BF}\u{2B50}\u{21BA}]/u;
     const violations: string[] = [];
 
     function walk(dir: string) {
@@ -153,5 +154,29 @@ describe('Soft-Clay SVG Icon Library (Icons.tsx)', () => {
 
     walk(srcDir);
     expect(violations).toEqual([]);
+  });
+
+  it('rejects regional indicator country flag emojis and standard emojis via forbiddenEmojiRegex', () => {
+    const forbiddenEmojiRegex =
+      /[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{2600}-\u{2604}\u{2606}-\u{2714}\u{2716}-\u{27BF}\u{2B50}\u{21BA}]/u;
+
+    // Spanish flag (Regional Indicators 🇪 and 🇸)
+    expect(forbiddenEmojiRegex.test('🇪🇸')).toBe(true);
+    // UK flag (Regional Indicators 🇬 and 🇧)
+    expect(forbiddenEmojiRegex.test('🇬🇧')).toBe(true);
+    // US flag
+    expect(forbiddenEmojiRegex.test('🇺🇸')).toBe(true);
+    // Standard emojis
+    expect(forbiddenEmojiRegex.test('🐱')).toBe(true);
+    expect(forbiddenEmojiRegex.test('⭐')).toBe(true);
+    expect(forbiddenEmojiRegex.test('✨')).toBe(true);
+
+    // Permitted clean strings and characters
+    expect(forbiddenEmojiRegex.test('Español')).toBe(false);
+    expect(forbiddenEmojiRegex.test('English')).toBe(false);
+    expect(forbiddenEmojiRegex.test('Auto')).toBe(false);
+    expect(forbiddenEmojiRegex.test('✕')).toBe(false);
+    expect(forbiddenEmojiRegex.test('★')).toBe(false);
+    expect(forbiddenEmojiRegex.test('▶')).toBe(false);
   });
 });

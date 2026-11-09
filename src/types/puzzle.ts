@@ -1,5 +1,8 @@
 export type CellState = 'empty' | 'cross' | 'cat';
 
+export type Language = 'auto' | 'es' | 'en';
+export type EffectiveLanguage = 'es' | 'en';
+
 export type CatVariant =
   | 'black'
   | 'white'
