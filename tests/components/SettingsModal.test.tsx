@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsModal } from '../../src/components/SettingsModal';
 import { soundEngine } from '../../src/audio/soundEngine';
 import { AppSettings } from '../../src/state/storage';
+import { I18nProvider } from '../../src/i18n';
 
 const defaultSettings: AppSettings = {
   language: 'auto',
@@ -112,7 +113,7 @@ describe('SettingsModal component', () => {
 
     // Clean speed labels without milliseconds and without Área de prueba title
     expect(getByText('Rápido')).toBeDefined();
-    expect(getByText('Medio')).toBeDefined();
+    expect(getByText('Normal')).toBeDefined();
     expect(getByText('Lento')).toBeDefined();
     expect(queryByText(/250ms/i)).toBeNull();
     expect(queryByText(/500ms/i)).toBeNull();
@@ -148,7 +149,7 @@ describe('SettingsModal component', () => {
     act(() => {
       vi.advanceTimersByTime(2000);
     });
-    expect(tester.textContent).toContain('Toca 2 veces aquí para probar la velocidad');
+    expect(tester.textContent).toContain('Prueba aquí tu ritmo de doble toque');
     vi.useRealTimers();
   });
 
@@ -298,13 +299,13 @@ describe('SettingsModal component', () => {
     expect(getByTestId('sfx-vol-step-1')).toBeDefined();
 
     // Track options (Auto + 6 songs) with clean labels without decorative emojis
-    expect(getByTestId('track-opt-auto').textContent?.trim()).toBe('Auto (6 temas)');
-    expect(getByTestId('track-opt-marimba').textContent?.trim()).toBe('Marimba Michi');
-    expect(getByTestId('track-opt-velvet').textContent?.trim()).toBe('Velvet Paws');
-    expect(getByTestId('track-opt-sunbeam').textContent?.trim()).toBe('Sunbeam Stroll');
-    expect(getByTestId('track-opt-bossa').textContent?.trim()).toBe('Bossa Meow');
-    expect(getByTestId('track-opt-waltz').textContent?.trim()).toBe('Catnip Waltz');
-    expect(getByTestId('track-opt-samba').textContent?.trim()).toBe('Samba de Gatinho');
+    expect(getByTestId('track-opt-auto').textContent?.trim()).toBe('Automática (por tamaño)');
+    expect(getByTestId('track-opt-marimba').textContent?.trim()).toBe('Gatito Curioso (Marimba)');
+    expect(getByTestId('track-opt-velvet').textContent?.trim()).toBe('Pasos de Terciopelo (Suave)');
+    expect(getByTestId('track-opt-sunbeam').textContent?.trim()).toBe('Rayo de Sol (Alegre)');
+    expect(getByTestId('track-opt-bossa').textContent?.trim()).toBe('Siesta Felina (Bossa)');
+    expect(getByTestId('track-opt-waltz').textContent?.trim()).toBe('Vals de Medianoche (Misterio)');
+    expect(getByTestId('track-opt-samba').textContent?.trim()).toBe('Ronroneo Travieso (Samba)');
   });
 
   it('Sound tab: clicking 0% volume step automatically mutes; clicking >0% unmutes and sets volume', () => {
@@ -426,5 +427,163 @@ describe('SettingsModal component', () => {
     expect(onUpdateSettings).toHaveBeenCalledWith(
       expect.objectContaining({ musicMuted: false, musicVolume: 0.75 })
     );
+  });
+
+  describe('Controles tab: language selector', () => {
+    it('renders segmented language selector at the top of Controles tab with Auto, Español, English options', () => {
+      const { getByTestId } = render(
+        <SettingsModal
+          settings={defaultSettings}
+          onUpdateSettings={vi.fn()}
+          onClose={vi.fn()}
+        />
+      );
+
+      const langSelect = getByTestId('language-select');
+      expect(langSelect).toBeDefined();
+
+      const optAuto = getByTestId('lang-opt-auto');
+      const optEs = getByTestId('lang-opt-es');
+      const optEn = getByTestId('lang-opt-en');
+
+      expect(optAuto.textContent?.trim()).toBe('Auto');
+      expect(optEs.textContent?.trim()).toBe('Español');
+      expect(optEn.textContent?.trim()).toBe('English');
+    });
+
+    it('clicking language options calls onUpdateSettings with language', () => {
+      const onUpdateSettings = vi.fn();
+      const { getByTestId } = render(
+        <SettingsModal
+          settings={{ ...defaultSettings, language: 'auto' }}
+          onUpdateSettings={onUpdateSettings}
+          onClose={vi.fn()}
+        />
+      );
+
+      fireEvent.click(getByTestId('lang-opt-en'));
+      expect(onUpdateSettings).toHaveBeenCalledWith(
+        expect.objectContaining({ language: 'en' })
+      );
+
+      fireEvent.click(getByTestId('lang-opt-es'));
+      expect(onUpdateSettings).toHaveBeenCalledWith(
+        expect.objectContaining({ language: 'es' })
+      );
+
+      fireEvent.click(getByTestId('lang-opt-auto'));
+      expect(onUpdateSettings).toHaveBeenCalledWith(
+        expect.objectContaining({ language: 'auto' })
+      );
+    });
+  });
+
+  describe('Full localization with I18nProvider', () => {
+    it('renders English strings when wrapped in I18nProvider with lang="en"', () => {
+      const { getByTestId, getByText } = render(
+        <I18nProvider lang="en">
+          <SettingsModal
+            settings={{ ...defaultSettings, language: 'en' }}
+            totalStars={300}
+            onUpdateSettings={vi.fn()}
+            onClose={vi.fn()}
+          />
+        </I18nProvider>
+      );
+
+      // Modal title and close button
+      expect(getByText('Settings')).toBeDefined();
+      expect(getByTestId('close-settings-btn').getAttribute('aria-label')).toBe('Close');
+
+      // Tab buttons
+      expect(getByTestId('tab-btn-controls').textContent).toContain('Controls');
+      expect(getByTestId('tab-btn-graphics').textContent).toContain('Graphics');
+      expect(getByTestId('tab-btn-sound').textContent).toContain('Audio');
+      expect(getByTestId('tab-btn-ayudas').textContent).toContain('Assists');
+
+      // Controls tab (default)
+      expect(getByText('LANGUAGE')).toBeDefined();
+      expect(getByText('Auto-detect or choose language')).toBeDefined();
+      expect(getByText('DOUBLE-TAP SPEED')).toBeDefined();
+      expect(getByText('Fast')).toBeDefined();
+      expect(getByText('Normal')).toBeDefined();
+      expect(getByText('Slow')).toBeDefined();
+      expect(getByText('Test your double-tap rhythm here')).toBeDefined();
+
+      // Graphics tab
+      fireEvent.click(getByTestId('tab-btn-graphics'));
+      expect(getByText('CHOOSE YOUR KITTEN')).toBeDefined();
+      expect(getByTestId('select-cat-black').getAttribute('aria-label')).toContain('Black Cat');
+      expect(getByTestId('select-cat-orange').getAttribute('aria-label')).toContain('Orange Tabby');
+      expect(getByText('REGION DIFFERENTIATION')).toBeDefined();
+      expect(getByTestId('select-region-assist-off').textContent?.trim()).toBe('Off');
+      expect(getByTestId('select-region-assist-textures').textContent?.trim()).toBe('Stripes');
+      expect(getByTestId('select-region-assist-glyphs').textContent?.trim()).toBe('Icons');
+      expect(getByTestId('select-region-assist-numbers').textContent?.trim()).toBe('Numbers 1-9');
+
+      // Audio tab
+      fireEvent.click(getByTestId('tab-btn-sound'));
+      expect(getByText('Music')).toBeDefined();
+      expect(getByText('Sound Effects (SFX)')).toBeDefined();
+      expect(getByText('Music track')).toBeDefined();
+      expect(getByTestId('track-opt-auto').textContent?.trim()).toBe('Automatic (by size)');
+      expect(getByTestId('track-opt-marimba').textContent?.trim()).toBe('Curious Kitten (Marimba)');
+      expect(getByTestId('track-opt-velvet').textContent?.trim()).toBe('Velvet Paws (Gentle)');
+
+      // Assists tab
+      fireEvent.click(getByTestId('tab-btn-ayudas'));
+      expect(getByText('AUTO-CROSS ELIMINATIONS')).toBeDefined();
+      expect(getByTestId('select-autocross-off').textContent).toContain('Off');
+      expect(getByTestId('select-autocross-off').textContent).toContain('Place all crosses manually');
+      expect(getByTestId('select-autocross-row-col-surround').textContent).toContain('Row, column & surround');
+      expect(getByTestId('select-autocross-all').textContent).toContain('Row, column, surround & color');
+    });
+
+    it('renders Spanish strings in default context', () => {
+      const { getByTestId, getByText } = render(
+        <SettingsModal
+          settings={defaultSettings}
+          totalStars={300}
+          onUpdateSettings={vi.fn()}
+          onClose={vi.fn()}
+        />
+      );
+
+      // Modal title
+      expect(getByText('Ajustes')).toBeDefined();
+
+      // Tab buttons
+      expect(getByTestId('tab-btn-controls').textContent).toContain('Controles');
+      expect(getByTestId('tab-btn-graphics').textContent).toContain('Aspecto');
+      expect(getByTestId('tab-btn-sound').textContent).toContain('Sonido');
+      expect(getByTestId('tab-btn-ayudas').textContent).toContain('Ayudas');
+
+      // Controls tab
+      expect(getByText('IDIOMA')).toBeDefined();
+      expect(getByText('Detectar automáticamente o elegir idioma')).toBeDefined();
+      expect(getByText('VELOCIDAD DE DOBLE TOQUE')).toBeDefined();
+      expect(getByText('Prueba aquí tu ritmo de doble toque')).toBeDefined();
+
+      // Graphics tab
+      fireEvent.click(getByTestId('tab-btn-graphics'));
+      expect(getByText('ELIGE TU GATITO')).toBeDefined();
+      expect(getByTestId('select-cat-black').getAttribute('aria-label')).toContain('Gato Negro');
+      expect(getByTestId('select-cat-orange').getAttribute('aria-label')).toContain('Naranjito');
+      expect(getByText('DIFERENCIACIÓN DE REGIONES')).toBeDefined();
+
+      // Audio tab
+      fireEvent.click(getByTestId('tab-btn-sound'));
+      expect(getByText('Música')).toBeDefined();
+      expect(getByText('Efectos (SFX)')).toBeDefined();
+      expect(getByText('Pista musical')).toBeDefined();
+      expect(getByTestId('track-opt-auto').textContent?.trim()).toBe('Automática (por tamaño)');
+      expect(getByTestId('track-opt-marimba').textContent?.trim()).toBe('Gatito Curioso (Marimba)');
+
+      // Assists tab
+      fireEvent.click(getByTestId('tab-btn-ayudas'));
+      expect(getByText('AUTO-DESCARTES DE CRUCES')).toBeDefined();
+      expect(getByTestId('select-autocross-off').textContent).toContain('No');
+      expect(getByTestId('select-autocross-row-col-surround').textContent).toContain('Fila, columna y alrededor');
+    });
   });
 });

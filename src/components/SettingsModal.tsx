@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { soundEngine } from '../audio/soundEngine';
+import { getLocalizedBreedName, useI18n } from '../i18n';
 import {
   AppSettings,
   CAT_BREEDS,
@@ -7,7 +8,7 @@ import {
   MusicTrackOption,
   VALID_STEPPED_VOLUMES,
 } from '../state/storage';
-import { AutoCrossMode, CatVariant, RegionAssistMode } from '../types/puzzle';
+import { AutoCrossMode, CatVariant, Language, RegionAssistMode } from '../types/puzzle';
 import { REGION_GLYPHS, RegionGlyphIcon } from './Board';
 import { CatSvg } from './CatSvg';
 import {
@@ -34,6 +35,7 @@ export function SettingsModal({
   onUpdateSettings,
   onClose,
 }: SettingsModalProps) {
+  const { t, lang } = useI18n();
   const [activeTab, setActiveTab] = useState<SettingsTab>('controls');
 
   // Tap tester state
@@ -73,9 +75,9 @@ export function SettingsModal({
   };
 
   const currentTimeout = settings.doubleTapTimeoutMs || 500;
-  let speedCategory = 'Normal';
-  if (currentTimeout <= 350) speedCategory = 'Rápido';
-  else if (currentTimeout >= 650) speedCategory = 'Lento';
+  let speedCategory = t('settings.controls.speedNormal');
+  if (currentTimeout <= 350) speedCategory = t('settings.controls.speedFast');
+  else if (currentTimeout >= 650) speedCategory = t('settings.controls.speedSlow');
 
   const handleTesterClick = () => {
     if (testerTimerRef.current) {
@@ -151,10 +153,11 @@ export function SettingsModal({
               }}
             >
               <GearIcon size={22} />
-              <span>Ajustes</span>
+              <span>{t('settings.title')}</span>
             </h2>
             <button
               data-testid="close-settings-btn"
+              aria-label={t('common.close')}
               onClick={onClose}
               style={{
                 background: '#EFE6D5',
@@ -183,10 +186,10 @@ export function SettingsModal({
             }}
           >
             {[
-              { id: 'controls', icon: <ControlsTabIcon size={18} />, label: 'Controles' },
-              { id: 'graphics', icon: <GraphicsTabIcon size={18} />, label: 'Gráficos' },
-              { id: 'sound', icon: <SoundTabIcon size={18} />, label: 'Sonido' },
-              { id: 'ayudas', icon: <AssistsTabIcon size={18} />, label: 'Ayudas' },
+              { id: 'controls', icon: <ControlsTabIcon size={18} />, label: t('settings.tabs.controls') },
+              { id: 'graphics', icon: <GraphicsTabIcon size={18} />, label: t('settings.tabs.graphics') },
+              { id: 'sound', icon: <SoundTabIcon size={18} />, label: t('settings.tabs.audio') },
+              { id: 'ayudas', icon: <AssistsTabIcon size={18} />, label: t('settings.tabs.assists') },
             ].map((tab) => {
               const active = activeTab === tab.id;
               return (
@@ -232,6 +235,67 @@ export function SettingsModal({
               aria-labelledby="tab-btn-controls"
               style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}
             >
+              {/* Language Selector Card */}
+              <div
+                style={{
+                  background: '#F8F3E8',
+                  border: '2px solid #E2D6C1',
+                  borderRadius: '16px',
+                  padding: '14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51' }}>
+                    {t('settings.language.sectionTitle')}
+                  </span>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#7A686E' }}>
+                    {t('settings.language.subtitle')}
+                  </span>
+                </div>
+                <div
+                  data-testid="language-select"
+                  style={{ display: 'flex', gap: '6px' }}
+                >
+                  {[
+                    { id: 'auto', label: t('settings.language.auto'), testId: 'lang-opt-auto' },
+                    { id: 'es', label: t('settings.language.spanish'), testId: 'lang-opt-es' },
+                    { id: 'en', label: t('settings.language.english'), testId: 'lang-opt-en' },
+                  ].map((opt) => {
+                    const isSelected = (settings.language || 'auto') === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        data-testid={opt.testId}
+                        aria-pressed={isSelected}
+                        onClick={() =>
+                          onUpdateSettings({ ...settings, language: opt.id as Language })
+                        }
+                        style={{
+                          flex: 1,
+                          padding: '8px 4px',
+                          borderRadius: '10px',
+                          fontSize: '13px',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          border: isSelected ? '2px solid #6366F1' : '2px solid #E2D6C1',
+                          background: isSelected ? '#FFF' : '#EFE6D5',
+                          color: isSelected ? '#3D3135' : '#5C4B51',
+                          boxShadow: isSelected ? '0 0 0 1px #6366F1' : 'none',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Double-tap Speed Section */}
               <div
                 style={{
                   background: '#F8F3E8',
@@ -245,7 +309,7 @@ export function SettingsModal({
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51' }}>
-                    VELOCIDAD DE DOBLE TOQUE
+                    {t('settings.controls.doubleTapSection')}
                   </span>
                   <span style={{ fontSize: '14px', fontWeight: 800, color: '#F3722C' }}>
                     {currentTimeout} ms ({speedCategory})
@@ -267,9 +331,9 @@ export function SettingsModal({
                 />
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 800, color: '#7A686E' }}>
-                  <span>Rápido</span>
-                  <span>Medio</span>
-                  <span>Lento</span>
+                  <span>{t('settings.controls.speedFast')}</span>
+                  <span>{t('settings.controls.speedNormal')}</span>
+                  <span>{t('settings.controls.speedSlow')}</span>
                 </div>
 
                 {/* Interactive tap tester */}
@@ -319,10 +383,10 @@ export function SettingsModal({
                     </div>
                     <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#3D3135', marginTop: '4px' }}>
                       {testerFeedback.status === 'double'
-                        ? `¡Doble toque detectado! (${testerFeedback.interval}ms)`
+                        ? `${t('settings.controls.doubleTapDetected')} (${testerFeedback.interval}ms)`
                         : testerFeedback.status === 'single'
-                        ? '1 toque (✕ cruz) — ¡toca de nuevo rápido!'
-                        : 'Toca 2 veces aquí para probar la velocidad'}
+                        ? t('settings.controls.singleTapPrompt')
+                        : t('settings.controls.testTapPrompt')}
                     </div>
                   </div>
                 </div>
@@ -348,7 +412,7 @@ export function SettingsModal({
                   }}
                 >
                   <span style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51' }}>
-                    DISEÑO DE GATITO
+                    {t('settings.graphics.sectionTitle')}
                   </span>
                   <span
                     data-testid="settings-total-stars"
@@ -388,6 +452,8 @@ export function SettingsModal({
                   {CAT_BREEDS.map((breed) => {
                     const isUnlocked = isCatBreedUnlocked(breed.id, totalStars);
                     const isSelected = settings.catVariant === breed.id;
+                    const breedName = getLocalizedBreedName(breed.id, lang);
+                    const starsReq = t('settings.graphics.starsRequired', { stars: breed.requiredStars });
 
                     return (
                       <button
@@ -396,11 +462,11 @@ export function SettingsModal({
                         data-testid={`select-cat-${breed.id}`}
                         data-locked={isUnlocked ? 'false' : 'true'}
                         aria-disabled={!isUnlocked}
-                        title={breed.name}
+                        title={breedName}
                         aria-label={
                           isUnlocked
-                            ? breed.name
-                            : `${breed.name} (Requiere ${breed.requiredStars}★)`
+                            ? breedName
+                            : `${breedName} (${starsReq})`
                         }
                         onClick={() => {
                           if (isUnlocked) {
@@ -446,7 +512,7 @@ export function SettingsModal({
                             maxWidth: '100%',
                           }}
                         >
-                          {breed.name}
+                          {breedName}
                         </span>
                         {!isUnlocked && (
                           <span
@@ -473,14 +539,14 @@ export function SettingsModal({
               {/* Region Assist */}
               <div>
                 <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51', marginBottom: '8px' }}>
-                  AYUDA VISUAL DE REGIONES (ACCESIBILIDAD)
+                  {t('settings.assists.regionSection')}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                   {[
-                    { id: 'off', label: 'Desactivado' },
-                    { id: 'textures', label: 'Rayas' },
-                    { id: 'glyphs', label: 'Iconos' },
-                    { id: 'numbers', label: 'Números 1-9' },
+                    { id: 'off', label: t('settings.assists.regionOptions.off.label') },
+                    { id: 'textures', label: t('settings.assists.regionOptions.textures.label') },
+                    { id: 'glyphs', label: t('settings.assists.regionOptions.glyphs.label') },
+                    { id: 'numbers', label: t('settings.assists.regionOptions.numbers.label') },
                   ].map((item) => {
                     const active = (settings.regionAssist || 'off') === item.id;
                     return (
@@ -609,14 +675,14 @@ export function SettingsModal({
               style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}
             >
               <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51' }}>
-                AUDIO Y MÚSICA
+                {t('settings.tabs.audio').toUpperCase()}
               </div>
 
               {/* Music Section */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '13px', fontWeight: 800, color: '#5C4B51' }}>
-                    Volumen de Música
+                    {t('settings.audio.musicVolume')}
                   </span>
                   <button
                     type="button"
@@ -673,7 +739,7 @@ export function SettingsModal({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '13px', fontWeight: 800, color: '#5C4B51' }}>
-                    Volumen de Efectos
+                    {t('settings.audio.sfxVolume')}
                   </span>
                   <button
                     type="button"
@@ -730,7 +796,7 @@ export function SettingsModal({
               {/* Soundtrack Selector Section */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ fontSize: '13px', fontWeight: 800, color: '#5C4B51' }}>
-                  Banda Sonora
+                  {t('settings.audio.musicTrack')}
                 </div>
                 {(() => {
                   const isAutoSelected = (settings.musicTrack || 'auto') === 'auto';
@@ -752,18 +818,18 @@ export function SettingsModal({
                         textAlign: 'center',
                       }}
                     >
-                      Auto (6 temas)
+                      {t('settings.audio.tracks.auto')}
                     </button>
                   );
                 })()}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
                   {([
-                    { id: 'marimba', label: 'Marimba Michi' },
-                    { id: 'velvet', label: 'Velvet Paws' },
-                    { id: 'sunbeam', label: 'Sunbeam Stroll' },
-                    { id: 'bossa', label: 'Bossa Meow' },
-                    { id: 'waltz', label: 'Catnip Waltz' },
-                    { id: 'samba', label: 'Samba de Gatinho' },
+                    { id: 'marimba', label: t('settings.audio.tracks.marimba') },
+                    { id: 'velvet', label: t('settings.audio.tracks.velvet') },
+                    { id: 'sunbeam', label: t('settings.audio.tracks.sunbeam') },
+                    { id: 'bossa', label: t('settings.audio.tracks.bossa') },
+                    { id: 'waltz', label: t('settings.audio.tracks.waltz') },
+                    { id: 'samba', label: t('settings.audio.tracks.samba') },
                   ] satisfies { id: MusicTrackOption; label: string }[]).map((track) => {
                     const isSelected = (settings.musicTrack || 'auto') === track.id;
                     return (
@@ -803,20 +869,24 @@ export function SettingsModal({
             >
               <div>
                 <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51', marginBottom: '8px' }}>
-                  COLOCAR CRUCES AUTOMÁTICAMENTE
+                  {t('settings.assists.autoCrossSection')}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {[
-                    { id: 'off', label: 'No', desc: 'Colocar todas las cruces de forma manual' },
+                    {
+                      id: 'off',
+                      label: t('settings.assists.autoCrossOptions.off.label'),
+                      desc: t('settings.assists.autoCrossOptions.off.desc'),
+                    },
                     {
                       id: 'row_col_surround',
-                      label: 'Fila, columna y alrededor',
-                      desc: 'Cruces en la fila, columna y casillas adyacentes al colocar un gato',
+                      label: t('settings.assists.autoCrossOptions.row_col_surround.label'),
+                      desc: t('settings.assists.autoCrossOptions.row_col_surround.desc'),
                     },
                     {
                       id: 'all',
-                      label: 'Fila, columna, alrededor y color',
-                      desc: 'Cruces en fila, columna, adyacentes y toda la región de color',
+                      label: t('settings.assists.autoCrossOptions.all.label'),
+                      desc: t('settings.assists.autoCrossOptions.all.desc'),
                     },
                   ].map((opt) => {
                     const active = (settings.autoCross || 'off') === opt.id;
