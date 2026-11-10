@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { useI18n } from '../i18n';
 import { getTotalEarnedStars, ModeProgress, StarRating } from '../state/storage';
 
 export interface LevelSelectTier {
@@ -66,6 +67,7 @@ export function LevelSelectScreen({
   onSelectLevel,
   onBack,
 }: LevelSelectScreenProps) {
+  const { t } = useI18n();
   const [selectedTierSize, setSelectedTierSize] = useState<number>(() =>
     getTierForLevelId(progress.currentLevelId, totalLevels)
   );
@@ -134,15 +136,17 @@ export function LevelSelectScreen({
             cursor: 'pointer',
           }}
         >
-          ← Menú
+          {t('levels.backToMenu')}
         </button>
 
         <h2 style={{ margin: 0, fontWeight: 900, fontSize: '20px', color: '#3D3135' }}>
-          Niveles
+          {t('levels.title')}
         </h2>
 
         <div
           data-testid="level-select-total-stars"
+          aria-label={t('levels.totalStars', { stars: totalEarnedStars, max: maxTotalStars })}
+          title={t('levels.totalStars', { stars: totalEarnedStars, max: maxTotalStars })}
           style={{
             background: '#F3E9D2',
             border: '2px solid #E2D6C1',
@@ -223,7 +227,11 @@ export function LevelSelectScreen({
         }}
       >
         <span>
-          Tableros {activeTier.size}×{activeTier.size} (Niv. {activeTier.startId}–{tierEndId})
+          {t('levels.tierBanner', {
+            size: activeTier.size,
+            start: activeTier.startId,
+            end: tierEndId,
+          })}
         </span>
         <span
           style={{
@@ -270,10 +278,10 @@ export function LevelSelectScreen({
                 disabled={isLocked}
                 aria-label={
                   isLocked
-                    ? `Nivel ${id}, bloqueado`
+                    ? t('levels.tileBlocked', { id })
                     : isFrontier
-                    ? `Nivel ${id}, actual`
-                    : `Nivel ${id}, ${displayStars} estrellas`
+                    ? t('levels.tileCurrent', { id })
+                    : t('levels.tileStars', { id, stars: displayStars })
                 }
                 data-testid={`level-tile-${id}`}
                 onClick={() => {
@@ -335,7 +343,7 @@ export function LevelSelectScreen({
                         lineHeight: 1,
                       }}
                     >
-                      JUGAR
+                      {t('levels.frontierPlay')}
                     </span>
                   )}
                   {isLocked && <LockIcon size={11} />}

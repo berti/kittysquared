@@ -19,7 +19,7 @@ export const TRANSLATIONS: Record<EffectiveLanguage, TranslationSchema> = {
       equip: 'Equipar',
       equipped: 'Equipado',
       completed: 'Completado',
-      gameCompleted: '¡Juego Completado!',
+      gameCompleted: '¡Juego completado!',
       cancel: 'Cancelar',
       confirm: 'Confirmar',
       levelN: 'Nivel {id}',

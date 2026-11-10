@@ -2,6 +2,7 @@
 import { fireEvent, render, screen } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LevelSelectScreen } from '../../src/components/LevelSelectScreen';
+import { I18nProvider } from '../../src/i18n';
 
 describe('LevelSelectScreen component', () => {
   beforeEach(() => {
@@ -87,5 +88,54 @@ describe('LevelSelectScreen component', () => {
     expect(tile300.disabled).toBe(false);
     fireEvent.click(tile300);
     expect(onSelectLevel).toHaveBeenCalledWith(300);
+  });
+
+  it('renders title, stars counter, back button, tier banner, frontier play button, and tile aria-labels in English when wrapped in <I18nProvider lang="en">', () => {
+    const onSelectLevel = vi.fn();
+    const onBack = vi.fn();
+
+    render(
+      <I18nProvider lang="en">
+        <LevelSelectScreen
+          progress={{
+            currentLevelId: 18,
+            totalScore: 1500,
+            activeSnapshot: null,
+            levelStars: {
+              1: 3,
+              16: 3,
+              17: 2,
+            },
+          }}
+          totalLevels={300}
+          onSelectLevel={onSelectLevel}
+          onBack={onBack}
+        />
+      </I18nProvider>
+    );
+
+    // Title and back button in English
+    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Levels');
+    expect(screen.getByTestId('level-select-back-btn').textContent).toBe('← Menu');
+
+    // Total stars counter in English
+    const totalStars = screen.getByTestId('level-select-total-stars');
+    expect(totalStars.getAttribute('aria-label') || totalStars.textContent).toContain('Stars: 8 / 900');
+
+    // Tier banner in English: "Boards 6×6 (Lvl. 16–40)"
+    expect(screen.getByTestId('tier-summary-banner').textContent).toContain('Boards 6×6 (Lvl. 16–40)');
+
+    // Frontier tile shows PLAY and English aria-label
+    const tile18 = screen.getByTestId('level-tile-18');
+    expect(tile18.textContent).toContain('PLAY');
+    expect(tile18.getAttribute('aria-label')).toBe('Level 18, current');
+
+    // Completed tile aria-label
+    const tile16 = screen.getByTestId('level-tile-16');
+    expect(tile16.getAttribute('aria-label')).toBe('Level 16, 3 stars');
+
+    // Locked tile aria-label
+    const tile19 = screen.getByTestId('level-tile-19');
+    expect(tile19.getAttribute('aria-label')).toBe('Level 19, locked');
   });
 });

@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfirmDialog } from '../../src/components/ConfirmDialog';
 import { RestartIcon } from '../../src/components/Icons';
+import { I18nProvider } from '../../src/i18n';
 
 describe('ConfirmDialog component', () => {
   beforeEach(() => {
@@ -111,5 +112,56 @@ describe('ConfirmDialog component', () => {
 
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders default button labels in Spanish when confirmText and cancelText are omitted', () => {
+    const { getByTestId } = render(
+      <ConfirmDialog
+        isOpen={true}
+        title="Acción"
+        description="¿Proceder?"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    );
+
+    expect(getByTestId('confirm-dialog-confirm-btn').textContent).toBe('Confirmar');
+    expect(getByTestId('confirm-dialog-cancel-btn').textContent).toBe('Cancelar');
+  });
+
+  it('renders localized button labels in English when wrapped in <I18nProvider lang="en">', () => {
+    const { getByTestId } = render(
+      <I18nProvider lang="en">
+        <ConfirmDialog
+          isOpen={true}
+          title="Action"
+          description="Proceed?"
+          onConfirm={vi.fn()}
+          onCancel={vi.fn()}
+        />
+      </I18nProvider>
+    );
+
+    expect(getByTestId('confirm-dialog-confirm-btn').textContent).toBe('Confirm');
+    expect(getByTestId('confirm-dialog-cancel-btn').textContent).toBe('Cancel');
+  });
+
+  it('preserves explicit confirmText and cancelText prop overrides even in English provider', () => {
+    const { getByTestId } = render(
+      <I18nProvider lang="en">
+        <ConfirmDialog
+          isOpen={true}
+          title="Action"
+          description="Proceed?"
+          confirmText="Yes, delete"
+          cancelText="No, go back"
+          onConfirm={vi.fn()}
+          onCancel={vi.fn()}
+        />
+      </I18nProvider>
+    );
+
+    expect(getByTestId('confirm-dialog-confirm-btn').textContent).toBe('Yes, delete');
+    expect(getByTestId('confirm-dialog-cancel-btn').textContent).toBe('No, go back');
   });
 });

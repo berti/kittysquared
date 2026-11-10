@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
+import { useI18n } from '../i18n';
 import { CatVariant } from '../types/puzzle';
 import { CatSvg } from './CatSvg';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -16,13 +17,14 @@ export interface PostGameModalProps {
 
 export function PostGameModal({
   isOpen,
-  totalLevels,
-  totalScore,
+  totalLevels: _totalLevels,
+  totalScore: _totalScore,
   catVariant = 'black',
   onReplayLastLevel,
   onResetProgress,
   onClose,
 }: PostGameModalProps) {
+  const { t } = useI18n();
   const [showConfirmReset, setShowConfirmReset] = useState(false);
 
   useEffect(() => {
@@ -69,7 +71,7 @@ export function PostGameModal({
           class="modal-card-flyin"
           role="dialog"
           aria-modal="true"
-          aria-label="¡Juego completado!"
+          aria-label={t('postGame.title')}
           style={{
             backgroundColor: '#FFFBF2',
             border: '4px solid #E2D6C1',
@@ -87,12 +89,11 @@ export function PostGameModal({
           </div>
 
           <h2 style={{ margin: '0 0 6px', fontSize: '24px', fontWeight: 900, color: '#3D3135' }}>
-            ¡Juego completado!
+            {t('postGame.title')}
           </h2>
 
           <p style={{ margin: '0 0 20px', fontSize: '15px', color: '#7A686E', lineHeight: '1.4' }}>
-            Has superado todos los {totalLevels} / {totalLevels} niveles con un total de{' '}
-            <strong>{totalScore} pts</strong>. ¿Qué te gustaría hacer ahora?
+            {t('postGame.summary')}
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -120,10 +121,10 @@ export function PostGameModal({
             >
               <div>
                 <div style={{ fontSize: '15.5px', fontWeight: 800 }}>
-                  Jugar último nivel (Nivel {totalLevels})
+                  {t('postGame.playLastBtn')}
                 </div>
                 <div style={{ fontSize: '13px', opacity: 0.9, marginTop: '2px' }}>
-                  Vuelve a jugar el último reto
+                  {t('postGame.playLastDesc')}
                 </div>
               </div>
               <span style={{ fontSize: '18px' }}>▶</span>
@@ -148,10 +149,10 @@ export function PostGameModal({
             >
               <div>
                 <div style={{ fontSize: '15px', fontWeight: 800, color: '#DC2626' }}>
-                  Reiniciar progreso desde cero
+                  {t('postGame.resetBtn')}
                 </div>
                 <div style={{ fontSize: '13px', color: '#EF4444', marginTop: '2px' }}>
-                  Volver al nivel 1 y puntuación a 0
+                  {t('postGame.resetDesc')}
                 </div>
               </div>
               <WarningIcon size={20} />
@@ -175,7 +176,7 @@ export function PostGameModal({
                 marginTop: '4px',
               }}
             >
-              Cerrar
+              {t('postGame.closeBtn')}
             </button>
           </div>
         </div>
@@ -183,11 +184,11 @@ export function PostGameModal({
 
       <ConfirmDialog
         isOpen={showConfirmReset}
-        title="¿Reiniciar progreso?"
-        description="Perderás el nivel alcanzado y todos los puntos acumulados volverán a 0."
+        title={t('home.confirmResetTitle')}
+        description={t('home.confirmResetMsg')}
         icon={<WarningIcon size={28} />}
-        confirmText="Sí, reiniciar"
-        cancelText="Cancelar"
+        confirmText={t('postGame.resetBtn')}
+        cancelText={t('common.cancel')}
         isDestructive={true}
         onConfirm={() => {
           onResetProgress();

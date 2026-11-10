@@ -1,8 +1,9 @@
 import { useState } from 'preact/hooks';
+import { useI18n } from '../i18n';
 import { CatVariant, DailyProgress } from '../types/puzzle';
 import { DEFAULT_DAILY_PROGRESS, getTotalEarnedStars, ModeProgress } from '../state/storage';
 import {
-  formatDailyDateSpanish,
+  formatDailyDate,
   getEffectiveStreak,
   getTodayDateString,
 } from '../engine/daily';
@@ -40,6 +41,7 @@ export function HomeScreen({
 }: HomeScreenProps) {
   const [showPostGameModal, setShowPostGameModal] = useState(false);
   const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const { lang, t } = useI18n();
 
   const levelsCount = totalLevels ?? 300;
   const isGameCompleted = progress.currentLevelId > levelsCount;
@@ -47,7 +49,7 @@ export function HomeScreen({
   const maxStars = levelsCount * 3;
 
   const todayStr = getTodayDateString();
-  const formattedDailyDate = formatDailyDateSpanish(todayStr, 'long');
+  const formattedDailyDate = formatDailyDate(todayStr, 'long', lang);
   const effectiveStreak = getEffectiveStreak(daily, todayStr);
   const todayResult = daily.history[todayStr];
   const isDailyCompletedToday = Boolean(todayResult);
@@ -103,7 +105,7 @@ export function HomeScreen({
           }}
         >
           <div style={{ fontWeight: 900, fontSize: '20px', letterSpacing: '0.2px' }}>
-            Jugar
+            {t('common.play')}
           </div>
           <div
             style={{
@@ -118,8 +120,8 @@ export function HomeScreen({
           >
             <span>
               {isGameCompleted
-                ? `¡Juego completado! • ${levelsCount} / ${levelsCount} • `
-                : `Nivel ${progress.currentLevelId} / ${levelsCount} • `}
+                ? `${t('common.gameCompleted')} • ${levelsCount} / ${levelsCount} • `
+                : `${t('home.levelProgress', { current: progress.currentLevelId, total: levelsCount })} • `}
             </span>
             <PawCoinIcon size={16} testId="home-paw-coin-icon" />
             <span>{progress.totalScore}</span>
@@ -165,7 +167,7 @@ export function HomeScreen({
                   lineHeight: 1.2,
                 }}
               >
-                Reto Diario
+                {t('common.dailyChallenge')}
               </span>
               <span
                 style={{
@@ -210,7 +212,7 @@ export function HomeScreen({
                   }}
                 >
                   <CheckIcon size={14} color="#2E7D32" testId="daily-check-icon" />
-                  <span>Completado</span>
+                  <span>{t('common.completed')}</span>
                 </span>
                 {todayResult && (
                   <span
@@ -227,6 +229,8 @@ export function HomeScreen({
                   </span>
                 )}
                 <span
+                  title={t('home.streakDays', { count: effectiveStreak })}
+                  aria-label={t('home.streakDays', { count: effectiveStreak })}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -253,9 +257,11 @@ export function HomeScreen({
                     fontWeight: 800,
                   }}
                 >
-                  10×10 Difícil
+                  10×10 {t('home.dailyHardBadge')}
                 </span>
                 <span
+                  title={t('home.streakDays', { count: effectiveStreak })}
+                  aria-label={t('home.streakDays', { count: effectiveStreak })}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -295,7 +301,7 @@ export function HomeScreen({
             fontFamily: 'inherit',
           }}
         >
-          <span>Niveles</span>
+          <span>{t('common.levels')}</span>
           <span
             style={{
               display: 'inline-flex',
@@ -358,7 +364,7 @@ export function HomeScreen({
               boxSizing: 'border-box',
             }}
           >
-            Ajustes
+            {t('common.settings')}
           </button>
         </div>
       </div>
@@ -382,17 +388,17 @@ export function HomeScreen({
             transition: 'all 0.15s ease',
           }}
         >
-          Reiniciar progreso
+          {t('home.resetProgressBtn')}
         </button>
       </div>
 
       <ConfirmDialog
         isOpen={showConfirmReset}
-        title="¿Reiniciar progreso?"
-        description="Perderás el nivel alcanzado y todos los puntos acumulados volverán a 0."
+        title={t('home.confirmResetTitle')}
+        description={t('home.confirmResetMsg')}
         icon={<WarningIcon size={28} />}
-        confirmText="Sí, reiniciar"
-        cancelText="Cancelar"
+        confirmText={t('home.resetProgressBtn')}
+        cancelText={t('common.cancel')}
         isDestructive={true}
         onConfirm={() => {
           onResetProgress?.();

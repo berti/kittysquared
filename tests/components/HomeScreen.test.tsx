@@ -3,10 +3,12 @@ import { fireEvent, render, screen } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HomeScreen } from '../../src/components/HomeScreen';
 import {
+  formatDailyDate,
   formatDailyDateSpanish,
   getPreviousDateString,
   getTodayDateString,
 } from '../../src/engine/daily';
+import { I18nProvider } from '../../src/i18n';
 import { DailyProgress } from '../../src/types/puzzle';
 
 describe('HomeScreen component', () => {
@@ -321,6 +323,152 @@ describe('HomeScreen component', () => {
       expect(dailyCard.textContent).toContain('10×10 Difícil');
       expect(dailyCard.textContent).toContain('0');
       expect(screen.queryByTestId('daily-check-icon')).toBeNull();
+    });
+  });
+
+  describe('Bilingual Localization (English)', () => {
+    it('renders Play button, Levels button, and Level progress in English when wrapped in <I18nProvider lang="en">', () => {
+      render(
+        <I18nProvider lang="en">
+          <HomeScreen
+            progress={defaultProgress}
+            totalLevels={300}
+            catVariant="black"
+            onPlay={vi.fn()}
+            onOpenTutorial={vi.fn()}
+            onOpenSettings={vi.fn()}
+          />
+        </I18nProvider>
+      );
+
+      const playBtn = screen.getByTestId('start-game-btn');
+      expect(playBtn.textContent).toContain('Play');
+      expect(playBtn.textContent).toContain('Level 4 / 300 • 125');
+
+      const levelsBtn = screen.getByTestId('open-levels-btn');
+      expect(levelsBtn.textContent).toContain('Levels');
+    });
+
+    it('renders Daily Challenge card with English title, formatted date, badge, and streak', () => {
+      const todayStr = getTodayDateString();
+      const yesterdayStr = getPreviousDateString(todayStr);
+      const dailyUnplayed: DailyProgress = {
+        lastPlayedDate: yesterdayStr,
+        currentStreak: 4,
+        maxStreak: 6,
+        history: {},
+        activeSnapshot: null,
+        activeSnapshotDate: null,
+      };
+
+      render(
+        <I18nProvider lang="en">
+          <HomeScreen
+            progress={defaultProgress}
+            daily={dailyUnplayed}
+            catVariant="black"
+            onPlay={vi.fn()}
+            onOpenTutorial={vi.fn()}
+            onOpenSettings={vi.fn()}
+          />
+        </I18nProvider>
+      );
+
+      const dailyCard = screen.getByTestId('open-daily-btn');
+      expect(dailyCard.textContent).toContain('Daily Challenge');
+      const expectedEnDate = formatDailyDate(todayStr, 'long', 'en');
+      expect(dailyCard.textContent).toContain(expectedEnDate);
+      expect(dailyCard.textContent).toContain('10×10 Hard');
+      expect(dailyCard.textContent).toContain('4');
+    });
+
+    it('renders Daily Challenge card completed badge in English', () => {
+      const todayStr = getTodayDateString();
+      const dailyCompleted: DailyProgress = {
+        lastPlayedDate: todayStr,
+        currentStreak: 5,
+        maxStreak: 7,
+        history: {
+          [todayStr]: {
+            date: todayStr,
+            stars: 3,
+            mistakes: 0,
+            timeSeconds: 120,
+            completedAt: new Date().toISOString(),
+          },
+        },
+        activeSnapshot: null,
+        activeSnapshotDate: null,
+      };
+
+      render(
+        <I18nProvider lang="en">
+          <HomeScreen
+            progress={defaultProgress}
+            daily={dailyCompleted}
+            catVariant="black"
+            onPlay={vi.fn()}
+            onOpenTutorial={vi.fn()}
+            onOpenSettings={vi.fn()}
+          />
+        </I18nProvider>
+      );
+
+      const dailyCard = screen.getByTestId('open-daily-btn');
+      expect(dailyCard.textContent).toContain('Completed');
+      expect(dailyCard.textContent).not.toContain('10×10 Hard');
+    });
+
+    it('renders localized Reset button and ConfirmDialog in English', () => {
+      const onReset = vi.fn();
+      render(
+        <I18nProvider lang="en">
+          <HomeScreen
+            progress={defaultProgress}
+            catVariant="black"
+            onPlay={vi.fn()}
+            onResetProgress={onReset}
+            onOpenTutorial={vi.fn()}
+            onOpenSettings={vi.fn()}
+          />
+        </I18nProvider>
+      );
+
+      const resetBtn = screen.getByTestId('home-reset-progress-btn');
+      expect(resetBtn.textContent).toBe('Reset All Progress');
+
+      fireEvent.click(resetBtn);
+      expect(screen.getByRole('dialog', { name: 'Reset All Progress?' })).toBeDefined();
+      expect(
+        screen.getByText(
+          'All completed levels, times, and unlocked kittens will be deleted. This action cannot be undone.'
+        )
+      ).toBeDefined();
+      expect(screen.getByTestId('confirm-dialog-confirm-btn').textContent).toBe('Reset All Progress');
+      expect(screen.getByTestId('confirm-dialog-cancel-btn').textContent).toBe('Cancel');
+    });
+
+    it('renders completed state banner on Play button in English when all levels are completed', () => {
+      render(
+        <I18nProvider lang="en">
+          <HomeScreen
+            progress={{
+              currentLevelId: 301,
+              totalScore: 16500,
+              activeSnapshot: null,
+            }}
+            totalLevels={300}
+            catVariant="black"
+            onPlay={vi.fn()}
+            onOpenTutorial={vi.fn()}
+            onOpenSettings={vi.fn()}
+          />
+        </I18nProvider>
+      );
+
+      const playBtn = screen.getByTestId('start-game-btn');
+      expect(playBtn.textContent).toContain('Game Completed!');
+      expect(playBtn.textContent).toContain('300 / 300 • 16500');
     });
   });
 });

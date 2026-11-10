@@ -1,5 +1,6 @@
 import { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { useI18n } from '../i18n';
 import { WarningIcon } from './Icons';
 
 export interface ConfirmDialogProps {
@@ -20,13 +21,17 @@ export function ConfirmDialog({
   title,
   description,
   icon = <WarningIcon size={28} />,
-  confirmText = 'Confirmar',
-  cancelText = 'Cancelar',
+  confirmText,
+  cancelText,
   isDestructive = false,
   guardBackdropMs = typeof process !== 'undefined' && process.env.NODE_ENV === 'test' ? 0 : 300,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const { t } = useI18n();
+  const resolvedConfirmText = confirmText ?? t('common.confirm');
+  const resolvedCancelText = cancelText ?? t('common.cancel');
+
   const prevIsOpenRef = useRef(isOpen);
   const [isEntering, setIsEntering] = useState(() => isOpen && guardBackdropMs > 0);
 
@@ -160,7 +165,7 @@ export function ConfirmDialog({
               cursor: 'pointer',
             }}
           >
-            {cancelText}
+            {resolvedCancelText}
           </button>
           <button
             type="button"
@@ -179,7 +184,7 @@ export function ConfirmDialog({
               boxShadow: isDestructive ? '0 2px 8px rgba(239, 68, 68, 0.3)' : '0 2px 8px rgba(243, 114, 44, 0.3)',
             }}
           >
-            {confirmText}
+            {resolvedConfirmText}
           </button>
         </div>
       </div>
