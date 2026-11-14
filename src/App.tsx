@@ -13,6 +13,7 @@ import {
   getEffectiveStreak,
   getTodayDateString,
 } from './engine/daily';
+import { I18nProvider, resolveEffectiveLanguage } from './i18n';
 import {
   computeLevelWinOutcome,
   createLevelSession,
@@ -118,6 +119,19 @@ export function App({
   useEffect(() => {
     soundEngine.setTrackPreference(appState.settings.musicTrack ?? 'auto');
   }, [appState.settings.musicTrack]);
+
+  const effectiveLang = resolveEffectiveLanguage(appState.settings.language);
+
+  // Synchronize document lang attribute and page title with effective language
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = effectiveLang;
+      document.title =
+        effectiveLang === 'en'
+          ? 'KittySquared — Logic Puzzle Game'
+          : 'KittySquared — Juego de Puzzles de Lógica';
+    }
+  }, [effectiveLang]);
 
   // Persist state on change
   const updateAppState = (
@@ -400,8 +414,15 @@ export function App({
     puzzles.find((p) => p.id === appState.progress.currentLevelId) || puzzles[0];
 
   return (
-    <div>
-      <ScreenTransitionOverlay {...transitionState} />
+    <I18nProvider
+      lang={effectiveLang}
+      setting={appState.settings.language}
+      onSetLanguage={(newLang) =>
+        handleUpdateSettings({ ...appState.settings, language: newLang })
+      }
+    >
+      <div>
+        <ScreenTransitionOverlay {...transitionState} />
 
       {activeScreen === 'home' && (
         <HomeScreen
@@ -493,5 +514,6 @@ export function App({
         />
       )}
     </div>
+    </I18nProvider>
   );
 }

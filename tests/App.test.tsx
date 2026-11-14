@@ -6,9 +6,28 @@ import { soundEngine } from '../src/audio/soundEngine';
 import { getDailyPuzzleForDate, getTodayDateString } from '../src/engine/daily';
 
 describe('App integration', () => {
+  const originalNavLanguage = typeof navigator !== 'undefined' ? navigator.language : 'en-US';
+
   beforeEach(() => {
     localStorage.clear();
     document.body.innerHTML = '';
+    document.documentElement.lang = '';
+    document.title = '';
+    if (typeof navigator !== 'undefined') {
+      Object.defineProperty(navigator, 'language', {
+        value: 'es-ES',
+        configurable: true,
+      });
+    }
+  });
+
+  afterEach(() => {
+    if (typeof navigator !== 'undefined') {
+      Object.defineProperty(navigator, 'language', {
+        value: originalNavLanguage,
+        configurable: true,
+      });
+    }
   });
 
   it('renders Home screen with single Play card, Tutorial, and Settings', () => {
@@ -678,6 +697,98 @@ describe('App integration', () => {
       expect(saved.daily.lastPlayedDate).toBe('2026-11-08');
 
       vi.useRealTimers();
+    });
+  });
+
+  describe('Bilingual i18n & document metadata integration', () => {
+    it('synchronizes document.documentElement.lang and document.title to Spanish by default', () => {
+      const { getByText } = render(<App transitionDurationMs={0} />);
+      expect(document.documentElement.lang).toBe('es');
+      expect(document.title).toBe('KittySquared — Juego de Puzzles de Lógica');
+      expect(getByText('Jugar')).toBeTruthy();
+      expect(getByText('Niveles')).toBeTruthy();
+    });
+
+    it('synchronizes document metadata to English when persisted language is en', () => {
+      localStorage.setItem(
+        'kittysquared_state_v1',
+        JSON.stringify({
+          progress: { currentLevelId: 1, totalScore: 0, activeSnapshot: null },
+          settings: {
+            catVariant: 'black',
+            language: 'en',
+            musicMuted: true,
+            sfxMuted: true,
+            tutorialSeen: true,
+          },
+        })
+      );
+
+      const { getByText } = render(<App transitionDurationMs={0} />);
+      expect(document.documentElement.lang).toBe('en');
+      expect(document.title).toBe('KittySquared — Logic Puzzle Game');
+      expect(getByText('Play')).toBeTruthy();
+      expect(getByText('Levels')).toBeTruthy();
+    });
+
+    it('dynamically switches language via Settings, updating metadata and screens immediately', () => {
+      const { getByTestId, getByText, queryByText } = render(<App transitionDurationMs={0} />);
+
+      // Initial state is Spanish
+      expect(document.documentElement.lang).toBe('es');
+      expect(document.title).toBe('KittySquared — Juego de Puzzles de Lógica');
+      expect(getByText('Jugar')).toBeTruthy();
+
+      // Open Settings
+      fireEvent.click(getByTestId('open-settings-btn'));
+
+      // Switch to English
+      fireEvent.click(getByTestId('lang-opt-en'));
+
+      // Metadata updates immediately
+      expect(document.documentElement.lang).toBe('en');
+      expect(document.title).toBe('KittySquared — Logic Puzzle Game');
+
+      // Close Settings and verify Home screen updated
+      fireEvent.click(getByTestId('close-settings-btn'));
+      expect(getByText('Play')).toBeTruthy();
+      expect(getByText('Levels')).toBeTruthy();
+      expect(queryByText('Jugar')).toBeNull();
+
+      // Navigate to Level Select screen and check English string
+      fireEvent.click(getByTestId('open-levels-btn'));
+      expect(getByText('Boards 5×5 (Lvl. 1–15)')).toBeTruthy();
+      expect(getByText('← Menu')).toBeTruthy();
+
+      // Return to Home
+      fireEvent.click(getByTestId('level-select-back-btn'));
+
+      // Re-open settings and switch back to Spanish
+      fireEvent.click(getByTestId('open-settings-btn'));
+      fireEvent.click(getByTestId('lang-opt-es'));
+
+      expect(document.documentElement.lang).toBe('es');
+      expect(document.title).toBe('KittySquared — Juego de Puzzles de Lógica');
+
+      fireEvent.click(getByTestId('close-settings-btn'));
+      expect(getByText('Jugar')).toBeTruthy();
+      expect(getByText('Niveles')).toBeTruthy();
+
+      // Check localStorage persistence
+      const saved = JSON.parse(localStorage.getItem('kittysquared_state_v1') || '{}');
+      expect(saved.settings.language).toBe('es');
+    });
+
+    it('resolves auto language to English when navigator.language is en-US', () => {
+      Object.defineProperty(navigator, 'language', {
+        value: 'en-US',
+        configurable: true,
+      });
+      const { getByText } = render(<App transitionDurationMs={0} />);
+      expect(document.documentElement.lang).toBe('en');
+      expect(document.title).toBe('KittySquared — Logic Puzzle Game');
+      expect(getByText('Play')).toBeTruthy();
+      expect(getByText('Levels')).toBeTruthy();
     });
   });
 });
