@@ -4,6 +4,7 @@ import { TUTORIAL_STEPS } from '../data/tutorialSteps';
 import { Board } from './Board';
 import { HeartSvg } from './Icons';
 import { soundEngine } from '../audio/soundEngine';
+import { useI18n } from '../i18n';
 import {
   applyCellTap,
   applyDragCross,
@@ -40,8 +41,21 @@ export function TutorialModal({
   doubleTapTimeoutMs = 500,
   onClose,
 }: TutorialModalProps) {
+  const { t } = useI18n();
   const [stepIndex, setStepIndex] = useState(0);
   const currentStep = TUTORIAL_STEPS[stepIndex];
+
+  const stepTitleKey = `tutorial.steps.${currentStep.id}.title`;
+  const translatedTitle = t(stepTitleKey);
+  const stepTitle = translatedTitle !== stepTitleKey ? translatedTitle : currentStep.title;
+
+  const stepDescKey = `tutorial.steps.${currentStep.id}.desc`;
+  const translatedDesc = t(stepDescKey);
+  const stepExplanation = translatedDesc !== stepDescKey ? translatedDesc : currentStep.explanation;
+
+  const stepHintKey = `tutorial.steps.${currentStep.id}.hint`;
+  const translatedHint = t(stepHintKey);
+  const stepHintText = translatedHint !== stepHintKey ? translatedHint : currentStep.hintText;
 
   const [session, setSession] = useState<LevelSessionState>(() => initSessionForStep(0));
   const initialSessionRef = useRef<LevelSessionState>(session);
@@ -157,7 +171,7 @@ export function TutorialModal({
                 cursor: 'pointer',
               }}
             >
-              1. Reglas y Controles
+              {t('tutorial.tabs.rules')}
             </button>
             <button
               data-testid="tab-btn-advanced"
@@ -173,11 +187,12 @@ export function TutorialModal({
                 cursor: 'pointer',
               }}
             >
-              2. Estrategias
+              {t('tutorial.tabs.strategies')}
             </button>
           </div>
           <button
             onClick={onClose}
+            aria-label={t('common.close')}
             style={{
               background: '#EFE6D5',
               border: 'none',
@@ -194,10 +209,10 @@ export function TutorialModal({
 
         <div>
           <h3 style={{ margin: '0 0 6px 0', fontSize: '18px', color: '#3D3135' }}>
-            {currentStep.title}
+            {stepTitle}
           </h3>
           <p style={{ margin: 0, fontSize: '13.5px', lineHeight: 1.45, color: '#7A686E' }}>
-            {currentStep.explanation}
+            {stepExplanation}
           </p>
         </div>
 
@@ -252,12 +267,12 @@ export function TutorialModal({
             minHeight: '20px',
           }}
         >
-          {isStepCompleted ? '¡Excelente! Deducción completada.' : currentStep.hintText}
+          {isStepCompleted ? t('tutorial.successHint') : stepHintText}
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: '12px', color: '#8C7A80', fontWeight: 600 }}>
-            Paso {stepIndex + 1} de {TUTORIAL_STEPS.length}
+            {t('tutorial.stepCounter', { current: stepIndex + 1, total: TUTORIAL_STEPS.length })}
           </span>
           <button
             data-testid="tutorial-next-btn"
@@ -274,7 +289,7 @@ export function TutorialModal({
               cursor: isStepCompleted ? 'pointer' : 'not-allowed',
             }}
           >
-            {stepIndex === TUTORIAL_STEPS.length - 1 ? '¡Listo para jugar! ▶' : 'Siguiente ▶'}
+            {stepIndex === TUTORIAL_STEPS.length - 1 ? t('tutorial.finishBtn') : t('tutorial.nextBtn')}
           </button>
         </div>
       </div>

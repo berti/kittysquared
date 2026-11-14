@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { soundEngine } from '../audio/soundEngine';
-import { formatDailyDateSpanish, getTodayDateString } from '../engine/daily';
+import { formatDailyDate, getTodayDateString } from '../engine/daily';
 import { formatDailyShareText, shareDailyResult } from '../engine/share';
+import { useI18n } from '../i18n';
 import {
   applyCellTap,
   applyDragCross,
@@ -80,6 +81,7 @@ export function GameScreen({
   dailyStreak = 0,
   onDailyWin,
 }: GameScreenProps) {
+  const { lang, t } = useI18n();
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
   const [isCelebratingVictory, setIsCelebratingVictory] = useState(false);
   const [justLostHeartIndex, setJustLostHeartIndex] = useState<number | null>(null);
@@ -233,9 +235,19 @@ export function GameScreen({
     ? winOutcome.scoreGain
     : session.partialScore + session.levelBonus;
 
+  const formatMistakes = (count: number) => {
+    if (count === 0) return t('game.mistakesZero');
+    if (count === 1) return t('game.mistakesOne');
+    return t('game.mistakesCount', { count });
+  };
+
   const renderVictoryUnlockedBanner = () => {
     if (!latestUnlockedBreed) return null;
     const isEquipped = settings.catVariant === latestUnlockedBreed.id;
+    const breedNameKey = `settings.breeds.${latestUnlockedBreed.id}`;
+    const translatedBreedName = t(breedNameKey);
+    const breedDisplayName =
+      translatedBreedName !== breedNameKey ? translatedBreedName : latestUnlockedBreed.name;
     return (
       <div
         data-testid="victory-unlocked-breed-banner"
@@ -266,7 +278,7 @@ export function GameScreen({
                 letterSpacing: '0.04em',
               }}
             >
-              ¡Nuevo gatito desbloqueado!
+              {t('game.newKittenUnlocked')}
             </div>
             <div
               style={{
@@ -275,7 +287,7 @@ export function GameScreen({
                 color: '#3D3135',
               }}
             >
-              {latestUnlockedBreed.name}
+              {breedDisplayName}
             </div>
           </div>
         </div>
@@ -297,7 +309,7 @@ export function GameScreen({
             flexShrink: 0,
           }}
         >
-          {isEquipped ? '¡Equipado!' : 'Equipar'}
+          {isEquipped ? t('common.equipped') : t('common.equip')}
         </button>
       </div>
     );
@@ -347,8 +359,9 @@ export function GameScreen({
       mistakes: session.mistakes,
       timeSeconds,
       streak: dailyStreak,
+      lang,
     });
-    const res = await shareDailyResult(text);
+    const res = await shareDailyResult(text, lang);
     if (res === 'copied') {
       setShowToast(true);
       if (toastTimerRef.current !== null) {
@@ -410,15 +423,15 @@ export function GameScreen({
               cursor: 'pointer',
             }}
           >
-            ← Menú
+            {t('levels.backToMenu')}
           </button>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ fontWeight: 900, fontSize: '19px', color: '#3D3135' }}>
-              {gameMode === 'daily' ? 'Reto Diario' : `Nivel ${puzzle.id}`}
+              {gameMode === 'daily' ? t('game.dailyTitle') : t('common.levelN', { id: puzzle.id })}
             </div>
             {gameMode === 'daily' && dailyDate && (
               <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#7A686F' }}>
-                {formatDailyDateSpanish(dailyDate, 'short')}
+                {formatDailyDate(dailyDate, 'short', lang)}
               </div>
             )}
           </div>
@@ -426,7 +439,8 @@ export function GameScreen({
             <button
               data-testid="restart-level-btn"
               onClick={() => setShowRestartConfirm(true)}
-              title="Reiniciar nivel actual"
+              title={t('game.restartTooltip')}
+              aria-label={t('game.restartTooltip')}
               style={{
                 background: '#F3E9D2',
                 border: '2px solid #E2D6C1',
@@ -447,7 +461,8 @@ export function GameScreen({
             <button
               data-testid="open-settings-btn"
               onClick={onOpenSettings}
-              title="Ajustes"
+              title={t('common.settings')}
+              aria-label={t('common.settings')}
               style={{
                 background: '#F3E9D2',
                 border: '2px solid #E2D6C1',
@@ -494,6 +509,7 @@ export function GameScreen({
           {/* Custom SVG Hearts Row */}
           <span
             data-testid="status-hearts-group"
+            aria-label={formatMistakes(session.mistakes)}
             style={{
               position: 'absolute',
               left: '50%',
@@ -596,6 +612,8 @@ export function GameScreen({
       {/* Controls Bar */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
         <div
+          data-testid="controls-legend"
+          aria-label={t('game.controlsLegend')}
           style={{
             textAlign: 'center',
             fontSize: '14.5px',
@@ -607,18 +625,22 @@ export function GameScreen({
             gap: '5px',
           }}
         >
-          1 toque: ✕ Cruz • 2 toques: <MiniCatIcon size={16} /> Gato
+          {lang === 'en' ? (
+            <>1 tap: ✕ Cross • 2 taps: <MiniCatIcon size={16} /> Cat</>
+          ) : (
+            <>1 toque: ✕ Cruz • 2 toques: <MiniCatIcon size={16} /> Gato</>
+          )}
         </div>
       </div>
 
       {/* Confirmation Dialog for Restart Level */}
       <ConfirmDialog
         isOpen={showRestartConfirm}
-        title="¿Reiniciar este nivel?"
-        description="Se reiniciará el tablero actual, borrando todos los gatos y cruces colocados."
+        title={t('game.confirmRestart.title')}
+        description={t('game.confirmRestart.desc')}
         icon={<RestartIcon size={28} />}
-        confirmText="Reiniciar nivel"
-        cancelText="Cancelar"
+        confirmText={t('game.confirmRestart.confirmBtn')}
+        cancelText={t('game.confirmRestart.cancelBtn')}
         onConfirm={() => {
           setShowRestartConfirm(false);
           onRetryLevel();
@@ -737,7 +759,7 @@ export function GameScreen({
             {gameMode === 'daily' ? (
               <>
                 <h2 style={{ margin: '0 0 8px', fontSize: '23px', fontWeight: 900, color: '#3D3135' }}>
-                  ¡Reto Diario Completado!
+                  {t('game.dailyCompleted')}
                 </h2>
                 <div
                   data-testid="daily-victory-stats"
@@ -756,21 +778,15 @@ export function GameScreen({
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Fallos:</span>
-                    <strong>
-                      {session.mistakes === 0
-                        ? '0 fallos'
-                        : session.mistakes === 1
-                        ? '1 fallo'
-                        : `${session.mistakes} fallos`}
-                    </strong>
+                    <span>{lang === 'en' ? 'Mistakes:' : 'Fallos:'}</span>
+                    <strong>{formatMistakes(session.mistakes)}</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Tiempo:</span>
+                    <span>{t('game.timeLabel')}:</span>
                     <strong>{formattedTime}</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Racha:</span>
+                    <span>{lang === 'en' ? 'Streak:' : 'Racha:'}</span>
                     <span
                       style={{
                         display: 'inline-flex',
@@ -780,7 +796,7 @@ export function GameScreen({
                         fontWeight: 900,
                       }}
                     >
-                      <FlameIcon size={18} /> {dailyStreak} {dailyStreak === 1 ? 'd\u00eda' : 'd\u00edas'}
+                      <FlameIcon size={18} /> {t('home.streakDays', { count: dailyStreak })}
                     </span>
                   </div>
                 </div>
@@ -804,7 +820,7 @@ export function GameScreen({
                       justifyContent: 'center',
                     }}
                   >
-                    Compartir
+                    {t('common.share')}
                   </button>
                   <button
                     type="button"
@@ -823,14 +839,14 @@ export function GameScreen({
                       cursor: 'pointer',
                     }}
                   >
-                    Volver al inicio
+                    {lang === 'en' ? t('common.backToHome') : 'Volver al inicio'}
                   </button>
                 </div>
               </>
             ) : isLastLevel ? (
               <>
                 <h2 style={{ margin: '0 0 6px', fontSize: '23px', fontWeight: 900, color: '#3D3135' }}>
-                  ¡Juego completado!
+                  {t('common.gameCompleted')}
                 </h2>
                 <div
                   data-testid="victory-score-card"
@@ -845,24 +861,26 @@ export function GameScreen({
                     fontWeight: 700,
                   }}
                 >
-                  <div>¡Has superado los {totalLevels} niveles!</div>
+                  <div>
+                    {lang === 'en'
+                      ? `You've beaten all ${totalLevels} levels!`
+                      : `¡Has superado los ${totalLevels} niveles!`}
+                  </div>
                   {isReplay ? (
                     <div>
                       {victoryScoreGain > 0
-                        ? `+${victoryScoreGain} pts (mejora de récord)`
-                        : '+0 pts (ya completado)'}
+                        ? t('game.scoreGains.recordImprovement', { gain: victoryScoreGain })
+                        : t('game.scoreGains.alreadyCompleted')}
                     </div>
                   ) : (
                     <>
-                      <div>Puntos gatos: +{session.partialScore}</div>
+                      <div>{t('game.scoreGains.catPoints', { score: session.partialScore })}</div>
                       <div>
-                        Bono {earnedStars}★ (
-                        {session.mistakes === 0
-                          ? '0 fallos'
-                          : session.mistakes === 1
-                          ? '1 fallo'
-                          : '2 fallos'}
-                        ): +{session.levelBonus}
+                        {t('game.scoreGains.bonusStars', {
+                          stars: earnedStars,
+                          mistakes: formatMistakes(session.mistakes),
+                          bonus: session.levelBonus,
+                        })}
                       </div>
                     </>
                   )}
@@ -877,7 +895,7 @@ export function GameScreen({
                     }}
                   >
                     <PawCoinIcon size={16} testId="victory-paw-coin-icon" />
-                    <strong>Puntuación final: {progress.totalScore + victoryScoreGain} pts</strong>
+                    <strong>{t('game.scoreGains.finalScore', { total: progress.totalScore + victoryScoreGain })}</strong>
                   </div>
                 </div>
                 {renderVictoryUnlockedBanner()}
@@ -898,7 +916,7 @@ export function GameScreen({
                       cursor: 'pointer',
                     }}
                   >
-                    Niveles
+                    {t('common.levels')}
                   </button>
                   <button
                     type="button"
@@ -916,14 +934,14 @@ export function GameScreen({
                       cursor: 'pointer',
                     }}
                   >
-                    Volver al Menú Principal
+                    {lang === 'en' ? t('common.backToHome') : 'Volver al Menú Principal'}
                   </button>
                 </div>
               </>
             ) : (
               <>
                 <h2 style={{ margin: '0 0 8px', fontSize: '23px', fontWeight: 900, color: '#3D3135' }}>
-                  ¡Nivel {puzzle.id} superado!
+                  {t('game.levelCompleted')}
                 </h2>
                 <div
                   data-testid="victory-score-card"
@@ -941,20 +959,18 @@ export function GameScreen({
                   {isReplay ? (
                     <div>
                       {victoryScoreGain > 0
-                        ? `+${victoryScoreGain} pts (mejora de récord)`
-                        : '+0 pts (ya completado)'}
+                        ? t('game.scoreGains.recordImprovement', { gain: victoryScoreGain })
+                        : t('game.scoreGains.alreadyCompleted')}
                     </div>
                   ) : (
                     <>
-                      <div>Puntos gatos: +{session.partialScore}</div>
+                      <div>{t('game.scoreGains.catPoints', { score: session.partialScore })}</div>
                       <div>
-                        Bono {earnedStars}★ (
-                        {session.mistakes === 0
-                          ? '0 fallos'
-                          : session.mistakes === 1
-                          ? '1 fallo'
-                          : '2 fallos'}
-                        ): +{session.levelBonus}
+                        {t('game.scoreGains.bonusStars', {
+                          stars: earnedStars,
+                          mistakes: formatMistakes(session.mistakes),
+                          bonus: session.levelBonus,
+                        })}
                       </div>
                     </>
                   )}
@@ -969,7 +985,7 @@ export function GameScreen({
                     }}
                   >
                     <PawCoinIcon size={16} testId="victory-paw-coin-icon" />
-                    <strong>Nuevo total: {progress.totalScore + victoryScoreGain} pts</strong>
+                    <strong>{t('game.scoreGains.newTotal', { total: progress.totalScore + victoryScoreGain })}</strong>
                   </div>
                 </div>
                 {renderVictoryUnlockedBanner()}
@@ -990,7 +1006,7 @@ export function GameScreen({
                       cursor: 'pointer',
                     }}
                   >
-                    Niveles
+                    {t('common.levels')}
                   </button>
                   <button
                     type="button"
@@ -1009,7 +1025,7 @@ export function GameScreen({
                       cursor: 'pointer',
                     }}
                   >
-                    Siguiente Nivel ▶
+                    {t('common.nextLevel')} ▶
                   </button>
                 </div>
               </>
@@ -1097,7 +1113,7 @@ export function GameScreen({
               <CatSvg variant={settings.catVariant} state="conflict" />
             </div>
             <h2 style={{ margin: '0 0 8px', fontSize: '23px', fontWeight: 900, color: '#EF4444' }}>
-              3 fallos alcanzados
+              {t('game.outOfLives')}
             </h2>
             <p
               style={{
@@ -1111,7 +1127,7 @@ export function GameScreen({
                 fontWeight: 700,
               }}
             >
-              Se han perdido los puntos parciales de este intento. Puedes reintentar el nivel manteniendo tu puntuación anterior.
+              {t('game.outOfLivesDesc')}
             </p>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
@@ -1130,7 +1146,7 @@ export function GameScreen({
                   cursor: 'pointer',
                 }}
               >
-                Niveles
+                {t('common.levels')}
               </button>
               <button
                 type="button"
@@ -1149,7 +1165,7 @@ export function GameScreen({
                   cursor: 'pointer',
                 }}
               >
-                Reintentar Nivel ↻
+                {t('common.retry')} ↻
               </button>
             </div>
           </div>
@@ -1179,7 +1195,7 @@ export function GameScreen({
             whiteSpace: 'nowrap',
           }}
         >
-          ¡Resultado copiado al portapapeles!
+          {t('game.copiedToClipboard')}
         </div>
       )}
     </div>

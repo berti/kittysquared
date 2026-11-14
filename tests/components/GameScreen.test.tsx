@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameScreen } from '../../src/components/GameScreen';
+import { I18nProvider } from '../../src/i18n';
 import { createLevelSession, LevelSessionState } from '../../src/state/gameState';
 import { getDefaultAppState, ModeProgress } from '../../src/state/storage';
 import { PuzzleDef } from '../../src/types/puzzle';
@@ -113,7 +114,7 @@ describe('GameScreen component', () => {
     expect(getByTestId('status-heart-1').getAttribute('data-state')).toBe('full');
     expect(getByTestId('status-heart-2').getAttribute('data-state')).toBe('full');
     expect(getByTestId('score-paw-coin-icon')).toBeDefined();
-    expect(statusBar.textContent).not.toContain('⭐');
+    expect(statusBar.textContent).not.toContain('\u2B50');
     expect(statusBar.style.fontSize).toBe('16.5px');
   });
 
@@ -208,7 +209,7 @@ describe('GameScreen component', () => {
       />
     );
 
-    expect(getByText('¡Nivel 42 superado!')).toBeDefined();
+    expect(getByText('¡Nivel Completado!')).toBeDefined();
     expect(getByText(/Siguiente Nivel ▶/i)).toBeDefined();
     expect(queryByText('¡Juego completado!')).toBeNull();
   });
@@ -234,7 +235,7 @@ describe('GameScreen component', () => {
     );
 
     expect(getByText('¡Juego completado!')).toBeDefined();
-    expect(getByText(/Volver al Menú Principal/i)).toBeDefined();
+    expect(getByText(/Menú Principal/i)).toBeDefined();
     expect(queryByText(/Siguiente Nivel ▶/i)).toBeNull();
   });
 
@@ -712,8 +713,8 @@ describe('GameScreen component', () => {
 
     // Primary action button is "Volver al inicio"
     expect(queryByTestId('victory-next-btn')).toBeNull();
-    const homeBtn = getByText('Volver al inicio');
-    expect(homeBtn).toBeDefined();
+    const homeBtn = getByTestId('daily-home-btn');
+    expect(homeBtn.textContent).toBe('Volver al inicio');
     fireEvent.click(homeBtn);
     expect(onBackToMenu).toHaveBeenCalledTimes(1);
 
@@ -780,7 +781,7 @@ describe('GameScreen component', () => {
       expect(mockWriteText).toHaveBeenCalled();
       const toast = await findByTestId('share-toast');
       expect(toast).toBeDefined();
-      expect(toast.textContent).toContain('¡Resultado copiado al portapapeles!');
+      expect(toast.textContent).toContain('Copiado al portapapeles');
     } finally {
       Object.defineProperty(globalThis, 'navigator', {
         value: originalNavigator,
@@ -788,5 +789,271 @@ describe('GameScreen component', () => {
         writable: true,
       });
     }
+  });
+
+  describe('Bilingual i18n support in GameScreen', () => {
+    it('renders English header, legend, mistakes counter, restart tooltip, and settings tooltip when wrapped in <I18nProvider lang="en">', () => {
+      const session = createLevelSession(samplePuzzle);
+      const defaultState = getDefaultAppState();
+
+      const { getByTestId, getByText, getByTitle } = render(
+        <I18nProvider lang="en">
+          <GameScreen
+            puzzle={samplePuzzle}
+            progress={defaultState.progress}
+            settings={defaultState.settings}
+            session={session}
+            onUpdateSession={vi.fn()}
+            onAdvanceLevel={vi.fn()}
+            onRetryLevel={vi.fn()}
+            onBackToMenu={vi.fn()}
+            onOpenSettings={vi.fn()}
+          />
+        </I18nProvider>
+      );
+
+      // Header
+      expect(getByText('Level 42')).toBeDefined();
+      expect(getByText('← Menu')).toBeDefined();
+
+      // Tooltips
+      expect(getByTitle('Restart current level')).toBeDefined();
+      expect(getByTitle('Settings')).toBeDefined();
+
+      // Legend
+      expect(getByText(/1 tap: ✕ Cross • 2 taps:/i)).toBeDefined();
+      expect(getByText(/Cat/i)).toBeDefined();
+
+      // Mistakes in status hearts
+      const heartsGroup = getByTestId('status-hearts-group');
+      expect(heartsGroup.getAttribute('aria-label')).toBe('0 mistakes');
+    });
+
+    it('renders English daily header and formatted daily date when gameMode="daily"', () => {
+      const session = createLevelSession(samplePuzzle);
+      const defaultState = getDefaultAppState();
+
+      const { getByText, getByTestId } = render(
+        <I18nProvider lang="en">
+          <GameScreen
+            puzzle={samplePuzzle}
+            progress={defaultState.progress}
+            settings={defaultState.settings}
+            session={session}
+            onUpdateSession={vi.fn()}
+            onAdvanceLevel={vi.fn()}
+            onRetryLevel={vi.fn()}
+            onBackToMenu={vi.fn()}
+            onOpenSettings={vi.fn()}
+            gameMode="daily"
+            dailyDate="2026-11-08"
+          />
+        </I18nProvider>
+      );
+
+      expect(getByText('Daily Challenge')).toBeDefined();
+      expect(getByTestId('daily-timer')).toBeDefined();
+    });
+
+    it('renders English restart confirmation dialog with localized title, desc, and buttons', () => {
+      const session = createLevelSession(samplePuzzle);
+      const defaultState = getDefaultAppState();
+
+      const { getByTestId, getByText } = render(
+        <I18nProvider lang="en">
+          <GameScreen
+            puzzle={samplePuzzle}
+            progress={defaultState.progress}
+            settings={defaultState.settings}
+            session={session}
+            onUpdateSession={vi.fn()}
+            onAdvanceLevel={vi.fn()}
+            onRetryLevel={vi.fn()}
+            onBackToMenu={vi.fn()}
+            onOpenSettings={vi.fn()}
+          />
+        </I18nProvider>
+      );
+
+      fireEvent.click(getByTestId('restart-level-btn'));
+
+      expect(getByText('Restart Level?')).toBeDefined();
+      expect(
+        getByText('The current board will be reset and progress for this attempt will be lost.')
+      ).toBeDefined();
+      expect(getByText('Restart')).toBeDefined();
+      expect(getByText('Keep Playing')).toBeDefined();
+    });
+
+    it('renders English Victory modal for normal level with score breakdown, unlocked kitten banner, and buttons', () => {
+      const session: LevelSessionState = {
+        ...createLevelSession(samplePuzzle),
+        puzzle: { ...samplePuzzle, id: 9 },
+        status: 'won',
+        mistakes: 0,
+        partialScore: 40,
+        levelBonus: 100,
+      };
+      const defaultState = getDefaultAppState();
+      defaultState.progress.totalScore = 500;
+      // 8 levels with 3 stars = 24 stars. Winning level 9 with 0 mistakes (+3★ -> 27★) crosses 25★ (Orange Tabby)
+      const levelStars = Object.fromEntries(Array.from({ length: 8 }, (_, i) => [i + 1, 3 as const]));
+      defaultState.progress.levelStars = levelStars;
+      defaultState.progress.currentLevelId = 9;
+
+      const { getByText, getByTestId } = render(
+        <I18nProvider lang="en">
+          <GameScreen
+            puzzle={session.puzzle}
+            progress={defaultState.progress}
+            settings={defaultState.settings}
+            session={session}
+            onUpdateSession={vi.fn()}
+            onAdvanceLevel={vi.fn()}
+            onRetryLevel={vi.fn()}
+            onBackToMenu={vi.fn()}
+            onOpenSettings={vi.fn()}
+          />
+        </I18nProvider>
+      );
+
+      expect(getByText('Level Completed!')).toBeDefined();
+      expect(getByText(/Cat points: \+40/i)).toBeDefined();
+      expect(getByText(/Bonus 3★ \(0 mistakes\): \+100/i)).toBeDefined();
+      expect(getByText(/New total: 640 pts/i)).toBeDefined();
+
+      // Breed unlocked banner
+      expect(getByText('New kitten unlocked!')).toBeDefined();
+      expect(getByText('Orange Tabby')).toBeDefined();
+      expect(getByTestId('victory-equip-breed-btn').textContent).toBe('Equip');
+
+      // Action buttons
+      expect(getByTestId('victory-levels-btn').textContent).toBe('Levels');
+      expect(getByTestId('victory-next-btn').textContent).toContain('Next Level');
+    });
+
+    it('renders English Victory modal for daily challenge with stats, share button, and back to home button', () => {
+      const session: LevelSessionState = {
+        ...createLevelSession(samplePuzzle),
+        status: 'won',
+        mistakes: 1,
+        partialScore: 40,
+        levelBonus: 50,
+      };
+      const defaultState = getDefaultAppState();
+
+      const { getByText, getByTestId } = render(
+        <I18nProvider lang="en">
+          <GameScreen
+            puzzle={samplePuzzle}
+            progress={defaultState.progress}
+            settings={defaultState.settings}
+            session={session}
+            onUpdateSession={vi.fn()}
+            onAdvanceLevel={vi.fn()}
+            onRetryLevel={vi.fn()}
+            onBackToMenu={vi.fn()}
+            onOpenSettings={vi.fn()}
+            gameMode="daily"
+            dailyDate="2026-11-08"
+            dailyStreak={4}
+          />
+        </I18nProvider>
+      );
+
+      expect(getByText('Daily Completed!')).toBeDefined();
+      expect(getByText('Mistakes:')).toBeDefined();
+      expect(getByText('1 mistake')).toBeDefined();
+      expect(getByText('Time:')).toBeDefined();
+      expect(getByText('Streak:')).toBeDefined();
+      expect(getByText(/4 days/i)).toBeDefined();
+
+      // Buttons
+      expect(getByTestId('daily-share-btn').textContent).toBe('Share');
+      expect(getByTestId('daily-home-btn').textContent).toBe('Back to Home');
+    });
+
+    it('renders English Defeat modal when session.status is "lost"', () => {
+      const session: LevelSessionState = {
+        ...createLevelSession(samplePuzzle),
+        status: 'lost',
+        mistakes: 3,
+      };
+      const defaultState = getDefaultAppState();
+
+      const { getByText, getByTestId } = render(
+        <I18nProvider lang="en">
+          <GameScreen
+            puzzle={samplePuzzle}
+            progress={defaultState.progress}
+            settings={defaultState.settings}
+            session={session}
+            onUpdateSession={vi.fn()}
+            onAdvanceLevel={vi.fn()}
+            onRetryLevel={vi.fn()}
+            onBackToMenu={vi.fn()}
+            onOpenSettings={vi.fn()}
+          />
+        </I18nProvider>
+      );
+
+      expect(getByText('Out of lives!')).toBeDefined();
+      expect(getByText('You made 3 mistakes. Try again!')).toBeDefined();
+      expect(getByTestId('defeat-levels-btn').textContent).toBe('Levels');
+      expect(getByTestId('defeat-retry-btn').textContent).toContain('Retry');
+    });
+
+    it('renders English share toast notification when daily result is copied to clipboard', async () => {
+      const originalNavigator = globalThis.navigator;
+      const mockWriteText = vi.fn().mockResolvedValue(undefined);
+
+      Object.defineProperty(globalThis, 'navigator', {
+        value: {
+          clipboard: { writeText: mockWriteText },
+        },
+        configurable: true,
+        writable: true,
+      });
+
+      try {
+        const session: LevelSessionState = {
+          ...createLevelSession(samplePuzzle),
+          status: 'won',
+          mistakes: 0,
+        };
+        const defaultState = getDefaultAppState();
+
+        const { getByTestId, findByTestId } = render(
+          <I18nProvider lang="en">
+            <GameScreen
+              puzzle={samplePuzzle}
+              progress={defaultState.progress}
+              settings={defaultState.settings}
+              session={session}
+              onUpdateSession={vi.fn()}
+              onAdvanceLevel={vi.fn()}
+              onRetryLevel={vi.fn()}
+              onBackToMenu={vi.fn()}
+              onOpenSettings={vi.fn()}
+              gameMode="daily"
+              dailyDate="2026-11-08"
+            />
+          </I18nProvider>
+        );
+
+        await act(async () => {
+          fireEvent.click(getByTestId('daily-share-btn'));
+        });
+
+        const toast = await findByTestId('share-toast');
+        expect(toast.textContent).toContain('Copied to clipboard!');
+      } finally {
+        Object.defineProperty(globalThis, 'navigator', {
+          value: originalNavigator,
+          configurable: true,
+          writable: true,
+        });
+      }
+    });
   });
 });
