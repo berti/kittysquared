@@ -167,12 +167,8 @@ export const TRANSLATIONS: Record<EffectiveLanguage, TranslationSchema> = {
             label: 'No',
             desc: 'Colocar todas las cruces de forma manual',
           },
-          row_col_surround: {
-            label: 'Fila, columna y alrededor',
-            desc: 'Cruces en la fila, columna y casillas adyacentes al colocar un gato',
-          },
           all: {
-            label: 'Fila, columna, alrededor y color',
+            label: 'Sí (Fila, columna, alrededor y color)',
             desc: 'Cruces en fila, columna, adyacentes y toda la región de color',
           },
         },
@@ -405,15 +401,11 @@ export const TRANSLATIONS: Record<EffectiveLanguage, TranslationSchema> = {
         autoCrossSection: 'AUTO-CROSS ELIMINATIONS',
         autoCrossOptions: {
           off: {
-            label: 'Off',
+            label: 'No',
             desc: 'Place all crosses manually',
           },
-          row_col_surround: {
-            label: 'Row, column & surround',
-            desc: 'Crosses in row, column, and adjacent cells when placing a cat',
-          },
           all: {
-            label: 'Row, column, surround & color',
+            label: 'Yes (Row, column, surround & color)',
             desc: 'Crosses in row, column, adjacent cells, and entire color region',
           },
         },

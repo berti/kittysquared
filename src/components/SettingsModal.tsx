@@ -960,18 +960,13 @@ export function SettingsModal({
                       desc: t('settings.assists.autoCrossOptions.off.desc'),
                     },
                     {
-                      id: 'row_col_surround',
-                      label: t('settings.assists.autoCrossOptions.row_col_surround.label'),
-                      desc: t('settings.assists.autoCrossOptions.row_col_surround.desc'),
-                    },
-                    {
                       id: 'all',
                       label: t('settings.assists.autoCrossOptions.all.label'),
                       desc: t('settings.assists.autoCrossOptions.all.desc'),
                     },
                   ].map((opt) => {
                     const active = (settings.autoCross || 'off') === opt.id;
-                    const testId = opt.id === 'off' ? 'select-autocross-off' : opt.id === 'row_col_surround' ? 'select-autocross-row-col-surround' : 'select-autocross-all';
+                    const testId = opt.id === 'off' ? 'select-autocross-off' : 'select-autocross-all';
                     return (
                       <button
                         key={opt.id}

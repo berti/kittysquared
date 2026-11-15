@@ -603,7 +603,7 @@ describe('SettingsModal component', () => {
   it('Ayudas tab: renders auto-cross options and allows changing assist setting', () => {
     const onUpdateSettings = vi.fn();
 
-    const { getByTestId } = render(
+    const { getByTestId, queryByTestId } = render(
       <SettingsModal
         settings={defaultSettings}
         onUpdateSettings={onUpdateSettings}
@@ -615,14 +615,8 @@ describe('SettingsModal component', () => {
     expect(getByTestId('pane-ayudas')).toBeDefined();
 
     expect(getByTestId('select-autocross-off')).toBeDefined();
-    expect(getByTestId('select-autocross-row-col-surround')).toBeDefined();
     expect(getByTestId('select-autocross-all')).toBeDefined();
-
-    // Selecting row_col_surround
-    fireEvent.click(getByTestId('select-autocross-row-col-surround'));
-    expect(onUpdateSettings).toHaveBeenCalledWith(
-      expect.objectContaining({ autoCross: 'row_col_surround' })
-    );
+    expect(queryByTestId('select-autocross-row-col-surround')).toBeNull();
 
     // Selecting all
     fireEvent.click(getByTestId('select-autocross-all'));
@@ -719,7 +713,7 @@ describe('SettingsModal component', () => {
 
   describe('Full localization with I18nProvider', () => {
     it('renders English strings when wrapped in I18nProvider with lang="en"', () => {
-      const { getByTestId, getByText } = render(
+      const { getByTestId, getByText, queryByTestId } = render(
         <I18nProvider lang="en">
           <SettingsModal
             settings={{ ...defaultSettings, language: 'en' }}
@@ -778,14 +772,15 @@ describe('SettingsModal component', () => {
       // Assists tab
       fireEvent.click(getByTestId('tab-btn-ayudas'));
       expect(getByText('AUTO-CROSS ELIMINATIONS')).toBeDefined();
-      expect(getByTestId('select-autocross-off').textContent).toContain('Off');
+      expect(getByTestId('select-autocross-off').textContent).toContain('No');
       expect(getByTestId('select-autocross-off').textContent).toContain('Place all crosses manually');
-      expect(getByTestId('select-autocross-row-col-surround').textContent).toContain('Row, column & surround');
-      expect(getByTestId('select-autocross-all').textContent).toContain('Row, column, surround & color');
+      expect(queryByTestId('select-autocross-row-col-surround')).toBeNull();
+      expect(getByTestId('select-autocross-all').textContent).toContain('Yes (Row, column, surround & color)');
+      expect(getByTestId('select-autocross-all').textContent).toContain('Crosses in row, column, adjacent cells, and entire color region');
     });
 
     it('renders Spanish strings in default context', () => {
-      const { getByTestId, getByText } = render(
+      const { getByTestId, getByText, queryByTestId } = render(
         <SettingsModal
           settings={defaultSettings}
           totalStars={300}
@@ -835,7 +830,10 @@ describe('SettingsModal component', () => {
       fireEvent.click(getByTestId('tab-btn-ayudas'));
       expect(getByText('AUTO-DESCARTES DE CRUCES')).toBeDefined();
       expect(getByTestId('select-autocross-off').textContent).toContain('No');
-      expect(getByTestId('select-autocross-row-col-surround').textContent).toContain('Fila, columna y alrededor');
+      expect(getByTestId('select-autocross-off').textContent).toContain('Colocar todas las cruces de forma manual');
+      expect(queryByTestId('select-autocross-row-col-surround')).toBeNull();
+      expect(getByTestId('select-autocross-all').textContent).toContain('Sí (Fila, columna, alrededor y color)');
+      expect(getByTestId('select-autocross-all').textContent).toContain('Cruces en fila, columna, adyacentes y toda la región de color');
     });
   });
 });

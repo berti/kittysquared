@@ -153,7 +153,6 @@ export interface TranslationSchema {
       autoCrossSection: string;
       autoCrossOptions: {
         off: AssistOptionCopy;
-        row_col_surround: AssistOptionCopy;
         all: AssistOptionCopy;
       };
     };

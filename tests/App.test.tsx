@@ -96,20 +96,20 @@ describe('App integration', () => {
 
   it('synchronizes volume and music track settings with soundEngine', () => {
     const setVolumeSpy = vi.spyOn(soundEngine, 'setVolume');
-    const setTrackSpy = vi.spyOn(soundEngine, 'setTrackPreference');
+    const setSelectedTracksSpy = vi.spyOn(soundEngine, 'setSelectedTracks');
 
     const { getByTestId } = render(<App />);
     fireEvent.click(getByTestId('open-settings-btn'));
     fireEvent.click(getByTestId('tab-btn-sound'));
 
-    fireEvent.click(getByTestId('music-vol-step-0.5'));
+    fireEvent.input(getByTestId('music-vol-slider'), { target: { value: '0.5' } });
     expect(setVolumeSpy).toHaveBeenCalledWith(0.5, expect.any(Number));
 
-    fireEvent.click(getByTestId('track-opt-samba'));
-    expect(setTrackSpy).toHaveBeenCalledWith('samba');
+    fireEvent.click(getByTestId('track-checkbox-samba'));
+    expect(setSelectedTracksSpy).toHaveBeenCalled();
 
     setVolumeSpy.mockRestore();
-    setTrackSpy.mockRestore();
+    setSelectedTracksSpy.mockRestore();
   });
 
   it('initializes audio focus lifecycle so background music only plays when app is focused', () => {
