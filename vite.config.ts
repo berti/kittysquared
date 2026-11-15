@@ -26,7 +26,7 @@ export default defineConfig({
         description: 'Un acogedor juego de puzzles de lógica felina',
         lang: 'es',
         theme_color: '#FBF9F5',
-        background_color: '#FBF9F5',
+        background_color: '#FFFFFF',
         display: 'standalone',
         orientation: 'portrait',
         start_url: './',
