@@ -380,14 +380,14 @@ describe('SettingsModal component', () => {
     );
   });
 
-  it('Sound tab: renders 5-step volume selectors for music and sfx, and soundtrack selector', () => {
-    const { getByTestId } = render(
+  it('Sound tab: renders stepped volume sliders with tick marks, section headers, and playlist checkboxes', () => {
+    const { getByTestId, getAllByText, getByText, queryByText } = render(
       <SettingsModal
         settings={{
           ...defaultSettings,
           musicVolume: 0.75,
           sfxVolume: 0.75,
-          musicTrack: 'auto',
+          selectedTracks: [...ALL_CONCRETE_TRACKS],
         }}
         onUpdateSettings={vi.fn()}
         onClose={vi.fn()}
@@ -396,31 +396,52 @@ describe('SettingsModal component', () => {
 
     fireEvent.click(getByTestId('tab-btn-sound'));
 
-    // Music volume steps
-    expect(getByTestId('music-vol-step-0')).toBeDefined();
-    expect(getByTestId('music-vol-step-0.25')).toBeDefined();
-    expect(getByTestId('music-vol-step-0.5')).toBeDefined();
-    expect(getByTestId('music-vol-step-0.75')).toBeDefined();
-    expect(getByTestId('music-vol-step-1')).toBeDefined();
+    // Redundant top banner removed
+    expect(queryByText('SONIDO')).toBeNull();
+    expect(queryByText('AUDIO')).toBeNull();
 
-    // SFX volume steps
-    expect(getByTestId('sfx-vol-step-0')).toBeDefined();
-    expect(getByTestId('sfx-vol-step-0.25')).toBeDefined();
-    expect(getByTestId('sfx-vol-step-0.5')).toBeDefined();
-    expect(getByTestId('sfx-vol-step-0.75')).toBeDefined();
-    expect(getByTestId('sfx-vol-step-1')).toBeDefined();
+    // Section headers in all-caps
+    expect(getByText('MÚSICA')).toBeDefined();
+    expect(getByText('EFECTOS (SFX)')).toBeDefined();
+    expect(getByText('BANDA SONORA')).toBeDefined();
 
-    // Track options (Auto + 6 songs) with clean labels without decorative emojis
-    expect(getByTestId('track-opt-auto').textContent?.trim()).toBe('Automática (por tamaño)');
-    expect(getByTestId('track-opt-marimba').textContent?.trim()).toBe('Gatito Curioso (Marimba)');
-    expect(getByTestId('track-opt-velvet').textContent?.trim()).toBe('Pasos de Terciopelo (Suave)');
-    expect(getByTestId('track-opt-sunbeam').textContent?.trim()).toBe('Rayo de Sol (Alegre)');
-    expect(getByTestId('track-opt-bossa').textContent?.trim()).toBe('Siesta Felina (Bossa)');
-    expect(getByTestId('track-opt-waltz').textContent?.trim()).toBe('Vals de Medianoche (Misterio)');
-    expect(getByTestId('track-opt-samba').textContent?.trim()).toBe('Ronroneo Travieso (Samba)');
+    // Stepped volume sliders
+    const musicSlider = getByTestId('music-vol-slider') as HTMLInputElement;
+    expect(musicSlider).toBeDefined();
+    expect(musicSlider.min).toBe('0');
+    expect(musicSlider.max).toBe('1');
+    expect(musicSlider.step).toBe('0.25');
+    expect(musicSlider.value).toBe('0.75');
+
+    const sfxSlider = getByTestId('sfx-vol-slider') as HTMLInputElement;
+    expect(sfxSlider).toBeDefined();
+    expect(sfxSlider.min).toBe('0');
+    expect(sfxSlider.max).toBe('1');
+    expect(sfxSlider.step).toBe('0.25');
+    expect(sfxSlider.value).toBe('0.75');
+
+    // Stepped tick labels (0%, 25%, 50%, 75%, 100%)
+    expect(getAllByText('0%').length).toBe(2);
+    expect(getAllByText('25%').length).toBe(2);
+    expect(getAllByText('50%').length).toBe(2);
+    expect(getAllByText('75%').length).toBe(2);
+    expect(getAllByText('100%').length).toBe(2);
+
+    // Playlist master checkbox
+    const masterCheckbox = getByTestId('track-opt-all') as HTMLInputElement;
+    expect(masterCheckbox).toBeDefined();
+    expect(masterCheckbox.checked).toBe(true);
+    expect(getByText('Todas las pistas')).toBeDefined();
+
+    // Individual checkboxes for all 6 songs
+    for (const trackId of ALL_CONCRETE_TRACKS) {
+      const trackCheckbox = getByTestId(`track-checkbox-${trackId}`) as HTMLInputElement;
+      expect(trackCheckbox).toBeDefined();
+      expect(trackCheckbox.checked).toBe(true);
+    }
   });
 
-  it('Sound tab: clicking 0% volume step automatically mutes; clicking >0% unmutes and sets volume', () => {
+  it('Sound tab: moving volume sliders to 0 sets volume to 0 and mutes; moving >0 unmutes and sets volume', () => {
     const onUpdateSettings = vi.fn();
     const { getByTestId } = render(
       <SettingsModal
@@ -428,6 +449,8 @@ describe('SettingsModal component', () => {
           ...defaultSettings,
           musicVolume: 0.75,
           musicMuted: false,
+          sfxVolume: 0.75,
+          sfxMuted: false,
         }}
         onUpdateSettings={onUpdateSettings}
         onClose={vi.fn()}
@@ -436,26 +459,62 @@ describe('SettingsModal component', () => {
 
     fireEvent.click(getByTestId('tab-btn-sound'));
 
-    // Click 0% -> sets musicMuted: true
-    fireEvent.click(getByTestId('music-vol-step-0'));
+    // Move music slider to 0 -> muted: true, volume: 0
+    const musicSlider = getByTestId('music-vol-slider');
+    fireEvent.input(musicSlider, { target: { value: '0' } });
     expect(onUpdateSettings).toHaveBeenCalledWith(
       expect.objectContaining({ musicVolume: 0, musicMuted: true })
     );
 
-    // Click 50% -> sets musicVolume: 0.5 and musicMuted: false
-    fireEvent.click(getByTestId('music-vol-step-0.5'));
+    // Move music slider to 0.5 -> muted: false, volume: 0.5
+    fireEvent.input(musicSlider, { target: { value: '0.5' } });
     expect(onUpdateSettings).toHaveBeenCalledWith(
       expect.objectContaining({ musicVolume: 0.5, musicMuted: false })
     );
+
+    // Move SFX slider to 0 -> muted: true, volume: 0
+    const sfxSlider = getByTestId('sfx-vol-slider');
+    fireEvent.input(sfxSlider, { target: { value: '0' } });
+    expect(onUpdateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ sfxVolume: 0, sfxMuted: true })
+    );
+
+    // Move SFX slider to 0.25 -> muted: false, volume: 0.25
+    fireEvent.input(sfxSlider, { target: { value: '0.25' } });
+    expect(onUpdateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ sfxVolume: 0.25, sfxMuted: false })
+    );
   });
 
-  it('Sound tab: selecting a specific soundtrack option updates settings', () => {
-    const onUpdateSettings = vi.fn();
+  it('Sound tab: slider displays 0 value when muted', () => {
     const { getByTestId } = render(
       <SettingsModal
         settings={{
           ...defaultSettings,
-          musicTrack: 'auto',
+          musicVolume: 0.75,
+          musicMuted: true,
+          sfxVolume: 0.75,
+          sfxMuted: true,
+        }}
+        onUpdateSettings={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    fireEvent.click(getByTestId('tab-btn-sound'));
+    const musicSlider = getByTestId('music-vol-slider') as HTMLInputElement;
+    expect(musicSlider.value).toBe('0');
+    const sfxSlider = getByTestId('sfx-vol-slider') as HTMLInputElement;
+    expect(sfxSlider.value).toBe('0');
+  });
+
+  it('Sound tab: master checkbox toggles all tracks vs default single track', () => {
+    const onUpdateSettings = vi.fn();
+    const { getByTestId, rerender } = render(
+      <SettingsModal
+        settings={{
+          ...defaultSettings,
+          selectedTracks: [...ALL_CONCRETE_TRACKS],
         }}
         onUpdateSettings={onUpdateSettings}
         onClose={vi.fn()}
@@ -463,14 +522,82 @@ describe('SettingsModal component', () => {
     );
 
     fireEvent.click(getByTestId('tab-btn-sound'));
-    fireEvent.click(getByTestId('track-opt-marimba'));
+    const masterCheckbox = getByTestId('track-opt-all') as HTMLInputElement;
+    expect(masterCheckbox.checked).toBe(true);
+
+    // Clicking master when all 6 tracks are selected unchecks to default ['marimba']
+    fireEvent.click(masterCheckbox);
     expect(onUpdateSettings).toHaveBeenCalledWith(
-      expect.objectContaining({ musicTrack: 'marimba' })
+      expect.objectContaining({ selectedTracks: ['marimba'] })
     );
-    fireEvent.click(getByTestId('track-opt-bossa'));
+
+    // When only a subset of tracks are selected, master checkbox is unchecked
+    rerender(
+      <SettingsModal
+        settings={{
+          ...defaultSettings,
+          selectedTracks: ['marimba', 'bossa'],
+        }}
+        onUpdateSettings={onUpdateSettings}
+        onClose={vi.fn()}
+      />
+    );
+    expect((getByTestId('track-opt-all') as HTMLInputElement).checked).toBe(false);
+
+    // Clicking master when not all are checked selects all 6 tracks
+    fireEvent.click(getByTestId('track-opt-all'));
     expect(onUpdateSettings).toHaveBeenCalledWith(
-      expect.objectContaining({ musicTrack: 'bossa' })
+      expect.objectContaining({ selectedTracks: [...ALL_CONCRETE_TRACKS] })
     );
+  });
+
+  it('Sound tab: individual checkboxes toggle tracks and guard prevents unchecking the last track', () => {
+    const onUpdateSettings = vi.fn();
+    const { getByTestId, rerender } = render(
+      <SettingsModal
+        settings={{
+          ...defaultSettings,
+          selectedTracks: ['marimba', 'velvet'],
+        }}
+        onUpdateSettings={onUpdateSettings}
+        onClose={vi.fn()}
+      />
+    );
+
+    fireEvent.click(getByTestId('tab-btn-sound'));
+
+    // Check states: marimba checked, velvet checked, sunbeam unchecked
+    expect((getByTestId('track-checkbox-marimba') as HTMLInputElement).checked).toBe(true);
+    expect((getByTestId('track-checkbox-velvet') as HTMLInputElement).checked).toBe(true);
+    expect((getByTestId('track-checkbox-sunbeam') as HTMLInputElement).checked).toBe(false);
+
+    // Check an unchecked track (sunbeam) -> adds to selectedTracks
+    fireEvent.click(getByTestId('track-checkbox-sunbeam'));
+    expect(onUpdateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ selectedTracks: ['marimba', 'velvet', 'sunbeam'] })
+    );
+
+    // Uncheck a checked track (velvet) -> removes from selectedTracks
+    fireEvent.click(getByTestId('track-checkbox-velvet'));
+    expect(onUpdateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ selectedTracks: ['marimba'] })
+    );
+
+    // Guard test: when only 1 track remains, unchecking it is blocked
+    rerender(
+      <SettingsModal
+        settings={{
+          ...defaultSettings,
+          selectedTracks: ['marimba'],
+        }}
+        onUpdateSettings={onUpdateSettings}
+        onClose={vi.fn()}
+      />
+    );
+    onUpdateSettings.mockClear();
+
+    fireEvent.click(getByTestId('track-checkbox-marimba'));
+    expect(onUpdateSettings).not.toHaveBeenCalled();
   });
 
   it('Ayudas tab: renders auto-cross options and allows changing assist setting', () => {
@@ -510,7 +637,7 @@ describe('SettingsModal component', () => {
     );
   });
 
-  it('Sound tab: clicking SFX volume step > 0 plays a preview sound', () => {
+  it('Sound tab: moving SFX volume slider > 0 plays a preview sound', () => {
     const playCrossSpy = vi.spyOn(soundEngine, 'playCross');
     const { getByTestId } = render(
       <SettingsModal
@@ -520,7 +647,7 @@ describe('SettingsModal component', () => {
       />
     );
     fireEvent.click(getByTestId('tab-btn-sound'));
-    fireEvent.click(getByTestId('sfx-vol-step-0.5'));
+    fireEvent.input(getByTestId('sfx-vol-slider'), { target: { value: '0.5' } });
     expect(playCrossSpy).toHaveBeenCalled();
     playCrossSpy.mockRestore();
   });
@@ -639,12 +766,14 @@ describe('SettingsModal component', () => {
 
       // Audio tab
       fireEvent.click(getByTestId('tab-btn-sound'));
-      expect(getByText('Music')).toBeDefined();
-      expect(getByText('Sound Effects (SFX)')).toBeDefined();
-      expect(getByText('Music track')).toBeDefined();
-      expect(getByTestId('track-opt-auto').textContent?.trim()).toBe('Automatic (by size)');
-      expect(getByTestId('track-opt-marimba').textContent?.trim()).toBe('Curious Kitten (Marimba)');
-      expect(getByTestId('track-opt-velvet').textContent?.trim()).toBe('Velvet Paws (Gentle)');
+      expect(getByText('MUSIC')).toBeDefined();
+      expect(getByText('SOUND EFFECTS (SFX)')).toBeDefined();
+      expect(getByText('SOUNDTRACK')).toBeDefined();
+      expect(getByTestId('track-opt-all')).toBeDefined();
+      expect(getByText('All tracks')).toBeDefined();
+      expect(getByTestId('track-checkbox-marimba')).toBeDefined();
+      expect(getByTestId('music-vol-slider')).toBeDefined();
+      expect(getByTestId('sfx-vol-slider')).toBeDefined();
 
       // Assists tab
       fireEvent.click(getByTestId('tab-btn-ayudas'));
@@ -693,11 +822,14 @@ describe('SettingsModal component', () => {
 
       // Audio tab
       fireEvent.click(getByTestId('tab-btn-sound'));
-      expect(getByText('Música')).toBeDefined();
-      expect(getByText('Efectos (SFX)')).toBeDefined();
-      expect(getByText('Pista musical')).toBeDefined();
-      expect(getByTestId('track-opt-auto').textContent?.trim()).toBe('Automática (por tamaño)');
-      expect(getByTestId('track-opt-marimba').textContent?.trim()).toBe('Gatito Curioso (Marimba)');
+      expect(getByText('MÚSICA')).toBeDefined();
+      expect(getByText('EFECTOS (SFX)')).toBeDefined();
+      expect(getByText('BANDA SONORA')).toBeDefined();
+      expect(getByTestId('track-opt-all')).toBeDefined();
+      expect(getByText('Todas las pistas')).toBeDefined();
+      expect(getByTestId('track-checkbox-marimba')).toBeDefined();
+      expect(getByTestId('music-vol-slider')).toBeDefined();
+      expect(getByTestId('sfx-vol-slider')).toBeDefined();
 
       // Assists tab
       fireEvent.click(getByTestId('tab-btn-ayudas'));

@@ -129,7 +129,8 @@ export const TRANSLATIONS: Record<EffectiveLanguage, TranslationSchema> = {
       audio: {
         musicVolume: 'Música',
         sfxVolume: 'Efectos (SFX)',
-        musicTrack: 'Pista musical',
+        musicTrack: 'Banda sonora',
+        allTracks: 'Todas las pistas',
         tracks: {
           auto: 'Automática (por tamaño)',
           marimba: 'Gatito Curioso (Marimba)',
@@ -369,7 +370,8 @@ export const TRANSLATIONS: Record<EffectiveLanguage, TranslationSchema> = {
       audio: {
         musicVolume: 'Music',
         sfxVolume: 'Sound Effects (SFX)',
-        musicTrack: 'Music track',
+        musicTrack: 'Soundtrack',
+        allTracks: 'All tracks',
         tracks: {
           auto: 'Automatic (by size)',
           marimba: 'Curious Kitten (Marimba)',

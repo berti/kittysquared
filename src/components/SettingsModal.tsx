@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { soundEngine } from '../audio/soundEngine';
 import { getLocalizedBreedName, useI18n } from '../i18n';
 import {
+  ALL_CONCRETE_TRACKS,
   AppSettings,
   CAT_BREEDS,
+  ConcreteTrackId,
   isCatBreedUnlocked,
-  MusicTrackOption,
-  VALID_STEPPED_VOLUMES,
+  SteppedVolume,
 } from '../state/storage';
 import { AutoCrossMode, CatVariant, Language, RegionAssistMode } from '../types/puzzle';
 import { REGION_GLYPHS, RegionGlyphIcon } from './Board';
@@ -72,6 +73,55 @@ export function SettingsModal({
     const nextMuted = !settings.sfxMuted;
     const nextVol = !nextMuted && settings.sfxVolume === 0 ? 0.75 : settings.sfxVolume;
     onUpdateSettings({ ...settings, sfxMuted: nextMuted, sfxVolume: nextVol });
+  };
+
+  const handleMusicSliderChange = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    const rawVal = parseFloat(target.value);
+    const stepVal = (Math.round(rawVal * 4) / 4) as SteppedVolume;
+    if (stepVal === 0) {
+      onUpdateSettings({ ...settings, musicVolume: 0, musicMuted: true });
+    } else {
+      onUpdateSettings({ ...settings, musicVolume: stepVal, musicMuted: false });
+    }
+  };
+
+  const handleSfxSliderChange = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    const rawVal = parseFloat(target.value);
+    const stepVal = (Math.round(rawVal * 4) / 4) as SteppedVolume;
+    if (stepVal === 0) {
+      onUpdateSettings({ ...settings, sfxVolume: 0, sfxMuted: true });
+    } else {
+      onUpdateSettings({ ...settings, sfxVolume: stepVal, sfxMuted: false });
+      soundEngine.playCross();
+    }
+  };
+
+  const selectedTracks = settings.selectedTracks || ALL_CONCRETE_TRACKS;
+  const isAllTracksSelected = selectedTracks.length === ALL_CONCRETE_TRACKS.length;
+
+  const handleToggleAllTracks = () => {
+    if (isAllTracksSelected) {
+      onUpdateSettings({ ...settings, selectedTracks: ['marimba'] });
+    } else {
+      onUpdateSettings({ ...settings, selectedTracks: [...ALL_CONCRETE_TRACKS] });
+    }
+  };
+
+  const handleToggleTrack = (trackId: ConcreteTrackId) => {
+    const isChecked = selectedTracks.includes(trackId);
+    if (isChecked) {
+      if (selectedTracks.length <= 1) {
+        // Guard: At least 1 track must remain checked at all times
+        return;
+      }
+      const next = selectedTracks.filter((id) => id !== trackId);
+      onUpdateSettings({ ...settings, selectedTracks: next });
+    } else {
+      const next = [...selectedTracks, trackId];
+      onUpdateSettings({ ...settings, selectedTracks: next });
+    }
   };
 
   const currentTimeout = settings.doubleTapTimeoutMs || 500;
@@ -688,7 +738,7 @@ export function SettingsModal({
             </div>
           )}
 
-          {/* TAB 3: SOUND */}
+          {/* TAB 4: SOUND */}
           {activeTab === 'sound' && (
             <div
               data-testid="pane-sound"
@@ -696,15 +746,11 @@ export function SettingsModal({
               aria-labelledby="tab-btn-sound"
               style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}
             >
-              <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51' }}>
-                {t('settings.tabs.audio').toUpperCase()}
-              </div>
-
               {/* Music Section */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#5C4B51' }}>
-                    {t('settings.audio.musicVolume')}
+                  <span style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51' }}>
+                    {t('settings.audio.musicVolume').toUpperCase()}
                   </span>
                   <button
                     type="button"
@@ -723,45 +769,40 @@ export function SettingsModal({
                     {settings.musicMuted ? 'Silenciada' : 'Activa'}
                   </button>
                 </div>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  {VALID_STEPPED_VOLUMES.map((step) => {
-                    const isSelected = settings.musicMuted ? step === 0 : settings.musicVolume === step;
-                    return (
-                      <button
-                        key={step}
-                        type="button"
-                        data-testid={`music-vol-step-${step}`}
-                        onClick={() => {
-                          if (step === 0) {
-                            onUpdateSettings({ ...settings, musicVolume: 0, musicMuted: true });
-                          } else {
-                            onUpdateSettings({ ...settings, musicVolume: step, musicMuted: false });
-                          }
-                        }}
-                        style={{
-                          flex: 1,
-                          padding: '8px 2px',
-                          borderRadius: '10px',
-                          fontSize: '12px',
-                          fontWeight: 800,
-                          border: isSelected ? '2px solid #E76F51' : '2px solid #E2D6C1',
-                          background: isSelected ? '#FCE8E2' : '#FFF',
-                          color: isSelected ? '#E76F51' : '#5C4B51',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {step === 0 ? '0%' : `${Math.round(step * 100)}%`}
-                      </button>
-                    );
-                  })}
+                <input
+                  type="range"
+                  data-testid="music-vol-slider"
+                  min="0"
+                  max="1"
+                  step="0.25"
+                  value={settings.musicMuted ? 0 : settings.musicVolume}
+                  onInput={handleMusicSliderChange}
+                  onChange={handleMusicSliderChange}
+                  style={{ width: '100%', accentColor: '#E76F51', cursor: 'pointer' }}
+                />
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    color: '#7A686E',
+                    padding: '0 2px',
+                  }}
+                >
+                  <span>0%</span>
+                  <span>25%</span>
+                  <span>50%</span>
+                  <span>75%</span>
+                  <span>100%</span>
                 </div>
               </div>
 
               {/* SFX Section */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#5C4B51' }}>
-                    {t('settings.audio.sfxVolume')}
+                  <span style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51' }}>
+                    {t('settings.audio.sfxVolume').toUpperCase()}
                   </span>
                   <button
                     type="button"
@@ -780,100 +821,118 @@ export function SettingsModal({
                     {settings.sfxMuted ? 'Silenciados' : 'Activos'}
                   </button>
                 </div>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  {VALID_STEPPED_VOLUMES.map((step) => {
-                    const isSelected = settings.sfxMuted ? step === 0 : settings.sfxVolume === step;
-                    return (
-                      <button
-                        key={step}
-                        type="button"
-                        data-testid={`sfx-vol-step-${step}`}
-                        onClick={() => {
-                          if (step === 0) {
-                            onUpdateSettings({ ...settings, sfxVolume: 0, sfxMuted: true });
-                          } else {
-                            onUpdateSettings({ ...settings, sfxVolume: step, sfxMuted: false });
-                            soundEngine.playCross();
-                          }
-                        }}
-                        style={{
-                          flex: 1,
-                          padding: '8px 2px',
-                          borderRadius: '10px',
-                          fontSize: '12px',
-                          fontWeight: 800,
-                          border: isSelected ? '2px solid #2A9D8F' : '2px solid #E2D6C1',
-                          background: isSelected ? '#E6F4F1' : '#FFF',
-                          color: isSelected ? '#2A9D8F' : '#5C4B51',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {step === 0 ? '0%' : `${Math.round(step * 100)}%`}
-                      </button>
-                    );
-                  })}
+                <input
+                  type="range"
+                  data-testid="sfx-vol-slider"
+                  min="0"
+                  max="1"
+                  step="0.25"
+                  value={settings.sfxMuted ? 0 : settings.sfxVolume}
+                  onInput={handleSfxSliderChange}
+                  onChange={handleSfxSliderChange}
+                  style={{ width: '100%', accentColor: '#2A9D8F', cursor: 'pointer' }}
+                />
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    color: '#7A686E',
+                    padding: '0 2px',
+                  }}
+                >
+                  <span>0%</span>
+                  <span>25%</span>
+                  <span>50%</span>
+                  <span>75%</span>
+                  <span>100%</span>
                 </div>
               </div>
 
-              {/* Soundtrack Selector Section */}
+              {/* Soundtrack Playlist Section */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 800, color: '#5C4B51' }}>
-                  {t('settings.audio.musicTrack')}
+                <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51' }}>
+                  {t('settings.audio.musicTrack').toUpperCase()}
                 </div>
-                {(() => {
-                  const isAutoSelected = (settings.musicTrack || 'auto') === 'auto';
-                  return (
-                    <button
-                      type="button"
-                      data-testid="track-opt-auto"
-                      onClick={() => onUpdateSettings({ ...settings, musicTrack: 'auto' })}
-                      style={{
-                        width: '100%',
-                        padding: '8px 8px',
-                        borderRadius: '12px',
-                        fontSize: '12.5px',
-                        fontWeight: 800,
-                        border: isAutoSelected ? '2px solid #E76F51' : '2px solid #E2D6C1',
-                        background: isAutoSelected ? '#FCE8E2' : '#FFF',
-                        color: isAutoSelected ? '#E76F51' : '#5C4B51',
-                        cursor: 'pointer',
-                        textAlign: 'center',
-                      }}
-                    >
-                      {t('settings.audio.tracks.auto')}
-                    </button>
-                  );
-                })()}
+
+                {/* Master Checkbox: Todas las pistas / All tracks */}
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px 12px',
+                    borderRadius: '12px',
+                    border: isAllTracksSelected ? '2px solid #E76F51' : '2px solid #E2D6C1',
+                    background: isAllTracksSelected ? '#FCE8E2' : '#FFF',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    data-testid="track-opt-all"
+                    checked={isAllTracksSelected}
+                    onChange={handleToggleAllTracks}
+                    style={{
+                      accentColor: '#E76F51',
+                      width: '18px',
+                      height: '18px',
+                      cursor: 'pointer',
+                    }}
+                  />
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#5C4B51' }}>
+                    {t('settings.audio.allTracks')}
+                  </span>
+                </label>
+
+                {/* 2-column responsive grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                  {([
-                    { id: 'marimba', label: t('settings.audio.tracks.marimba') },
-                    { id: 'velvet', label: t('settings.audio.tracks.velvet') },
-                    { id: 'sunbeam', label: t('settings.audio.tracks.sunbeam') },
-                    { id: 'bossa', label: t('settings.audio.tracks.bossa') },
-                    { id: 'waltz', label: t('settings.audio.tracks.waltz') },
-                    { id: 'samba', label: t('settings.audio.tracks.samba') },
-                  ] satisfies { id: MusicTrackOption; label: string }[]).map((track) => {
-                    const isSelected = (settings.musicTrack || 'auto') === track.id;
+                  {ALL_CONCRETE_TRACKS.map((trackId) => {
+                    const isChecked = selectedTracks.includes(trackId);
                     return (
-                      <button
-                        key={track.id}
-                        type="button"
-                        data-testid={`track-opt-${track.id}`}
-                        onClick={() => onUpdateSettings({ ...settings, musicTrack: track.id })}
+                      <label
+                        key={trackId}
+                        data-testid={`track-card-${trackId}`}
                         style={{
-                          padding: '8px 8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '8px 10px',
                           borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: 800,
-                          border: isSelected ? '2px solid #E76F51' : '2px solid #E2D6C1',
-                          background: isSelected ? '#FCE8E2' : '#FFF',
-                          color: isSelected ? '#E76F51' : '#5C4B51',
+                          border: isChecked ? '2px solid #E76F51' : '2px solid #E2D6C1',
+                          background: isChecked ? '#FCE8E2' : '#FFF',
                           cursor: 'pointer',
-                          textAlign: 'left',
+                          userSelect: 'none',
+                          transition: 'all 0.15s ease',
                         }}
                       >
-                        {track.label}
-                      </button>
+                        <input
+                          type="checkbox"
+                          data-testid={`track-checkbox-${trackId}`}
+                          checked={isChecked}
+                          onChange={() => handleToggleTrack(trackId)}
+                          style={{
+                            accentColor: '#E76F51',
+                            width: '16px',
+                            height: '16px',
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontSize: '12px',
+                            fontWeight: 800,
+                            color: isChecked ? '#E76F51' : '#5C4B51',
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {t(`settings.audio.tracks.${trackId}` as const)}
+                        </span>
+                      </label>
                     );
                   })}
                 </div>

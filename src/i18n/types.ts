@@ -131,6 +131,7 @@ export interface TranslationSchema {
       musicVolume: string;
       sfxVolume: string;
       musicTrack: string;
+      allTracks: string;
       tracks: {
         auto: string;
         marimba: string;
