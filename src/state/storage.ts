@@ -45,7 +45,7 @@ export interface AppSettings {
   tutorialSeen: boolean;
   musicVolume: SteppedVolume;
   sfxVolume: SteppedVolume;
-  selectedTracks?: ConcreteTrackId[];
+  selectedTracks: ConcreteTrackId[];
   /** @deprecated Legacy single-track preference, use selectedTracks */
   musicTrack?: MusicTrackOption;
 }

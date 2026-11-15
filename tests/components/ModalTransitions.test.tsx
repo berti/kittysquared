@@ -6,6 +6,7 @@ import { SettingsModal } from '../../src/components/SettingsModal';
 import { TutorialModal } from '../../src/components/TutorialModal';
 import { GameScreen } from '../../src/components/GameScreen';
 import { createLevelSession } from '../../src/state/gameState';
+import { ALL_CONCRETE_TRACKS } from '../../src/state/storage';
 import { PuzzleDef } from '../../src/types/puzzle';
 
 const dummyPuzzle: PuzzleDef = {
@@ -86,6 +87,7 @@ describe('ModalTransitions', () => {
           tutorialSeen: true,
           musicVolume: 0.75,
           sfxVolume: 0.75,
+          selectedTracks: [...ALL_CONCRETE_TRACKS],
           musicTrack: 'auto',
         }}
         onUpdateSettings={vi.fn()}
@@ -131,6 +133,7 @@ describe('ModalTransitions', () => {
           tutorialSeen: true,
           musicVolume: 0.75,
           sfxVolume: 0.75,
+          selectedTracks: [...ALL_CONCRETE_TRACKS],
           musicTrack: 'auto',
         }}
         session={wonSession}
@@ -165,6 +168,7 @@ describe('ModalTransitions', () => {
           tutorialSeen: true,
           musicVolume: 0.75,
           sfxVolume: 0.75,
+          selectedTracks: [...ALL_CONCRETE_TRACKS],
           musicTrack: 'auto',
         }}
         session={lostSession}

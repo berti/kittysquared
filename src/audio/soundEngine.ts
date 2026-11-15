@@ -1191,7 +1191,7 @@ export class SoundEngine {
     this.updateGainLevels();
   }
 
-  public setSelectedTracks(tracks?: ConcreteTrackId[]): void {
+  public setSelectedTracks(tracks: ConcreteTrackId[]): void {
     const valid = Array.isArray(tracks)
       ? tracks.filter((t: unknown): t is ConcreteTrackId => ALL_CONCRETE_TRACKS.includes(t as ConcreteTrackId))
       : [];

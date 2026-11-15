@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsModal } from '../../src/components/SettingsModal';
 import { soundEngine } from '../../src/audio/soundEngine';
-import { AppSettings } from '../../src/state/storage';
+import { ALL_CONCRETE_TRACKS, AppSettings } from '../../src/state/storage';
 import { I18nProvider } from '../../src/i18n';
 
 const defaultSettings: AppSettings = {
@@ -17,6 +17,7 @@ const defaultSettings: AppSettings = {
   tutorialSeen: true,
   musicVolume: 0.75,
   sfxVolume: 0.75,
+  selectedTracks: [...ALL_CONCRETE_TRACKS],
   musicTrack: 'auto',
 };
 

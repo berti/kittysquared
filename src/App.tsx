@@ -115,6 +115,13 @@ export function App({
     soundEngine.setVolume(appState.settings.musicVolume ?? 0.75, appState.settings.sfxVolume ?? 0.75);
   }, [appState.settings.musicVolume, appState.settings.sfxVolume]);
 
+  // Backward compatibility: sync legacy musicTrack preference if updated
+  useEffect(() => {
+    if (appState.settings.musicTrack) {
+      soundEngine.setTrackPreference(appState.settings.musicTrack);
+    }
+  }, [appState.settings.musicTrack]);
+
   // Sync playlist tracks with soundEngine
   useEffect(() => {
     soundEngine.setSelectedTracks(appState.settings.selectedTracks);
