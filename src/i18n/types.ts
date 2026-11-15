@@ -97,6 +97,7 @@ export interface TranslationSchema {
     title: string;
     tabs: {
       controls: string;
+      cats: string;
       graphics: string;
       audio: string;
       assists: string;

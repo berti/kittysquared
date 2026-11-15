@@ -101,4 +101,9 @@ describe('Translation Dictionaries (src/i18n/translations.ts)', () => {
     const t = createTranslator('es');
     expect(t('nonexistent.nested.key')).toBe('nonexistent.nested.key');
   });
+
+  it('includes cats tab translation in Spanish and English', () => {
+    expect((TRANSLATIONS.es.settings.tabs as unknown as Record<string, string>).cats).toBe('Gatos');
+    expect((TRANSLATIONS.en.settings.tabs as unknown as Record<string, string>).cats).toBe('Cats');
+  });
 });

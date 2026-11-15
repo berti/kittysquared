@@ -13,6 +13,7 @@ import { REGION_GLYPHS, RegionGlyphIcon } from './Board';
 import { CatSvg } from './CatSvg';
 import {
   AssistsTabIcon,
+  CatTabIcon,
   ControlsTabIcon,
   GearIcon,
   GraphicsTabIcon,
@@ -20,7 +21,7 @@ import {
   TapFingerIcon,
 } from './Icons';
 
-export type SettingsTab = 'controls' | 'graphics' | 'sound' | 'ayudas';
+export type SettingsTab = 'controls' | 'cats' | 'graphics' | 'sound' | 'ayudas';
 
 export interface SettingsModalProps {
   settings: AppSettings;
@@ -187,6 +188,7 @@ export function SettingsModal({
           >
             {[
               { id: 'controls', icon: <ControlsTabIcon size={18} />, label: t('settings.tabs.controls') },
+              { id: 'cats', icon: <CatTabIcon size={18} />, label: t('settings.tabs.cats') },
               { id: 'graphics', icon: <GraphicsTabIcon size={18} />, label: t('settings.tabs.graphics') },
               { id: 'sound', icon: <SoundTabIcon size={18} />, label: t('settings.tabs.audio') },
               { id: 'ayudas', icon: <AssistsTabIcon size={18} />, label: t('settings.tabs.assists') },
@@ -394,12 +396,12 @@ export function SettingsModal({
             </div>
           )}
 
-          {/* TAB 2: GRAPHICS */}
-          {activeTab === 'graphics' && (
+          {/* TAB 2: CATS */}
+          {activeTab === 'cats' && (
             <div
-              data-testid="pane-graphics"
+              data-testid="pane-cats"
               role="tabpanel"
-              aria-labelledby="tab-btn-graphics"
+              aria-labelledby="tab-btn-cats"
               style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}
             >
               <div>
@@ -535,7 +537,17 @@ export function SettingsModal({
                   })}
                 </div>
               </div>
+            </div>
+          )}
 
+          {/* TAB 3: GRAPHICS */}
+          {activeTab === 'graphics' && (
+            <div
+              data-testid="pane-graphics"
+              role="tabpanel"
+              aria-labelledby="tab-btn-graphics"
+              style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}
+            >
               {/* Region Assist */}
               <div>
                 <div style={{ fontSize: '13.5px', fontWeight: 900, color: '#5C4B51', marginBottom: '8px' }}>

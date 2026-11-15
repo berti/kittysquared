@@ -87,6 +87,7 @@ export const TRANSLATIONS: Record<EffectiveLanguage, TranslationSchema> = {
       title: 'Ajustes',
       tabs: {
         controls: 'Controles',
+        cats: 'Gatos',
         graphics: 'Aspecto',
         audio: 'Sonido',
         assists: 'Ayudas',
@@ -326,6 +327,7 @@ export const TRANSLATIONS: Record<EffectiveLanguage, TranslationSchema> = {
       title: 'Settings',
       tabs: {
         controls: 'Controls',
+        cats: 'Cats',
         graphics: 'Graphics',
         audio: 'Audio',
         assists: 'Assists',

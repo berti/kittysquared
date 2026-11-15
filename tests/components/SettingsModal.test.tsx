@@ -27,7 +27,7 @@ describe('SettingsModal component', () => {
     document.body.innerHTML = '';
   });
 
-  it('renders tab buttons: controls, graphics, sound, ayudas with custom Soft-Clay SVG icons', () => {
+  it('renders tab buttons: controls, cats, graphics, sound, ayudas with custom Soft-Clay SVG icons', () => {
     const { getByTestId, queryByTestId } = render(
       <SettingsModal
         settings={defaultSettings}
@@ -38,6 +38,8 @@ describe('SettingsModal component', () => {
 
     expect(getByTestId('icon-gear')).toBeDefined();
     expect(getByTestId('tab-btn-controls').querySelector('[data-testid="icon-tab-controls"]')).not.toBeNull();
+    expect(getByTestId('tab-btn-cats').querySelector('[data-testid="icon-tab-cats"]')).not.toBeNull();
+    expect(getByTestId('tab-btn-cats').textContent).toContain('Gatos');
     expect(getByTestId('tab-btn-graphics').querySelector('[data-testid="icon-tab-graphics"]')).not.toBeNull();
     expect(getByTestId('tab-btn-sound').querySelector('[data-testid="icon-tab-sound"]')).not.toBeNull();
     expect(getByTestId('tab-btn-ayudas').querySelector('[data-testid="icon-tab-ayudas"]')).not.toBeNull();
@@ -68,11 +70,17 @@ describe('SettingsModal component', () => {
 
     // Default tab is controls
     expect(getByTestId('pane-controls')).toBeDefined();
+    expect(queryByTestId('pane-cats')).toBeNull();
     expect(queryByTestId('pane-graphics')).toBeNull();
+
+    // Click cats tab
+    fireEvent.click(getByTestId('tab-btn-cats'));
+    expect(queryByTestId('pane-controls')).toBeNull();
+    expect(getByTestId('pane-cats')).toBeDefined();
 
     // Click graphics tab
     fireEvent.click(getByTestId('tab-btn-graphics'));
-    expect(queryByTestId('pane-controls')).toBeNull();
+    expect(queryByTestId('pane-cats')).toBeNull();
     expect(getByTestId('pane-graphics')).toBeDefined();
 
     // Click sound tab
@@ -154,31 +162,7 @@ describe('SettingsModal component', () => {
     vi.useRealTimers();
   });
 
-  it('Graphics tab: renders cat variants, region assist options, and mini-board preview', () => {
-    const { getByTestId, queryByText } = render(
-      <SettingsModal
-        settings={defaultSettings}
-        onUpdateSettings={vi.fn()}
-        onClose={vi.fn()}
-      />
-    );
-
-    fireEvent.click(getByTestId('tab-btn-graphics'));
-    expect(getByTestId('select-cat-black')).toBeDefined();
-    expect(getByTestId('select-cat-white')).toBeDefined();
-    expect(getByTestId('select-region-assist-off')).toBeDefined();
-    expect(getByTestId('select-region-assist-textures')).toBeDefined();
-    expect(getByTestId('mini-board-preview')).toBeDefined();
-
-    // Verify micro-descriptions and preview footer text are removed
-    expect(queryByText('Colores puros')).toBeNull();
-    expect(queryByText('Tramas rayadas')).toBeNull();
-    expect(queryByText('Iconos en esquina')).toBeNull();
-    expect(queryByText('Dígitos en esquina')).toBeNull();
-    expect(queryByText(/Muestra cómo lucen los gatos/i)).toBeNull();
-  });
-
-  it('Review Focus #4: Graphics tab renders 8 cat breeds, displays totalStars badge, blocks locked breeds, and selects unlocked breeds', () => {
+  it('Cats tab: renders 8 cat breeds, displays totalStars badge, blocks locked breeds, and selects unlocked breeds', () => {
     const onUpdateSettings = vi.fn();
     const { getByTestId, rerender } = render(
       <SettingsModal
@@ -189,8 +173,11 @@ describe('SettingsModal component', () => {
       />
     );
 
-    fireEvent.click(getByTestId('tab-btn-graphics'));
+    fireEvent.click(getByTestId('tab-btn-cats'));
+    expect(getByTestId('pane-cats')).toBeDefined();
     expect(getByTestId('settings-total-stars').textContent).toContain('24★');
+    expect(getByTestId('select-cat-black')).toBeDefined();
+    expect(getByTestId('select-cat-white')).toBeDefined();
 
     // Black and White are unlocked at 24 stars; Orange (25★) is locked
     const orangeCard = getByTestId('select-cat-orange');
@@ -215,6 +202,40 @@ describe('SettingsModal component', () => {
     expect(onUpdateSettings).toHaveBeenCalledWith(
       expect.objectContaining({ catVariant: 'siamese' })
     );
+  });
+
+  it('Graphics tab: renders region assist options and live board preview, and no longer contains cat breeds', () => {
+    const { getByTestId, queryByTestId, queryByText } = render(
+      <SettingsModal
+        settings={defaultSettings}
+        onUpdateSettings={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    fireEvent.click(getByTestId('tab-btn-graphics'));
+    expect(getByTestId('pane-graphics')).toBeDefined();
+    expect(queryByTestId('pane-cats')).toBeNull();
+
+    // Cat gallery is no longer in Graphics tab
+    expect(queryByTestId('select-cat-black')).toBeNull();
+    expect(queryByTestId('select-cat-white')).toBeNull();
+    expect(queryByTestId('select-cat-orange')).toBeNull();
+    expect(queryByTestId('settings-total-stars')).toBeNull();
+
+    // Region assist & preview are present
+    expect(getByTestId('select-region-assist-off')).toBeDefined();
+    expect(getByTestId('select-region-assist-textures')).toBeDefined();
+    expect(getByTestId('select-region-assist-glyphs')).toBeDefined();
+    expect(getByTestId('select-region-assist-numbers')).toBeDefined();
+    expect(getByTestId('mini-board-preview')).toBeDefined();
+
+    // Verify micro-descriptions and preview footer text are removed
+    expect(queryByText('Colores puros')).toBeNull();
+    expect(queryByText('Tramas rayadas')).toBeNull();
+    expect(queryByText('Iconos en esquina')).toBeNull();
+    expect(queryByText('Dígitos en esquina')).toBeNull();
+    expect(queryByText(/Muestra cómo lucen los gatos/i)).toBeNull();
   });
 
   it('Graphics tab: mini-board preview renders distinct SVG glyphs and textures matching region IDs', () => {
@@ -498,6 +519,7 @@ describe('SettingsModal component', () => {
 
       // Tab buttons
       expect(getByTestId('tab-btn-controls').textContent).toContain('Controls');
+      expect(getByTestId('tab-btn-cats').textContent).toContain('Cats');
       expect(getByTestId('tab-btn-graphics').textContent).toContain('Graphics');
       expect(getByTestId('tab-btn-sound').textContent).toContain('Audio');
       expect(getByTestId('tab-btn-ayudas').textContent).toContain('Assists');
@@ -511,11 +533,14 @@ describe('SettingsModal component', () => {
       expect(getByText('Slow')).toBeDefined();
       expect(getByText('Test your double-tap rhythm here')).toBeDefined();
 
-      // Graphics tab
-      fireEvent.click(getByTestId('tab-btn-graphics'));
+      // Cats tab
+      fireEvent.click(getByTestId('tab-btn-cats'));
       expect(getByText('CHOOSE YOUR KITTEN')).toBeDefined();
       expect(getByTestId('select-cat-black').getAttribute('aria-label')).toContain('Black Cat');
       expect(getByTestId('select-cat-orange').getAttribute('aria-label')).toContain('Orange Tabby');
+
+      // Graphics tab
+      fireEvent.click(getByTestId('tab-btn-graphics'));
       expect(getByText('REGION DIFFERENTIATION')).toBeDefined();
       expect(getByTestId('select-region-assist-off').textContent?.trim()).toBe('Off');
       expect(getByTestId('select-region-assist-textures').textContent?.trim()).toBe('Stripes');
@@ -555,6 +580,7 @@ describe('SettingsModal component', () => {
 
       // Tab buttons
       expect(getByTestId('tab-btn-controls').textContent).toContain('Controles');
+      expect(getByTestId('tab-btn-cats').textContent).toContain('Gatos');
       expect(getByTestId('tab-btn-graphics').textContent).toContain('Aspecto');
       expect(getByTestId('tab-btn-sound').textContent).toContain('Sonido');
       expect(getByTestId('tab-btn-ayudas').textContent).toContain('Ayudas');
@@ -565,11 +591,14 @@ describe('SettingsModal component', () => {
       expect(getByText('VELOCIDAD DE DOBLE TOQUE')).toBeDefined();
       expect(getByText('Prueba aquí tu ritmo de doble toque')).toBeDefined();
 
-      // Graphics tab
-      fireEvent.click(getByTestId('tab-btn-graphics'));
+      // Cats tab
+      fireEvent.click(getByTestId('tab-btn-cats'));
       expect(getByText('ELIGE TU GATITO')).toBeDefined();
       expect(getByTestId('select-cat-black').getAttribute('aria-label')).toContain('Gato Negro');
       expect(getByTestId('select-cat-orange').getAttribute('aria-label')).toContain('Naranjito');
+
+      // Graphics tab
+      fireEvent.click(getByTestId('tab-btn-graphics'));
       expect(getByText('DIFERENCIACIÓN DE REGIONES')).toBeDefined();
 
       // Audio tab

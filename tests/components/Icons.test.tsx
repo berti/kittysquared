@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   AssistsTabIcon,
   CalendarIcon,
+  CatTabIcon,
   CheckIcon,
   ControlsTabIcon,
   FlameIcon,
@@ -37,6 +38,7 @@ describe('Soft-Clay SVG Icon Library (Icons.tsx)', () => {
         <PawCoinIcon size={18} testId="icon-paw-coin" />
         <WarningIcon size={26} />
         <ControlsTabIcon size={20} />
+        <CatTabIcon size={20} />
         <GraphicsTabIcon size={20} />
         <SoundTabIcon size={20} />
         <AssistsTabIcon size={20} />
@@ -50,6 +52,8 @@ describe('Soft-Clay SVG Icon Library (Icons.tsx)', () => {
     expect(getByTestId('icon-paw-coin').getAttribute('width')).toBe('18');
     expect(getByTestId('icon-warning').getAttribute('width')).toBe('26');
     expect(getByTestId('icon-tab-controls')).toBeDefined();
+    expect(getByTestId('icon-tab-cats')).toBeDefined();
+    expect(getByTestId('icon-tab-cats').getAttribute('width')).toBe('20');
     expect(getByTestId('icon-tab-graphics')).toBeDefined();
     expect(getByTestId('icon-tab-sound')).toBeDefined();
     expect(getByTestId('icon-tab-ayudas')).toBeDefined();

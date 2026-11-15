@@ -205,6 +205,32 @@ export function ControlsTabIcon({ size = 20, className, testId = 'icon-tab-contr
   );
 }
 
+export function CatTabIcon({ size = 20, className, testId = 'icon-tab-cats' }: IconProps) {
+  return (
+    <svg
+      data-testid={testId}
+      className={className}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      style={{ display: 'block', flexShrink: 0 }}
+    >
+      <path
+        d="M5 10.5 6.2 4.5l4.2 3.2h3.2l4.2-3.2L19 10.5c1.1 1.3 1.6 2.8 1.6 4.4 0 3.5-3.6 5.6-8.6 5.6s-8.6-2.1-8.6-5.6c0-1.6.5-3.1 1.6-4.4Z"
+        fill="#FFB5A7"
+        stroke="#4A3B32"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="9.2" cy="13.5" r="1.2" fill="#4A3B32" />
+      <circle cx="14.8" cy="13.5" r="1.2" fill="#4A3B32" />
+      <path d="M11.2 15.6h1.6l-.8 1Z" fill="#FF7E67" />
+    </svg>
+  );
+}
+
 export function GraphicsTabIcon({ size = 20, className, testId = 'icon-tab-graphics' }: IconProps) {
   return (
     <svg

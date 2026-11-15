@@ -44,8 +44,8 @@ describe('App integration', () => {
     fireEvent.click(getByTestId('open-settings-btn'));
     fireEvent.input(getByTestId('speed-slider'), { target: { value: '450' } });
 
-    // Switch to graphics tab for cat variant
-    fireEvent.click(getByTestId('tab-btn-graphics'));
+    // Switch to cats tab for cat variant
+    fireEvent.click(getByTestId('tab-btn-cats'));
     fireEvent.click(getByTestId('select-cat-white'));
     fireEvent.click(getByTestId('close-settings-btn'));
 
