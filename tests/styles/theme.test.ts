@@ -31,6 +31,11 @@ describe('theme.css accessibility styles', () => {
     const css = fs.readFileSync(path.resolve(__dirname, '../../src/styles/theme.css'), 'utf-8');
     expect(css).toMatch(/\.region-pattern\s*\{[^}]*border-radius:\s*inherit/);
   });
+
+  it('defines .cross-mark.cross-mark-translucent with opacity 0.45 for pending double-tap', () => {
+    const css = fs.readFileSync(path.resolve(__dirname, '../../src/styles/theme.css'), 'utf-8');
+    expect(css).toMatch(/\.cross-mark\.cross-mark-translucent\s*\{[^}]*opacity:\s*0\.45/);
+  });
 });
 
 describe('theme.css screen wipe and modal animation styles', () => {

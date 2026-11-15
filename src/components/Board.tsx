@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { CatVariant, CellState, RegionAssistMode } from '../types/puzzle';
 import { CatSvg } from './CatSvg';
 import { REGION_GLYPH_IDS, RegionGlyphIcon } from './Icons';
@@ -60,6 +60,17 @@ export function Board({
   const dragOriginRef = useRef<{ row: number; col: number; applied: boolean } | null>(null);
   const lastDraggedCellRef = useRef<{ row: number; col: number } | null>(null);
   const lastTapRef = useRef<{ row: number; col: number; time: number } | null>(null);
+  const [pendingDoubleTapCell, setPendingDoubleTapCell] = useState<{ row: number; col: number } | null>(null);
+  const doubleTapTimerRef = useRef<number | null>(null);
+
+  const clearPendingDoubleTap = () => {
+    if (doubleTapTimerRef.current !== null) {
+      clearTimeout(doubleTapTimerRef.current);
+      doubleTapTimerRef.current = null;
+    }
+    setPendingDoubleTapCell(null);
+    lastTapRef.current = null;
+  };
 
   const applyDragToCell = (row: number, col: number) => {
     if (!isDraggingRef.current) return;
@@ -71,6 +82,9 @@ export function Board({
     ) {
       return;
     }
+
+    // Dragging crosses cancels any pending single-tap double-tap window
+    clearPendingDoubleTap();
 
     if (dragOriginRef.current && !dragOriginRef.current.applied) {
       if (dragOriginRef.current.row === row && dragOriginRef.current.col === col) {
@@ -154,10 +168,29 @@ export function Board({
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (doubleTapTimerRef.current !== null) {
+        clearTimeout(doubleTapTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isVictory) {
+      clearPendingDoubleTap();
+    }
+  }, [isVictory]);
+
   const handleClick = (row: number, col: number) => {
     // If pointer drag occurred across cells, ignore click to prevent double trigger
     if (hasDraggedRef.current) {
       hasDraggedRef.current = false;
+      return;
+    }
+
+    if (lockedCats[row]?.[col] || errorCrosses?.[row]?.[col]) {
+      clearPendingDoubleTap();
       return;
     }
 
@@ -172,10 +205,19 @@ export function Board({
       now - lastTap.time <= doubleTapTimeoutMs
     ) {
       isDoubleTap = true;
-      // Reset after registering double tap
-      lastTapRef.current = null;
+      clearPendingDoubleTap();
     } else {
       lastTapRef.current = { row, col, time: now };
+      if (doubleTapTimerRef.current !== null) {
+        clearTimeout(doubleTapTimerRef.current);
+        doubleTapTimerRef.current = null;
+      }
+      setPendingDoubleTapCell({ row, col });
+      doubleTapTimerRef.current = window.setTimeout(() => {
+        setPendingDoubleTapCell(null);
+        lastTapRef.current = null;
+        doubleTapTimerRef.current = null;
+      }, doubleTapTimeoutMs);
     }
 
     onCellTap(row, col, { isDoubleTap });
@@ -289,12 +331,25 @@ export function Board({
                     viewBox="0 0 24 24"
                     className={`cross-mark ${isErrorCross ? 'cross-mark-error' : ''} ${
                       isAutoCross ? 'cross-wave' : ''
+                    } ${
+                      !isErrorCross &&
+                      !isAutoCross &&
+                      pendingDoubleTapCell?.row === r &&
+                      pendingDoubleTapCell?.col === c
+                        ? 'cross-mark-translucent'
+                        : ''
                     }`}
-                    style={
-                      autoCrossDelayMs !== undefined
+                    style={{
+                      ...(!isErrorCross &&
+                      !isAutoCross &&
+                      pendingDoubleTapCell?.row === r &&
+                      pendingDoubleTapCell?.col === c
+                        ? { opacity: 0.45 }
+                        : {}),
+                      ...(autoCrossDelayMs !== undefined
                         ? { animationDelay: `${autoCrossDelayMs}ms` }
-                        : undefined
-                    }
+                        : {}),
+                    }}
                   >
                     <line x1="5" y1="5" x2="19" y2="19" />
                     <line x1="19" y1="5" x2="5" y2="19" />

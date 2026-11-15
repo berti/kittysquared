@@ -82,6 +82,61 @@ describe('GameScreen component', () => {
     expect(currentSession.board[0][1]).toBe('cross');
   });
 
+  it('renders a translucent cross on single tap during gameplay that turns solid white after timeout', () => {
+    vi.useFakeTimers();
+    let currentSession = createLevelSession(samplePuzzle);
+    const defaultState = getDefaultAppState();
+
+    const { getByTestId, rerender } = render(
+      <GameScreen
+        puzzle={samplePuzzle}
+        progress={defaultState.progress}
+        settings={defaultState.settings}
+        session={currentSession}
+        onUpdateSession={(next) => {
+          currentSession = next;
+        }}
+        onAdvanceLevel={vi.fn()}
+        onRetryLevel={vi.fn()}
+        onBackToMenu={vi.fn()}
+        onOpenSettings={vi.fn()}
+      />
+    );
+
+    const cell00 = getByTestId('cell-0-0');
+    fireEvent.click(cell00);
+
+    rerender(
+      <GameScreen
+        puzzle={samplePuzzle}
+        progress={defaultState.progress}
+        settings={defaultState.settings}
+        session={currentSession}
+        onUpdateSession={(next) => {
+          currentSession = next;
+        }}
+        onAdvanceLevel={vi.fn()}
+        onRetryLevel={vi.fn()}
+        onBackToMenu={vi.fn()}
+        onOpenSettings={vi.fn()}
+      />
+    );
+
+    const cross = cell00.querySelector('.cross-mark') as SVGElement;
+    expect(cross).not.toBeNull();
+    expect(cross.classList.contains('cross-mark-translucent')).toBe(true);
+    expect(cross.style.opacity).toBe('0.45');
+
+    // Advance past doubleTapTimeoutMs
+    act(() => {
+      vi.advanceTimersByTime(defaultState.settings.doubleTapTimeoutMs || 500);
+    });
+
+    expect(cross.classList.contains('cross-mark-translucent')).toBe(false);
+    expect(cross.style.opacity).not.toBe('0.45');
+    vi.useRealTimers();
+  });
+
   it('renders top bar buttons and enlarged status bar with cats, lives, and score', () => {
     const session = createLevelSession(samplePuzzle);
     const defaultState = getDefaultAppState();
