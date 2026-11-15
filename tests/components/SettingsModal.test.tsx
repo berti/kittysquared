@@ -119,6 +119,8 @@ describe('SettingsModal component', () => {
     // Tap tester exists
     const tester = getByTestId('double-tap-tester');
     expect(tester).toBeDefined();
+    const cellTester = getByTestId('double-tap-cell-tester');
+    expect(cellTester).toBeDefined();
 
     // Clean speed labels without milliseconds and without Área de prueba title
     expect(getByText('Rápido')).toBeDefined();
@@ -130,7 +132,44 @@ describe('SettingsModal component', () => {
     expect(queryByText('ÁREA DE PRUEBA')).toBeNull();
   });
 
-  it('Controls tab: double-tap tester provides interactive feedback for single and double taps', () => {
+  it('Controls tab: double-tap section is uncarded without #F8F3E8 card background or border', () => {
+    const { getByTestId } = render(
+      <SettingsModal
+        settings={defaultSettings}
+        onUpdateSettings={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    const section = getByTestId('double-tap-speed-section');
+    expect(section.style.background).not.toContain('#F8F3E8');
+    expect(section.style.backgroundColor).not.toBe('rgb(248, 243, 232)');
+    expect(section.style.border).toBe('');
+  });
+
+  it('Controls tab: cell tap tester displays 52x52px board cell styling and is empty when idle', () => {
+    const { getByTestId } = render(
+      <SettingsModal
+        settings={defaultSettings}
+        onUpdateSettings={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    const cell = getByTestId('double-tap-cell-tester');
+    expect(cell.style.width).toBe('52px');
+    expect(cell.style.height).toBe('52px');
+    expect(cell.style.borderRadius).toBe('12px');
+    expect(cell.style.backgroundColor).toBe('rgb(255, 227, 216)');
+    expect(cell.style.border).toMatch(/2px solid (rgb\(226, 214, 193\)|#E2D6C1)/i);
+
+    // Empty when idle
+    expect(cell.querySelector('.cat-svg')).toBeNull();
+    expect(cell.querySelector('[data-testid="double-tap-cross"]')).toBeNull();
+    expect(getByTestId('double-tap-tester-feedback').textContent).toContain('Prueba aquí tu ritmo de doble toque');
+  });
+
+  it('Controls tab: single tap renders translucent cross and disappears when timer expires', () => {
     vi.useFakeTimers();
     const { getByTestId } = render(
       <SettingsModal
@@ -140,25 +179,76 @@ describe('SettingsModal component', () => {
       />
     );
 
-    const tester = getByTestId('double-tap-tester');
-    expect(tester.querySelector('[data-testid="icon-tap-prompt"]')).not.toBeNull();
+    const cell = getByTestId('double-tap-cell-tester');
+    const feedback = getByTestId('double-tap-tester-feedback');
 
-    // 1st click -> single tap feedback
-    fireEvent.click(tester);
-    expect(tester.textContent).toContain('1 toque');
+    // Single click -> shows translucent cross (opacity 0.45)
+    fireEvent.click(cell);
+    const cross = cell.querySelector('[data-testid="double-tap-cross"]') as HTMLElement;
+    expect(cross).not.toBeNull();
+    expect(cross.textContent).toBe('✕');
+    expect(cross.style.opacity).toBe('0.45');
+    expect(feedback.textContent).toContain('1 toque detectado');
 
-    // 2nd click after 100ms (within 500ms) -> double tap feedback with CatSvg and no paw emoji
-    vi.advanceTimersByTime(100);
-    fireEvent.click(tester);
-    expect(tester.textContent).toContain('¡Doble toque detectado!');
-    expect(tester.textContent).not.toContain('🐾');
-    expect(tester.querySelector('.cat-svg')).not.toBeNull();
-
-    // After 2000ms -> resets back to idle
+    // Advance timer by 499ms -> cross still present
     act(() => {
-      vi.advanceTimersByTime(2000);
+      vi.advanceTimersByTime(499);
     });
-    expect(tester.textContent).toContain('Prueba aquí tu ritmo de doble toque');
+    expect(cell.querySelector('[data-testid="double-tap-cross"]')).not.toBeNull();
+
+    // Advance 1ms (500ms total = currentTimeout) -> cross expires back to empty idle state
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(cell.querySelector('[data-testid="double-tap-cross"]')).toBeNull();
+    expect(feedback.textContent).toContain('Prueba aquí tu ritmo de doble toque');
+
+    vi.useRealTimers();
+  });
+
+  it('Controls tab: double tap renders CatSvg and resets back to idle after 1.2s', () => {
+    vi.useFakeTimers();
+    const { getByTestId } = render(
+      <SettingsModal
+        settings={{ ...defaultSettings, doubleTapTimeoutMs: 500, catVariant: 'siamese' }}
+        onUpdateSettings={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    const cell = getByTestId('double-tap-cell-tester');
+    const feedback = getByTestId('double-tap-tester-feedback');
+
+    // 1st click
+    fireEvent.click(cell);
+    expect(cell.querySelector('[data-testid="double-tap-cross"]')).not.toBeNull();
+
+    // 2nd click after 120ms (within 500ms) -> double tap detected, renders CatSvg with equipped variant
+    vi.advanceTimersByTime(120);
+    fireEvent.click(cell);
+
+    expect(cell.querySelector('[data-testid="double-tap-cross"]')).toBeNull();
+    const cat = cell.querySelector('.cat-svg');
+    expect(cat).not.toBeNull();
+    expect(cat?.getAttribute('data-cat-state')).toBe('idle');
+    expect(cat?.querySelector('[data-cat-part="head"]')?.getAttribute('fill')).toBe('#F5EFE6');
+    expect(feedback.textContent).toContain('¡Doble toque detectado!');
+    expect(feedback.textContent).toContain('120ms');
+    expect(/\p{Extended_Pictographic}/u.test(feedback.textContent || '')).toBe(false);
+
+    // Advance 1199ms -> cat still visible
+    act(() => {
+      vi.advanceTimersByTime(1199);
+    });
+    expect(cell.querySelector('.cat-svg')).not.toBeNull();
+
+    // Advance 1ms (1200ms = 1.2s total) -> resets back to idle
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(cell.querySelector('.cat-svg')).toBeNull();
+    expect(feedback.textContent).toContain('Prueba aquí tu ritmo de doble toque');
+
     vi.useRealTimers();
   });
 

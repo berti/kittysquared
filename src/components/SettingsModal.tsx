@@ -18,7 +18,6 @@ import {
   GearIcon,
   GraphicsTabIcon,
   SoundTabIcon,
-  TapFingerIcon,
 } from './Icons';
 
 export type SettingsTab = 'controls' | 'cats' | 'graphics' | 'sound' | 'ayudas';
@@ -94,7 +93,7 @@ export function SettingsModal({
       setLastTesterTapTime(0);
       testerTimerRef.current = setTimeout(() => {
         setTesterFeedback({ status: 'idle' });
-      }, 1500);
+      }, 1200);
     } else {
       setLastTesterTapTime(now);
       setTesterFeedback({ status: 'single' });
@@ -299,11 +298,8 @@ export function SettingsModal({
 
               {/* Double-tap Speed Section */}
               <div
+                data-testid="double-tap-speed-section"
                 style={{
-                  background: '#F8F3E8',
-                  border: '2px solid #E2D6C1',
-                  borderRadius: '16px',
-                  padding: '14px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '10px',
@@ -339,57 +335,71 @@ export function SettingsModal({
                 </div>
 
                 {/* Interactive tap tester */}
-                <div style={{ textAlign: 'center', marginTop: '6px' }}>
+                <div
+                  data-testid="double-tap-tester"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    marginTop: '6px',
+                    gap: '6px',
+                  }}
+                >
                   <div
-                    data-testid="double-tap-tester"
+                    data-testid="double-tap-cell-tester"
                     onClick={handleTesterClick}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={t('settings.controls.testTapPrompt')}
                     style={{
-                      background:
-                        testerFeedback.status === 'double'
-                          ? '#E8FBF8'
-                          : testerFeedback.status === 'single'
-                          ? '#FFF5F0'
-                          : '#FFFFFF',
-                      border:
-                        testerFeedback.status === 'double'
-                          ? '2px solid #2EC4B6'
-                          : testerFeedback.status === 'single'
-                          ? '2px solid #FF9770'
-                          : '2px dashed #E2D6C1',
-                      borderRadius: '14px',
-                      padding: '14px',
+                      width: '52px',
+                      height: '52px',
+                      background: '#FFE3D8',
+                      border: '2px solid #E2D6C1',
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       cursor: 'pointer',
                       userSelect: 'none',
+                      boxSizing: 'border-box',
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    <div
-                      style={{
-                        fontSize: '26px',
-                        lineHeight: 1,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        minHeight: '34px',
-                      }}
-                    >
-                      {testerFeedback.status === 'double' ? (
-                        <div style={{ width: '34px', height: '34px' }}>
-                          <CatSvg variant={settings.catVariant} state="idle" />
-                        </div>
-                      ) : testerFeedback.status === 'single' ? (
-                        '✕'
-                      ) : (
-                        <TapFingerIcon size={28} />
-                      )}
-                    </div>
-                    <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#3D3135', marginTop: '4px' }}>
-                      {testerFeedback.status === 'double'
-                        ? `${t('settings.controls.doubleTapDetected')} (${testerFeedback.interval}ms)`
-                        : testerFeedback.status === 'single'
-                        ? t('settings.controls.singleTapPrompt')
-                        : t('settings.controls.testTapPrompt')}
-                    </div>
+                    {testerFeedback.status === 'double' ? (
+                      <div style={{ width: '34px', height: '34px' }}>
+                        <CatSvg variant={settings.catVariant} state="idle" />
+                      </div>
+                    ) : testerFeedback.status === 'single' ? (
+                      <span
+                        data-testid="double-tap-cross"
+                        style={{
+                          fontSize: '26px',
+                          fontWeight: 900,
+                          color: '#3D3135',
+                          opacity: 0.45,
+                          lineHeight: 1,
+                        }}
+                      >
+                        ✕
+                      </span>
+                    ) : null}
+                  </div>
+                  <div
+                    data-testid="double-tap-tester-feedback"
+                    style={{
+                      fontSize: '13.5px',
+                      fontWeight: 800,
+                      color: '#3D3135',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {testerFeedback.status === 'double'
+                      ? `${t('settings.controls.doubleTapDetected')} (${testerFeedback.interval}ms)`
+                      : testerFeedback.status === 'single'
+                      ? t('settings.controls.singleTapPrompt')
+                      : t('settings.controls.testTapPrompt')}
                   </div>
                 </div>
               </div>
