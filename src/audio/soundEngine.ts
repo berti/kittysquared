@@ -1,15 +1,13 @@
-import { MusicTrackOption, SteppedVolume } from '../state/storage';
+import {
+  ALL_CONCRETE_TRACKS,
+  ConcreteTrackId,
+  MusicTrackOption,
+  SteppedVolume,
+} from '../state/storage';
 
-export type ConcreteTrackId = Exclude<MusicTrackOption, 'auto'>;
+export { ALL_CONCRETE_TRACKS, type ConcreteTrackId };
 
-export const PLAYLIST_ORDER: ConcreteTrackId[] = [
-  'marimba',
-  'velvet',
-  'sunbeam',
-  'bossa',
-  'waltz',
-  'samba',
-];
+export const PLAYLIST_ORDER: ConcreteTrackId[] = [...ALL_CONCRETE_TRACKS];
 
 export type InstrumentType =
   | 'marimba'
@@ -1090,7 +1088,7 @@ export class SoundEngine {
   private sfxMuted: boolean = false;
   private musicVolume: SteppedVolume = 0.75;
   private sfxVolume: SteppedVolume = 0.75;
-  private musicTrackPreference: MusicTrackOption = 'auto';
+  private selectedTracks: ConcreteTrackId[] = [...ALL_CONCRETE_TRACKS];
 
   private isDuckingActive: boolean = false;
   private duckingTimeout: number | null = null;
@@ -1193,16 +1191,47 @@ export class SoundEngine {
     this.updateGainLevels();
   }
 
-  public setTrackPreference(pref: MusicTrackOption): void {
-    if (this.musicTrackPreference === pref) return;
-    this.musicTrackPreference = pref;
-    this.currentRepeatCount = 0;
-    if (pref !== 'auto') {
-      this.currentTrackId = pref;
+  public setSelectedTracks(tracks?: ConcreteTrackId[]): void {
+    const valid = Array.isArray(tracks)
+      ? tracks.filter((t: unknown): t is ConcreteTrackId => ALL_CONCRETE_TRACKS.includes(t as ConcreteTrackId))
+      : [];
+    const nextTracks = valid.length > 0 ? valid : [...ALL_CONCRETE_TRACKS];
+
+    const isSameSelection =
+      nextTracks.length === this.selectedTracks.length &&
+      nextTracks.every((t, i) => t === this.selectedTracks[i]);
+
+    if (isSameSelection) return;
+
+    this.selectedTracks = nextTracks;
+
+    const trackStillPresent = this.selectedTracks.includes(this.currentTrackId);
+    if (!trackStillPresent) {
+      this.currentTrackId = this.selectedTracks[0];
+      this.currentTrackIndex = 0;
+      this.currentRepeatCount = 0;
+      if (this.isMusicPlaying && !this.musicMuted) {
+        this.stopMusic();
+        this.startMusic();
+      }
+    } else {
+      if (nextTracks.length === 1) {
+        this.currentRepeatCount = 0;
+      }
+      const curIdx = this.selectedTracks.indexOf(this.currentTrackId);
+      this.currentTrackIndex = curIdx >= 0 ? curIdx + 1 : 0;
     }
-    if (this.isMusicPlaying && !this.musicMuted) {
-      this.stopMusic();
-      this.startMusic();
+  }
+
+  public getSelectedTracks(): ConcreteTrackId[] {
+    return [...this.selectedTracks];
+  }
+
+  public setTrackPreference(pref: MusicTrackOption): void {
+    if (pref === 'auto') {
+      this.setSelectedTracks([...ALL_CONCRETE_TRACKS]);
+    } else if (ALL_CONCRETE_TRACKS.includes(pref)) {
+      this.setSelectedTracks([pref]);
     }
   }
 
@@ -1211,7 +1240,7 @@ export class SoundEngine {
   }
 
   public getCurrentTrackId(): ConcreteTrackId {
-    return this.musicTrackPreference === 'auto' ? this.currentTrackId : this.musicTrackPreference;
+    return this.currentTrackId;
   }
 
   public getTrackDef(trackId: ConcreteTrackId): SoundTrackDef {
@@ -1890,14 +1919,15 @@ export class SoundEngine {
   }
 
   public getNextTrack(): { track: SoundTrackDef; isNewTrack: boolean } {
-    if (this.musicTrackPreference !== 'auto') {
-      this.currentTrackId = this.musicTrackPreference;
+    if (this.selectedTracks.length === 1) {
+      const trackId = this.selectedTracks[0];
+      this.currentTrackId = trackId;
       const isNew = this.currentRepeatCount === 0;
       this.currentRepeatCount++;
-      return { track: TRACK_MAP[this.musicTrackPreference], isNewTrack: isNew };
+      return { track: TRACK_MAP[trackId], isNewTrack: isNew };
     }
 
-    const trackId = PLAYLIST_ORDER[this.currentTrackIndex % PLAYLIST_ORDER.length];
+    const trackId = this.selectedTracks[this.currentTrackIndex % this.selectedTracks.length];
     this.currentTrackId = trackId;
     this.currentTrackIndex++;
     this.currentRepeatCount = 1;

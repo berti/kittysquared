@@ -130,6 +130,50 @@ describe('audio/soundEngine', () => {
     }
   });
 
+  describe('playlist multi-selection', () => {
+    it('updates active playlist and returns copy from getSelectedTracks', () => {
+      const engine = new SoundEngine();
+      engine.setSelectedTracks(['marimba', 'bossa']);
+      expect(engine.getSelectedTracks()).toEqual(['marimba', 'bossa']);
+    });
+
+    it('cycles strictly through selectedTracks across successive getNextTrack calls', () => {
+      const engine = new SoundEngine();
+      engine.setSelectedTracks(['sunbeam', 'waltz']);
+
+      const first = engine.getNextTrack();
+      expect(first.track.id).toBe('sunbeam');
+      expect(first.isNewTrack).toBe(true);
+
+      const second = engine.getNextTrack();
+      expect(second.track.id).toBe('waltz');
+      expect(second.isNewTrack).toBe(true);
+
+      const third = engine.getNextTrack();
+      expect(third.track.id).toBe('sunbeam');
+      expect(third.isNewTrack).toBe(true);
+    });
+
+    it('falls back safely to all tracks when empty array is passed to setSelectedTracks', () => {
+      const engine = new SoundEngine();
+      engine.setSelectedTracks([]);
+      expect(engine.getSelectedTracks()).toEqual(PLAYLIST_ORDER);
+    });
+
+    it('transitions to first track in new selection if current track is no longer selected', () => {
+      const engine = new SoundEngine();
+      engine.setSelectedTracks(['marimba']);
+      expect(engine.getCurrentTrackId()).toBe('marimba');
+
+      engine.setSelectedTracks(['bossa', 'samba']);
+      expect(engine.getCurrentTrackId()).toBe('bossa');
+
+      // If current track is still in selection, retain it
+      engine.setSelectedTracks(['samba', 'bossa']);
+      expect(engine.getCurrentTrackId()).toBe('bossa');
+    });
+  });
+
   describe('focus and lifecycle handling', () => {
     let originalAudioContext: any;
 

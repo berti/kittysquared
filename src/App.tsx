@@ -115,10 +115,10 @@ export function App({
     soundEngine.setVolume(appState.settings.musicVolume ?? 0.75, appState.settings.sfxVolume ?? 0.75);
   }, [appState.settings.musicVolume, appState.settings.sfxVolume]);
 
-  // Sync track preference with soundEngine
+  // Sync playlist tracks with soundEngine
   useEffect(() => {
-    soundEngine.setTrackPreference(appState.settings.musicTrack ?? 'auto');
-  }, [appState.settings.musicTrack]);
+    soundEngine.setSelectedTracks(appState.settings.selectedTracks);
+  }, [appState.settings.selectedTracks]);
 
   const effectiveLang = resolveEffectiveLanguage(appState.settings.language);
 

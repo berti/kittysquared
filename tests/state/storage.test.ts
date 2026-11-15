@@ -2,7 +2,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getTodayDateString } from '../../src/engine/daily';
 import {
+  ALL_CONCRETE_TRACKS,
   CAT_BREEDS,
+  DEFAULT_APP_SETTINGS,
   DEFAULT_DAILY_PROGRESS,
   getDefaultAppState,
   getNewlyUnlockedBreeds,
@@ -31,14 +33,22 @@ describe('state/storage', () => {
     expect(loaded.settings.catVariant).toBe('white');
   });
 
-  it('provides default musicVolume (0.75), sfxVolume (0.75), and musicTrack ("auto") in default state', () => {
+  it('provides default musicVolume (0.75), sfxVolume (0.75), and selectedTracks (all 6 tracks) in default state', () => {
     const state = getDefaultAppState();
     expect(state.settings.musicVolume).toBe(0.75);
     expect(state.settings.sfxVolume).toBe(0.75);
-    expect(state.settings.musicTrack).toBe('auto');
+    expect(state.settings.selectedTracks).toEqual([
+      'marimba',
+      'velvet',
+      'sunbeam',
+      'bossa',
+      'waltz',
+      'samba',
+    ]);
+    expect(DEFAULT_APP_SETTINGS.selectedTracks).toEqual(ALL_CONCRETE_TRACKS);
   });
 
-  it('migrates legacy save format missing volume and track fields with robust defaults', () => {
+  it('migrates legacy save format missing volume and track fields with robust defaults including all 6 tracks', () => {
     localStorage.setItem(
       'kittysquared_state_v1',
       JSON.stringify({
@@ -56,7 +66,75 @@ describe('state/storage', () => {
     const loaded = loadPersistedState();
     expect(loaded.settings.musicVolume).toBe(0.75);
     expect(loaded.settings.sfxVolume).toBe(0.75);
-    expect(loaded.settings.musicTrack).toBe('auto');
+    expect(loaded.settings.selectedTracks).toEqual(ALL_CONCRETE_TRACKS);
+  });
+
+  it('migrates legacy musicTrack: "auto" to all 6 tracks in selectedTracks', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        settings: {
+          musicTrack: 'auto',
+        },
+      })
+    );
+    const loaded = loadPersistedState();
+    expect(loaded.settings.selectedTracks).toEqual([
+      'marimba',
+      'velvet',
+      'sunbeam',
+      'bossa',
+      'waltz',
+      'samba',
+    ]);
+  });
+
+  it('migrates legacy single track preference to a single-element selectedTracks array', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        settings: {
+          musicTrack: 'marimba',
+        },
+      })
+    );
+    const loaded = loadPersistedState();
+    expect(loaded.settings.selectedTracks).toEqual(['marimba']);
+  });
+
+  it('migrates legacy autoCross: "row_col_surround" to "all"', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        settings: {
+          autoCross: 'row_col_surround',
+        },
+      })
+    );
+    const loaded = loadPersistedState();
+    expect(loaded.settings.autoCross).toBe('all');
+  });
+
+  it('falls back to all 6 tracks if selectedTracks is empty or corrupted', () => {
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        settings: {
+          selectedTracks: [],
+        },
+      })
+    );
+    expect(loadPersistedState().settings.selectedTracks).toEqual(ALL_CONCRETE_TRACKS);
+
+    localStorage.setItem(
+      'kittysquared_state_v1',
+      JSON.stringify({
+        settings: {
+          selectedTracks: ['invalid_track_id', 123],
+        },
+      })
+    );
+    expect(loadPersistedState().settings.selectedTracks).toEqual(ALL_CONCRETE_TRACKS);
   });
 
   it('persists and reloads custom volume and track preferences', () => {
@@ -92,11 +170,13 @@ describe('state/storage', () => {
     state.progress.currentLevelId = 5;
     state.progress.totalScore = 320;
     state.settings.catVariant = 'white';
+    state.settings.selectedTracks = ['bossa', 'samba'];
     const afterReset = resetProgress(state);
     expect(afterReset.progress.currentLevelId).toBe(1);
     expect(afterReset.progress.totalScore).toBe(0);
     expect(afterReset.progress.activeSnapshot).toBeNull();
     expect(afterReset.settings.catVariant).toBe('white');
+    expect(afterReset.settings.selectedTracks).toEqual(['bossa', 'samba']);
   });
 
   it('migrates legacy save format with classic progress to unified progress', () => {
@@ -228,11 +308,11 @@ describe('state/storage', () => {
     const state = getDefaultAppState();
     expect(state.settings.autoCross).toBe('off');
 
-    state.settings.autoCross = 'row_col_surround';
+    state.settings.autoCross = 'all';
     savePersistedState(state);
 
     const loaded = loadPersistedState();
-    expect(loaded.settings.autoCross).toBe('row_col_surround');
+    expect(loaded.settings.autoCross).toBe('all');
   });
 
   it('loadPersistedState defaults autoCross to "off" if missing in older save files', () => {

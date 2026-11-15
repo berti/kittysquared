@@ -23,6 +23,23 @@ export type RegionAssistMode = 'off' | 'textures' | 'glyphs' | 'numbers';
 
 export type AutoCrossMode = 'off' | 'row_col_surround' | 'all';
 
+export type ConcreteTrackId =
+  | 'marimba'
+  | 'velvet'
+  | 'sunbeam'
+  | 'bossa'
+  | 'waltz'
+  | 'samba';
+
+export const ALL_CONCRETE_TRACKS: readonly ConcreteTrackId[] = [
+  'marimba',
+  'velvet',
+  'sunbeam',
+  'bossa',
+  'waltz',
+  'samba',
+];
+
 export type CatAnimState = 'idle' | 'placed' | 'conflict' | 'victory';
 
 export interface CellCoord {

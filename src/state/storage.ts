@@ -1,7 +1,9 @@
 import {
+  ALL_CONCRETE_TRACKS,
   AutoCrossMode,
   CatBreedDef,
   CatVariant,
+  ConcreteTrackId,
   DailyProgress,
   DailyPuzzleResult,
   Language,
@@ -10,6 +12,7 @@ import {
 } from '../types/puzzle';
 import { getTodayDateString } from '../engine/daily';
 
+export { ALL_CONCRETE_TRACKS, type ConcreteTrackId };
 export type { SavedBoardSnapshot };
 
 export type StarRating = 1 | 2 | 3;
@@ -42,7 +45,9 @@ export interface AppSettings {
   tutorialSeen: boolean;
   musicVolume: SteppedVolume;
   sfxVolume: SteppedVolume;
-  musicTrack: MusicTrackOption;
+  selectedTracks?: ConcreteTrackId[];
+  /** @deprecated Legacy single-track preference, use selectedTracks */
+  musicTrack?: MusicTrackOption;
 }
 
 export interface PersistedAppState {
@@ -75,6 +80,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   tutorialSeen: false,
   musicVolume: 0.75,
   sfxVolume: 0.75,
+  selectedTracks: [...ALL_CONCRETE_TRACKS],
   musicTrack: 'auto',
 };
 
@@ -98,7 +104,6 @@ export const VALID_REGION_ASSIST_MODES: RegionAssistMode[] = [
 
 export const VALID_AUTO_CROSS_MODES: AutoCrossMode[] = [
   'off',
-  'row_col_surround',
   'all',
 ];
 
@@ -290,6 +295,41 @@ export function loadPersistedState(): PersistedAppState {
       ? cleanRawSettings.language
       : 'auto';
 
+    let selectedTracks: ConcreteTrackId[] | null = null;
+    if (Array.isArray(cleanRawSettings.selectedTracks)) {
+      const valid = cleanRawSettings.selectedTracks.filter((t: unknown): t is ConcreteTrackId =>
+        ALL_CONCRETE_TRACKS.includes(t as ConcreteTrackId)
+      );
+      if (valid.length > 0) {
+        selectedTracks = valid;
+      }
+    }
+    if (!selectedTracks) {
+      if (cleanRawSettings.musicTrack === 'auto') {
+        selectedTracks = [...ALL_CONCRETE_TRACKS];
+      } else if (
+        cleanRawSettings.musicTrack &&
+        ALL_CONCRETE_TRACKS.includes(cleanRawSettings.musicTrack as ConcreteTrackId)
+      ) {
+        selectedTracks = [cleanRawSettings.musicTrack as ConcreteTrackId];
+      } else {
+        selectedTracks = [...ALL_CONCRETE_TRACKS];
+      }
+    }
+
+    const rawAutoCross = cleanRawSettings.autoCross;
+    const autoCross: AutoCrossMode =
+      rawAutoCross === 'row_col_surround' || rawAutoCross === 'all'
+        ? 'all'
+        : 'off';
+
+    const rawMusicTrack = cleanRawSettings.musicTrack;
+    const musicTrack: MusicTrackOption = VALID_MUSIC_TRACKS.includes(rawMusicTrack)
+      ? rawMusicTrack
+      : selectedTracks.length === 1
+        ? selectedTracks[0]
+        : 'auto';
+
     return {
       progress: sanitizedProgress,
       settings: {
@@ -301,18 +341,15 @@ export function loadPersistedState(): PersistedAppState {
         regionAssist: VALID_REGION_ASSIST_MODES.includes(cleanRawSettings.regionAssist)
           ? cleanRawSettings.regionAssist
           : 'off',
-        autoCross: VALID_AUTO_CROSS_MODES.includes(cleanRawSettings.autoCross)
-          ? cleanRawSettings.autoCross
-          : 'off',
+        autoCross,
         musicVolume: VALID_STEPPED_VOLUMES.includes(cleanRawSettings.musicVolume)
           ? cleanRawSettings.musicVolume
           : 0.75,
         sfxVolume: VALID_STEPPED_VOLUMES.includes(cleanRawSettings.sfxVolume)
           ? cleanRawSettings.sfxVolume
           : 0.75,
-        musicTrack: VALID_MUSIC_TRACKS.includes(cleanRawSettings.musicTrack)
-          ? cleanRawSettings.musicTrack
-          : 'auto',
+        selectedTracks,
+        musicTrack,
       },
       daily: sanitizeDailyProgress(parsed.daily),
     };
