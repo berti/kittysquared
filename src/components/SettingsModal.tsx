@@ -286,13 +286,10 @@ export function SettingsModal({
               aria-labelledby="tab-btn-controls"
               style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}
             >
-              {/* Language Selector Card */}
+              {/* Language Selector */}
               <div
+                data-testid="language-section"
                 style={{
-                  background: '#F8F3E8',
-                  border: '2px solid #E2D6C1',
-                  borderRadius: '16px',
-                  padding: '14px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '8px',
@@ -396,6 +393,7 @@ export function SettingsModal({
                   }}
                 >
                   <div
+                    className="board-cell reg-0"
                     data-testid="double-tap-cell-tester"
                     onClick={handleTesterClick}
                     role="button"
@@ -404,36 +402,23 @@ export function SettingsModal({
                     style={{
                       width: '52px',
                       height: '52px',
-                      background: '#FFE3D8',
-                      border: '2px solid #E2D6C1',
-                      borderRadius: '12px',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      userSelect: 'none',
                       boxSizing: 'border-box',
-                      transition: 'all 0.15s ease',
                     }}
                   >
                     {testerFeedback.status === 'double' ? (
-                      <div style={{ width: '34px', height: '34px' }}>
+                      <div className="board-cat-wrapper">
                         <CatSvg variant={settings.catVariant} state="idle" />
                       </div>
                     ) : testerFeedback.status === 'single' ? (
-                      <span
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="cross-mark"
                         data-testid="double-tap-cross"
-                        style={{
-                          fontSize: '26px',
-                          fontWeight: 900,
-                          color: '#3D3135',
-                          opacity: 0.45,
-                          lineHeight: 1,
-                        }}
+                        style={{ opacity: 0.45 }}
                       >
-                        ✕
-                      </span>
+                        <line x1="5" y1="5" x2="19" y2="19" />
+                        <line x1="19" y1="5" x2="5" y2="19" />
+                      </svg>
                     ) : null}
                   </div>
                   <div

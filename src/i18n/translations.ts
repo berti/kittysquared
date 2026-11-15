@@ -168,7 +168,7 @@ export const TRANSLATIONS: Record<EffectiveLanguage, TranslationSchema> = {
             desc: 'Colocar todas las cruces de forma manual',
           },
           all: {
-            label: 'Sí (Fila, columna, alrededor y color)',
+            label: 'Sí',
             desc: 'Cruces en fila, columna, adyacentes y toda la región de color',
           },
         },
@@ -405,7 +405,7 @@ export const TRANSLATIONS: Record<EffectiveLanguage, TranslationSchema> = {
             desc: 'Place all crosses manually',
           },
           all: {
-            label: 'Yes (Row, column, surround & color)',
+            label: 'Yes',
             desc: 'Crosses in row, column, adjacent cells, and entire color region',
           },
         },

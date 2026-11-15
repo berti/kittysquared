@@ -132,7 +132,7 @@ describe('SettingsModal component', () => {
     expect(queryByText('ÁREA DE PRUEBA')).toBeNull();
   });
 
-  it('Controls tab: double-tap section is uncarded without #F8F3E8 card background or border', () => {
+  it('Controls tab: language and double-tap sections are uncarded without #F8F3E8 card background or border', () => {
     const { getByTestId } = render(
       <SettingsModal
         settings={defaultSettings}
@@ -140,6 +140,11 @@ describe('SettingsModal component', () => {
         onClose={vi.fn()}
       />
     );
+
+    const langSection = getByTestId('language-section');
+    expect(langSection.style.background).not.toContain('#F8F3E8');
+    expect(langSection.style.backgroundColor).not.toBe('rgb(248, 243, 232)');
+    expect(langSection.style.border).toBe('');
 
     const section = getByTestId('double-tap-speed-section');
     expect(section.style.background).not.toContain('#F8F3E8');
@@ -157,11 +162,10 @@ describe('SettingsModal component', () => {
     );
 
     const cell = getByTestId('double-tap-cell-tester');
+    expect(cell.classList.contains('board-cell')).toBe(true);
+    expect(cell.classList.contains('reg-0')).toBe(true);
     expect(cell.style.width).toBe('52px');
     expect(cell.style.height).toBe('52px');
-    expect(cell.style.borderRadius).toBe('12px');
-    expect(cell.style.backgroundColor).toBe('rgb(255, 227, 216)');
-    expect(cell.style.border).toMatch(/2px solid (rgb\(226, 214, 193\)|#E2D6C1)/i);
 
     // Empty when idle
     expect(cell.querySelector('.cat-svg')).toBeNull();
@@ -186,7 +190,8 @@ describe('SettingsModal component', () => {
     fireEvent.click(cell);
     const cross = cell.querySelector('[data-testid="double-tap-cross"]') as HTMLElement;
     expect(cross).not.toBeNull();
-    expect(cross.textContent).toBe('✕');
+    expect(cross.tagName.toLowerCase()).toBe('svg');
+    expect(cross.classList.contains('cross-mark')).toBe(true);
     expect(cross.style.opacity).toBe('0.45');
     expect(feedback.textContent).toContain('1 toque detectado');
 
@@ -775,7 +780,7 @@ describe('SettingsModal component', () => {
       expect(getByTestId('select-autocross-off').textContent).toContain('No');
       expect(getByTestId('select-autocross-off').textContent).toContain('Place all crosses manually');
       expect(queryByTestId('select-autocross-row-col-surround')).toBeNull();
-      expect(getByTestId('select-autocross-all').textContent).toContain('Yes (Row, column, surround & color)');
+      expect(getByTestId('select-autocross-all').textContent).toContain('Yes');
       expect(getByTestId('select-autocross-all').textContent).toContain('Crosses in row, column, adjacent cells, and entire color region');
     });
 
@@ -832,7 +837,7 @@ describe('SettingsModal component', () => {
       expect(getByTestId('select-autocross-off').textContent).toContain('No');
       expect(getByTestId('select-autocross-off').textContent).toContain('Colocar todas las cruces de forma manual');
       expect(queryByTestId('select-autocross-row-col-surround')).toBeNull();
-      expect(getByTestId('select-autocross-all').textContent).toContain('Sí (Fila, columna, alrededor y color)');
+      expect(getByTestId('select-autocross-all').textContent).toContain('Sí');
       expect(getByTestId('select-autocross-all').textContent).toContain('Cruces en fila, columna, adyacentes y toda la región de color');
     });
   });
