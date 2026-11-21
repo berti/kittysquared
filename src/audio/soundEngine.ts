@@ -77,13 +77,17 @@ interface Arrangement44Spec {
 }
 
 /**
- * Builds a 56-bar (224-beat in 4/4) arrangement across 6 sections:
+ * Builds a 96-bar (384-beat in 4/4) arrangement with full reprises and a resolved tonic outro:
  * 1. Bars 0–3 (4 bars): Groove Intro (rhythm only)
  * 2. Bars 4–19 (16 bars): Theme A (A1 + A2 with call-and-response)
  * 3. Bars 20–27 (8 bars): Rhythm & Comping Breather (melody rests)
  * 4. Bars 28–43 (16 bars): Bridge & Instrument Handoff (Theme B1 + B2)
  * 5. Bars 44–47 (4 bars): Bass & Percussion Breakdown
- * 6. Bars 48–55 (8 bars): Theme A' Finale & Cadence
+ * 6. Bars 48–63 (16 bars): Theme A Reprise (A1 + A2 with counter-melody fills)
+ * 7. Bars 64–79 (16 bars): Bridge B Reprise (B1 + B2 with enriched accompaniment)
+ * 8. Bars 80–87 (8 bars): Final Chorus A2
+ * 9. Bars 88–91 (4 bars): Wind-Down Tag
+ * 10. Bars 92–95 (4 bars): Resolved Tonic Cadence & Open Decay Bar
  */
 function buildExtended44Arrangement(spec: Arrangement44Spec): SoundEvent[] {
   const events: SoundEvent[] = [];
@@ -104,11 +108,20 @@ function buildExtended44Arrangement(spec: Arrangement44Spec): SoundEvent[] {
   function addRhythmBar(
     barIndex: number,
     chordDef: ChordBarDef,
-    mode: 'intro' | 'main' | 'rhythm-breather' | 'bridge' | 'breakdown'
+    mode: 'intro' | 'main' | 'rhythm-breather' | 'bridge' | 'breakdown' | 'outro-tag'
   ): void {
     const b = barIndex * 4;
     const [r1, r2] = chordDef.bass;
     const notes = chordDef.voicing;
+
+    if (mode === 'outro-tag') {
+      events.push({ inst: 'bass', beat: b + 0, dur: 1.2, midi: r1, gain: 0.28 });
+      events.push({ inst: 'bass', beat: b + 2.5, dur: 1.0, midi: r2, gain: 0.26 });
+      events.push({ inst: 'shaker', beat: b + 0 }, { inst: 'shaker', beat: b + 2 });
+      events.push(...chord(compInst, b + 0, 0.8, notes, 0.18));
+      events.push(...chord(compInst, b + 2.5, 0.8, notes, 0.18));
+      return;
+    }
 
     if (grooveStyle === 'walking') {
       const walk = chordDef.walk || [r1, r1 + 4, r2, r1 + 2];
@@ -235,14 +248,95 @@ function buildExtended44Arrangement(spec: Arrangement44Spec): SoundEvent[] {
   for (let i = 0; i < 8; i++) addRhythmBar(36 + i, progB[i], 'bridge');
   addMelody8Bars(36, melB2, lead2, lead1);
   for (let i = 0; i < 4; i++) addRhythmBar(44 + i, progA[i], 'breakdown');
+
+  // Bars 48–55: Theme A1 reprise
   for (let i = 0; i < 8; i++) addRhythmBar(48 + i, progA[i], 'main');
-  addMelody8Bars(48, melA2, lead1, lead2);
+  addMelody8Bars(48, melA1, lead1, lead2);
+
+  // Bars 56–63: Theme A2 reprise
+  for (let i = 0; i < 8; i++) addRhythmBar(56 + i, progA[i], 'main');
+  addMelody8Bars(56, melA2, lead1, accentInst);
+
+  // Bars 64–71: Bridge B1 reprise
+  for (let i = 0; i < 8; i++) addRhythmBar(64 + i, progB[i], 'bridge');
+  addMelody8Bars(64, melB1, lead2, accentInst);
+
+  // Bars 72–79: Bridge B2 reprise
+  for (let i = 0; i < 8; i++) addRhythmBar(72 + i, progB[i], 'bridge');
+  addMelody8Bars(72, melB2, lead2, lead1);
+
+  // Bars 80–87: Final Chorus A2
+  for (let i = 0; i < 8; i++) addRhythmBar(80 + i, progA[i], 'main');
+  addMelody8Bars(80, melA2, lead1, lead2);
+
+  // Bars 88–91: 4-bar Wind-Down Tag
+  for (let i = 0; i < 4; i++) addRhythmBar(88 + i, progA[i], 'outro-tag');
+  melA1.slice(0, 4).forEach((n) => {
+    if (n.beat < 8) {
+      events.push({
+        inst: lead2,
+        beat: 88 * 4 + n.beat,
+        dur: n.dur,
+        midi: n.midi,
+        gain: 0.17,
+      });
+      events.push({
+        inst: accentInst,
+        beat: 90 * 4 + n.beat,
+        dur: n.dur,
+        midi: n.midi,
+        gain: 0.16,
+      });
+    }
+  });
+
+  // Bars 92–95: 4-bar Resolved Tonic Cadence
+  // Bar 92 (b = 368, progA[6])
+  {
+    const b = 368;
+    const c6 = progA[6];
+    events.push({ inst: 'bass', beat: b + 0, dur: 1.2, midi: c6.bass[0] });
+    events.push({ inst: 'bass', beat: b + 2.5, dur: 1.0, midi: c6.bass[1] });
+    events.push({ inst: 'shaker', beat: b + 0 }, { inst: 'shaker', beat: b + 2 });
+    events.push(...chord(compInst, b + 0, 1.2, c6.voicing, 0.2));
+    events.push(...chord(compInst, b + 2.5, 1.0, c6.voicing, 0.18));
+    events.push({ inst: lead1, beat: b + 0, dur: 1.8, midi: c6.voicing[2], gain: 0.19 });
+  }
+  // Bar 93 (b = 372, progA[7])
+  {
+    const b = 372;
+    const c7 = progA[7];
+    events.push({ inst: 'bass', beat: b + 0, dur: 1.2, midi: c7.bass[0] });
+    events.push({ inst: 'bass', beat: b + 2, dur: 1.2, midi: c7.bass[1] });
+    events.push({ inst: 'shaker', beat: b + 0 });
+    events.push(...chord(compInst, b + 0, 1.4, c7.voicing, 0.19));
+    events.push(...chord(compInst, b + 2, 1.4, c7.voicing, 0.18));
+    events.push({ inst: lead1, beat: b + 2.0, dur: 1.6, midi: c7.voicing[2], gain: 0.18 });
+  }
+  // Bar 94 (b = 376, progA[0] tonic resolution)
+  {
+    const b = 376;
+    const c0 = progA[0];
+    events.push({ inst: 'bass', beat: b + 0, dur: 1.8, midi: c0.bass[0], gain: 0.32 });
+    events.push({ inst: 'bass', beat: b + 2.5, dur: 3.0, midi: c0.bass[0], gain: 0.28 });
+    events.push(...chord(compInst, b + 0, 2.0, c0.voicing, 0.2));
+    events.push(...chord(compInst, b + 2.5, 3.2, c0.voicing, 0.18));
+    events.push({ inst: lead1, beat: b + 0, dur: 3.5, midi: c0.voicing[2], gain: 0.2 });
+    events.push({
+      inst: accentInst,
+      beat: b + 2.5,
+      dur: 3.0,
+      midi: Math.min(74, c0.voicing[3] || c0.voicing[2]),
+      gain: 0.16,
+    });
+  }
+  // Bar 95 (b = 380–384): open decay bar (no new percussion or bass hits)
 
   return events.sort((a, b) => a.beat - b.beat);
 }
 
 /**
- * Builds a 56-bar (168-beat in 3/4) waltz arrangement for Catnip Waltz.
+ * Builds a 112-bar (336-beat in 3/4) waltz arrangement for Catnip Waltz.
  */
 function buildExtendedWaltzArrangement(): SoundEvent[] {
   const events: SoundEvent[] = [];
@@ -370,19 +464,142 @@ function buildExtendedWaltzArrangement(): SoundEvent[] {
     events.push({ inst: 'marimba', beat: 108 + n.beat, dur: n.dur, midi: n.midi })
   );
   for (let i = 0; i < 4; i++) addWaltzBar(44 + i, progA[i], 'breakdown');
+
+  // Bars 48–55 (beat 144): progA 'main', melA1 on 'accordion' + 'kalimba' fifth/third chime on beat 0 of every 2nd bar
   for (let i = 0; i < 8; i++) addWaltzBar(48 + i, progA[i], 'main');
-  melA2.forEach((n) => {
+  melA1.forEach((n) => {
     events.push({ inst: 'accordion', beat: 144 + n.beat, dur: n.dur, midi: n.midi });
-    if (n.beat % 3 === 0) {
+    if (n.beat % 6 === 0) {
       events.push({
         inst: 'kalimba',
         beat: 144 + n.beat,
+        dur: 0.8,
+        midi: Math.min(72, n.midi + 7),
+        gain: 0.14,
+      });
+    }
+  });
+
+  // Bars 56–63 (beat 168): progA 'main', melA2 on 'accordion' + 'marimba' counter-note on beat 0 of every bar
+  for (let i = 0; i < 8; i++) addWaltzBar(56 + i, progA[i], 'main');
+  melA2.forEach((n) => {
+    events.push({ inst: 'accordion', beat: 168 + n.beat, dur: n.dur, midi: n.midi });
+    if (n.beat % 3 === 0) {
+      events.push({
+        inst: 'marimba',
+        beat: 168 + n.beat,
+        dur: 0.7,
+        midi: n.midi,
+        gain: 0.15,
+      });
+    }
+  });
+
+  // Bars 64–71 (beat 192): progB 'bridge', melB on 'kalimba' with soft 'accordion' harmony on downbeats
+  for (let i = 0; i < 8; i++) addWaltzBar(64 + i, progB[i], 'bridge');
+  melB.forEach((n) => {
+    events.push({ inst: 'kalimba', beat: 192 + n.beat, dur: n.dur, midi: Math.min(74, n.midi + 5) });
+    if (n.beat % 3 === 0) {
+      events.push({
+        inst: 'accordion',
+        beat: 192 + n.beat,
+        dur: n.dur,
+        midi: n.midi,
+        gain: 0.13,
+      });
+    }
+  });
+
+  // Bars 72–79 (beat 216): progB 'bridge', melB on 'marimba' with 'kalimba' echo on beat 2 of odd bars
+  for (let i = 0; i < 8; i++) addWaltzBar(72 + i, progB[i], 'bridge');
+  melB.forEach((n) => {
+    events.push({ inst: 'marimba', beat: 216 + n.beat, dur: n.dur, midi: n.midi });
+    if (n.beat % 6 === 5) {
+      events.push({
+        inst: 'kalimba',
+        beat: 216 + n.beat,
+        dur: 0.7,
+        midi: Math.min(74, n.midi + 5),
+        gain: 0.14,
+      });
+    }
+  });
+
+  // Bars 80–87 (beat 240): progA 'main', melA1 on 'accordion'
+  for (let i = 0; i < 8; i++) addWaltzBar(80 + i, progA[i], 'main');
+  melA1.forEach((n) =>
+    events.push({ inst: 'accordion', beat: 240 + n.beat, dur: n.dur, midi: n.midi })
+  );
+
+  // Bars 88–95 (beat 264): progA 'main', melA2 on 'accordion' with 'kalimba' shimmer on downbeats
+  for (let i = 0; i < 8; i++) addWaltzBar(88 + i, progA[i], 'main');
+  melA2.forEach((n) => {
+    events.push({ inst: 'accordion', beat: 264 + n.beat, dur: n.dur, midi: n.midi });
+    if (n.beat % 3 === 0) {
+      events.push({
+        inst: 'kalimba',
+        beat: 264 + n.beat,
         dur: 0.8,
         midi: Math.min(74, n.midi + 7),
         gain: 0.14,
       });
     }
   });
+
+  // Bars 96–103 (beats 288–311): 8-bar Gentle Waltz Tag
+  for (let i = 0; i < 8; i++) {
+    const barIndex = 96 + i;
+    const b = barIndex * 3;
+    const cDef = progA[i];
+    events.push({ inst: 'bass', beat: b + 0, dur: 1.2, midi: cDef.bass, gain: 0.28 });
+    events.push(...chord('guitar', b + 1, 0.7, cDef.voicing, 0.19));
+    if (i % 2 === 0) {
+      events.push({
+        inst: 'kalimba',
+        beat: b + 0,
+        dur: 1.5,
+        midi: cDef.voicing[2],
+        gain: 0.16,
+      });
+      events.push({
+        inst: 'kalimba',
+        beat: b + 2,
+        dur: 0.8,
+        midi: cDef.voicing[1],
+        gain: 0.14,
+      });
+    }
+  }
+
+  // Bars 104–111 (beats 312–335): 8-bar Resolved Tonic Waltz Cadence
+  const cadenceAccordionNotes = [64, 61, 60, 57];
+  for (let i = 0; i < 4; i++) {
+    const b = (104 + i) * 3;
+    const cDef = progA[4 + i];
+    events.push({ inst: 'bass', beat: b + 0, dur: 1.4, midi: cDef.bass, gain: 0.26 });
+    events.push(...chord('guitar', b + 1, 0.9, cDef.voicing, 0.18));
+    events.push({
+      inst: 'accordion',
+      beat: b + 0,
+      dur: 2.2,
+      midi: cadenceAccordionNotes[i],
+      gain: 0.15,
+    });
+  }
+  // Bar 108 (b = 324)
+  events.push({ inst: 'bass', beat: 324, dur: 2.5, midi: 43, gain: 0.3 });
+  events.push(...chord('guitar', 325, 1.5, [55, 59, 62], 0.19));
+  events.push({ inst: 'accordion', beat: 324, dur: 2.6, midi: 59, gain: 0.16 });
+
+  // Bar 109 (b = 327)
+  events.push({ inst: 'bass', beat: 327, dur: 2.8, midi: 43, gain: 0.26 });
+  events.push(...chord('guitar', 327, 2.5, [55, 59, 62], 0.17));
+  events.push({ inst: 'accordion', beat: 327, dur: 3.5, midi: 55, gain: 0.15 });
+  events.push({ inst: 'kalimba', beat: 328, dur: 2.5, midi: 67, gain: 0.15 });
+
+  // Bar 110 (b = 330)
+  events.push({ inst: 'kalimba', beat: 330, dur: 2.5, midi: 67, gain: 0.12 });
+  // Bar 111 (b = 333–336): open decay bar (no events)
 
   return events.sort((a, b) => a.beat - b.beat);
 }
@@ -391,7 +608,7 @@ const MARIMBA_TRACK: SoundTrackDef = {
   id: 'marimba',
   bpm: 126,
   meter: '4/4',
-  totalBeats: 224,
+  totalBeats: 384,
   events: buildExtended44Arrangement({
     grooveStyle: 'mambo',
     compInst: 'guitar',
@@ -538,7 +755,7 @@ const VELVET_TRACK: SoundTrackDef = {
   id: 'velvet',
   bpm: 120,
   meter: '4/4',
-  totalBeats: 224,
+  totalBeats: 384,
   events: buildExtended44Arrangement({
     grooveStyle: 'walking',
     compInst: 'rhodes',
@@ -665,7 +882,7 @@ const SUNBEAM_TRACK: SoundTrackDef = {
   id: 'sunbeam',
   bpm: 124,
   meter: '4/4',
-  totalBeats: 224,
+  totalBeats: 384,
   events: buildExtended44Arrangement({
     grooveStyle: 'bossa',
     compInst: 'guitar',
@@ -801,7 +1018,7 @@ const BOSSA_TRACK: SoundTrackDef = {
   id: 'bossa',
   bpm: 122,
   meter: '4/4',
-  totalBeats: 224,
+  totalBeats: 384,
   events: buildExtended44Arrangement({
     grooveStyle: 'bossa',
     compInst: 'guitar',
@@ -929,7 +1146,7 @@ const WALTZ_TRACK: SoundTrackDef = {
   id: 'waltz',
   bpm: 126,
   meter: '3/4',
-  totalBeats: 168,
+  totalBeats: 336,
   events: buildExtendedWaltzArrangement(),
 };
 
@@ -937,7 +1154,7 @@ const SAMBA_TRACK: SoundTrackDef = {
   id: 'samba',
   bpm: 130,
   meter: '4/4',
-  totalBeats: 224,
+  totalBeats: 384,
   events: buildExtended44Arrangement({
     grooveStyle: 'samba',
     compInst: 'guitar',
@@ -1957,10 +2174,8 @@ export class SoundEngine {
       this.activeTrack = nextInfo.track;
       this.currentBeat = 0;
       this.scheduledUntilBeat = 0;
-      if (nextInfo.isNewTrack) {
-        this.pauseUntilTime = now + 2.5;
-        return;
-      }
+      this.pauseUntilTime = now + 2.5;
+      return;
     }
 
     const targetBeat = Math.min(this.currentBeat + this.lookaheadBeats, this.activeTrack.totalBeats);

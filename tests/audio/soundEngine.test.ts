@@ -46,24 +46,59 @@ describe('audio/soundEngine', () => {
     }).not.toThrow();
   });
 
-  it('builds full 56-bar arrangements (224 beats for 4/4, 168 beats for 3/4) for all 6 tracks without strident high notes', () => {
+  it('builds extended 96-bar (384-beat 4/4) and 112-bar (336-beat 3/4) arrangements with resolved tonic outros and no shrill notes', () => {
     const engine = new SoundEngine();
+    const expectedTonicBass: Record<string, number> = {
+      marimba: 41,
+      velvet: 46,
+      sunbeam: 43,
+      bossa: 48,
+      samba: 50,
+    };
     const fourFourTracks = ['marimba', 'velvet', 'sunbeam', 'bossa', 'samba'] as const;
     for (const id of fourFourTracks) {
       const def = engine.getTrackDef(id);
-      expect(def.totalBeats).toBe(224);
-      expect(def.events.length).toBeGreaterThan(250);
+      expect(def.totalBeats).toBe(384);
+      expect(def.events.length).toBeGreaterThan(450);
+
+      // Review Focus #1 & #4: all beats within [0, 384) and no shrill notes > 76
+      for (const ev of def.events) {
+        expect(ev.beat).toBeGreaterThanOrEqual(0);
+        expect(ev.beat).toBeLessThan(384);
+      }
       const shrillNotes = def.events.filter((ev) => ev.midi && ev.midi > 76);
       expect(shrillNotes.length).toBe(0);
+
+      // Review Focus #2: final bar [380, 384) has no shaker or woodblock hits
+      const finalBarPerc = def.events.filter(
+        (ev) => ev.beat >= 380 && (ev.inst === 'shaker' || ev.inst === 'woodblock')
+      );
+      expect(finalBarPerc.length).toBe(0);
+
+      // Review Focus #3: last bass note resolves to tonic root of progA[0]
+      const bassEvents = def.events.filter((ev) => ev.inst === 'bass');
+      expect(bassEvents[bassEvents.length - 1].midi).toBe(expectedTonicBass[id]);
     }
 
     const waltzDef = engine.getTrackDef('waltz');
-    expect(waltzDef.totalBeats).toBe(168);
-    expect(waltzDef.events.length).toBeGreaterThan(200);
+    expect(waltzDef.totalBeats).toBe(336);
+    expect(waltzDef.events.length).toBeGreaterThan(400);
+    for (const ev of waltzDef.events) {
+      expect(ev.beat).toBeGreaterThanOrEqual(0);
+      expect(ev.beat).toBeLessThan(336);
+    }
     const highAccordion = waltzDef.events.filter(
       (ev) => ev.inst === 'accordion' && ev.midi && ev.midi > 72
     );
     expect(highAccordion.length).toBe(0);
+
+    const waltzFinalBarPerc = waltzDef.events.filter(
+      (ev) => ev.beat >= 333 && (ev.inst === 'shaker' || ev.inst === 'woodblock')
+    );
+    expect(waltzFinalBarPerc.length).toBe(0);
+
+    const waltzBass = waltzDef.events.filter((ev) => ev.inst === 'bass');
+    expect(waltzBass[waltzBass.length - 1].midi).toBe(43);
   });
 
   it('synchronizes volume levels with mute state correctly', () => {
@@ -385,6 +420,28 @@ describe('audio/soundEngine', () => {
       expect(resumeSpy).toHaveBeenCalled();
       // Track position is preserved at beat 12.5 rather than reset to 0
       expect((engine as any).currentBeat).toBe(12.5);
+
+      engine.stopMusic();
+    });
+
+    it('Review Focus #5: always pauses for 2.5 seconds at the end of a song even when repeating a single selected track', () => {
+      const engine = new SoundEngine();
+      engine.setMuted(false, false);
+      engine.setTrackPreference('velvet');
+      engine.startMusic();
+
+      const ctx = (engine as any).getContext();
+      const trackDef = engine.getTrackDef('velvet');
+
+      // Advance clock to reach the end of the track (384 beats at 120 BPM = 192s)
+      (engine as any).currentBeat = trackDef.totalBeats - 0.5;
+      (engine as any).lastTickTime = ctx.currentTime;
+      ctx.currentTime += 1.0; // advances by 2 beats -> crosses totalBeats
+
+      (engine as any).runMusicTick();
+
+      expect((engine as any).currentBeat).toBe(0);
+      expect((engine as any).pauseUntilTime).toBeCloseTo(ctx.currentTime + 2.5, 5);
 
       engine.stopMusic();
     });
