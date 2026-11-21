@@ -291,8 +291,8 @@ describe('App integration', () => {
 
       expect(getByText('Nivel 300')).toBeTruthy();
 
-      // Solution for puzzle 300: [0, 2, 5, 7, 3, 1, 4, 9, 6, 8]
-      const solution = [0, 2, 5, 7, 3, 1, 4, 9, 6, 8];
+      // Solution for puzzle 300: [5, 2, 4, 1, 6, 0, 7, 9, 3, 8]
+      const solution = [5, 2, 4, 1, 6, 0, 7, 9, 3, 8];
       for (let r = 0; r < solution.length; r++) {
         const c = solution[r];
         const cell = getByTestId(`cell-${r}-${c}`);

@@ -19,9 +19,9 @@ export const LEVEL_TIERS: LevelTierSpec[] = [
 ];
 
 export function createRng(seed: number): () => number {
-  let s = seed;
+  let s = seed | 0;
   return function () {
-    s += 0x6d2b79f5;
+    s = (s + 0x6d2b79f5) | 0;
     let t = Math.imul(s ^ (s >>> 15), 1 | s);
     t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
@@ -31,6 +31,7 @@ export function createRng(seed: number): () => number {
 export interface GeneratePuzzleOptions {
   minRuleRequired?: number;
   giftSingleton?: boolean;
+  existingSignatures?: Set<string>;
 }
 
 export function generatePuzzle(
@@ -49,8 +50,13 @@ export function generatePuzzle(
     function findCatPlacement(row: number): boolean {
       if (row === size) return true;
 
-      // Shuffle available cols
-      const shuffled = [...cols].sort(() => rng() - 0.5);
+      // Uniform Fisher-Yates shuffle of available cols
+      const shuffled = [...cols];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+
       for (const c of shuffled) {
         if (catPlacement.includes(c)) continue;
         if (row > 0 && Math.abs(catPlacement[row - 1] - c) <= 1) continue;
@@ -70,7 +76,11 @@ export function generatePuzzle(
 
     const useSmallCap = size >= 10 || options?.giftSingleton;
     const smallReg = useSmallCap ? Math.floor(rng() * size) : -1;
-    const smallCap = options?.giftSingleton ? 1 : 1 + Math.floor(rng() * 3);
+    const smallCap = options?.giftSingleton
+      ? 1
+      : options?.minRuleRequired && options.minRuleRequired >= 4
+        ? 2 + Math.floor(rng() * 2)
+        : 1 + Math.floor(rng() * 3);
     let smallCells = 1;
 
     for (let r = 0; r < size; r++) {
@@ -82,6 +92,8 @@ export function generatePuzzle(
     }
 
     let unassigned = size * size - size;
+    const nbrR = [0, 0, 0, 0];
+    const nbrC = [0, 0, 0, 0];
     while (unassigned > 0 && front.length > 0) {
       const idx = Math.floor(rng() * front.length);
       const cell = front[idx];
@@ -90,20 +102,36 @@ export function generatePuzzle(
         continue;
       }
 
-      const neighbors = [
-        [cell.r - 1, cell.c],
-        [cell.r + 1, cell.c],
-        [cell.r, cell.c - 1],
-        [cell.r, cell.c + 1],
-      ];
-      const validNbrs = neighbors.filter(
-        ([nr, nc]) => nr >= 0 && nr < size && nc >= 0 && nc < size && regions[nr][nc] === -1
-      );
+      let validCount = 0;
+      const r = cell.r;
+      const c = cell.c;
+      if (r > 0 && regions[r - 1][c] === -1) {
+        nbrR[validCount] = r - 1;
+        nbrC[validCount] = c;
+        validCount++;
+      }
+      if (r + 1 < size && regions[r + 1][c] === -1) {
+        nbrR[validCount] = r + 1;
+        nbrC[validCount] = c;
+        validCount++;
+      }
+      if (c > 0 && regions[r][c - 1] === -1) {
+        nbrR[validCount] = r;
+        nbrC[validCount] = c - 1;
+        validCount++;
+      }
+      if (c + 1 < size && regions[r][c + 1] === -1) {
+        nbrR[validCount] = r;
+        nbrC[validCount] = c + 1;
+        validCount++;
+      }
 
-      if (validNbrs.length === 0) {
+      if (validCount === 0) {
         front.splice(idx, 1);
       } else {
-        const [nr, nc] = validNbrs[Math.floor(rng() * validNbrs.length)];
+        const pick = Math.floor(rng() * validCount);
+        const nr = nbrR[pick];
+        const nc = nbrC[pick];
         regions[nr][nc] = cell.reg;
         if (cell.reg === smallReg) {
           smallCells++;
@@ -113,11 +141,19 @@ export function generatePuzzle(
       }
     }
 
-    if (unassigned !== 0 || !areRegionsContiguous(regions)) continue;
+    if (unassigned !== 0) continue;
 
-    // 3. Check uniqueness
+    // 3. Check uniqueness before contiguity/signature allocation
     const exact = countSolutions(regions, 2);
     if (exact.count !== 1) continue;
+
+    if (!areRegionsContiguous(regions)) continue;
+
+    // Check against existing signatures if deduplication requested
+    if (options?.existingSignatures) {
+      const sig = regions.map((row) => row.join(',')).join(';');
+      if (options.existingSignatures.has(sig)) continue;
+    }
 
     // 4. Check human solvability
     const logic = solveLogically(regions, maxAllowedRule);
@@ -143,9 +179,11 @@ export function generate10x10Waves(
   startId: number = 101,
   waveCount: number = 10,
   rng: () => number,
-  onWaveComplete?: (waveIndex: number, wavePuzzles: PuzzleDef[]) => void
+  onWaveComplete?: (waveIndex: number, wavePuzzles: PuzzleDef[]) => void,
+  existingSignatures?: Set<string>
 ): PuzzleDef[] {
   const result: PuzzleDef[] = [];
+  const seenSignatures = existingSignatures || new Set<string>();
 
   for (let w = 0; w < waveCount; w++) {
     const waveStartId = startId + w * 20;
@@ -153,13 +191,17 @@ export function generate10x10Waves(
     // 1. Generate 3 gifts for slots 2, 5, 13 (maxAllowedRule: 5 so gifts are true breathers, never Rule 6)
     const gifts: PuzzleDef[] = [];
     for (let g = 0; g < 3; g++) {
-      gifts.push(generatePuzzle(0, 10, 5, rng, 1, { giftSingleton: true }));
+      const p = generatePuzzle(0, 10, 5, rng, 1, { giftSingleton: true, existingSignatures: seenSignatures });
+      seenSignatures.add(p.regions.map((row) => row.join(',')).join(';'));
+      gifts.push(p);
     }
 
     // 2. Generate 17 standard 10x10 puzzles
     const standards: PuzzleDef[] = [];
     for (let s = 0; s < 17; s++) {
-      standards.push(generatePuzzle(0, 10, 6, rng, 1));
+      const p = generatePuzzle(0, 10, 6, rng, 1, { existingSignatures: seenSignatures });
+      seenSignatures.add(p.regions.map((row) => row.join(',')).join(';'));
+      standards.push(p);
     }
 
     // 3. Sort standards by difficultyScore
@@ -243,8 +285,12 @@ export function generateAll300Puzzles(
   onWaveComplete?: (waveIndex: number, wavePuzzles: PuzzleDef[]) => void
 ): PuzzleDef[] {
   const existing100 = generateAll100Puzzles(seed);
+  const seenSignatures = new Set<string>();
+  for (const p of existing100) {
+    seenSignatures.add(p.regions.map((row) => row.join(',')).join(';'));
+  }
   const rng10x10 = createRng(seed + 100);
-  const new200 = generate10x10Waves(101, 10, rng10x10, onWaveComplete);
+  const new200 = generate10x10Waves(101, 10, rng10x10, onWaveComplete, seenSignatures);
   return [...existing100, ...new200];
 }
 

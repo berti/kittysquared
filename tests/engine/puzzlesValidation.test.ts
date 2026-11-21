@@ -79,4 +79,16 @@ describe('Puzzles Dataset Validation (1-300)', () => {
       expect(logic.solved).toBe(true);
     }
   }, 120000);
+
+  it('ensures all 300 puzzles have distinct regional layouts with zero duplicates across levels', () => {
+    const seen = new Map<string, number>();
+    for (const p of puzzles) {
+      const signature = p.regions.map((row) => row.join(',')).join(';');
+      expect(
+        seen.has(signature),
+        `Level ${p.id} has identical layout to level ${seen.get(signature)}`
+      ).toBe(false);
+      seen.set(signature, p.id);
+    }
+  });
 });
